@@ -63,7 +63,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           throw new Error("Failed to fetch user");
         }
         
-        return response.json();
+        const userData = await response.json();
+        return userData as User;
       } catch (err) {
         console.error("Error fetching user:", err);
         return null;

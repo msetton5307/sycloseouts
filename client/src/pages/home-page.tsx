@@ -5,7 +5,7 @@ import Categories from "@/components/home/categories";
 import SellWithUs from "@/components/home/sell-with-us";
 import Testimonials from "@/components/home/testimonials";
 import CTA from "@/components/home/cta";
-import Header from "@/components/layout/header";
+import Header from "@/components/layout/header-fixed";
 import Footer from "@/components/layout/footer";
 
 export default function HomePage() {

@@ -30,7 +30,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { Link } from "wouter";
-import Header from "@/components/layout/header";
+import Header from "@/components/layout/header-fixed";
 import Footer from "@/components/layout/footer";
 
 export default function AuthPage() {
