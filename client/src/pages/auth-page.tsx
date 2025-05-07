@@ -31,7 +31,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { Link } from "wouter";
 import Header from "@/components/layout/header-fixed";
-import Footer from "@/components/layout/footer";
+import Footer from "@/components/layout/footer-fixed";
 
 export default function AuthPage() {
   const [, setLocation] = useLocation();
