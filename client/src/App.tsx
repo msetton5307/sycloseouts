@@ -33,7 +33,9 @@ function Router() {
       <Route path="/products/:id" component={ProductDetailPage} />
       <Route path="/auth" component={AuthPage} />
       <Route path="/cart" component={CartPage} />
-      <Route path="/seller/apply" component={SellerApply} />
+      
+      {/* Protected seller application route */}
+      <ProtectedRoute path="/seller/apply" component={SellerApply} allowedRoles={["buyer", "seller", "admin"]} />
 
       {/* Buyer routes */}
       <ProtectedRoute path="/checkout" component={CheckoutPage} allowedRoles={["buyer", "seller", "admin"]} />
