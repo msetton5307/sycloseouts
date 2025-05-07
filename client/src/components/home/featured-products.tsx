@@ -42,10 +42,8 @@ export default function FeaturedProducts() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center">
           <h2 className="text-2xl font-extrabold tracking-tight text-gray-900">Featured Closeout Lots</h2>
-          <Link href="/products">
-            <a className="text-primary hover:text-blue-700 font-medium flex items-center">
-              View All <ArrowRight className="ml-1 h-4 w-4" />
-            </a>
+          <Link href="/products" className="text-primary hover:text-blue-700 font-medium flex items-center">
+            View All <ArrowRight className="ml-1 h-4 w-4" />
           </Link>
         </div>
         
