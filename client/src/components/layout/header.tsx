@@ -52,15 +52,11 @@ export default function Header() {
                 <Link href="/products" className={`${isActive('/products') ? 'border-primary text-gray-900' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}>
                     Products
                 </Link>
-                <Link href="/seller/apply">
-                  <a className={`${isActive('/seller/apply') ? 'border-primary text-gray-900' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}>
-                    Sell with Us
-                  </a>
+                <Link href="/seller/apply" className={`${isActive('/seller/apply') ? 'border-primary text-gray-900' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}>
+                  Sell with Us
                 </Link>
-                <Link href="/about">
-                  <a className={`${isActive('/about') ? 'border-primary text-gray-900' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}>
-                    About
-                  </a>
+                <Link href="/about" className={`${isActive('/about') ? 'border-primary text-gray-900' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}>
+                  About
                 </Link>
               </nav>
             </div>
@@ -147,37 +143,33 @@ export default function Header() {
         {isMenuOpen && (
           <div className="sm:hidden">
             <div className="pt-2 pb-3 space-y-1">
-              <Link href="/">
-                <a 
-                  className={`${isActive('/') ? 'bg-primary border-primary text-white' : 'border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800'} block pl-3 pr-4 py-2 border-l-4 text-base font-medium`}
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Home
-                </a>
+              <Link 
+                href="/"
+                className={`${isActive('/') ? 'bg-primary border-primary text-white' : 'border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800'} block pl-3 pr-4 py-2 border-l-4 text-base font-medium`}
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Home
               </Link>
-              <Link href="/products">
-                <a 
-                  className={`${isActive('/products') ? 'bg-primary border-primary text-white' : 'border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800'} block pl-3 pr-4 py-2 border-l-4 text-base font-medium`}
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Products
-                </a>
+              <Link 
+                href="/products"
+                className={`${isActive('/products') ? 'bg-primary border-primary text-white' : 'border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800'} block pl-3 pr-4 py-2 border-l-4 text-base font-medium`}
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Products
               </Link>
-              <Link href="/seller/apply">
-                <a 
-                  className={`${isActive('/seller/apply') ? 'bg-primary border-primary text-white' : 'border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800'} block pl-3 pr-4 py-2 border-l-4 text-base font-medium`}
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Sell with Us
-                </a>
+              <Link 
+                href="/seller/apply"
+                className={`${isActive('/seller/apply') ? 'bg-primary border-primary text-white' : 'border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800'} block pl-3 pr-4 py-2 border-l-4 text-base font-medium`}
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Sell with Us
               </Link>
-              <Link href="/about">
-                <a 
-                  className={`${isActive('/about') ? 'bg-primary border-primary text-white' : 'border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800'} block pl-3 pr-4 py-2 border-l-4 text-base font-medium`}
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  About
-                </a>
+              <Link 
+                href="/about"
+                className={`${isActive('/about') ? 'bg-primary border-primary text-white' : 'border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800'} block pl-3 pr-4 py-2 border-l-4 text-base font-medium`}
+                onClick={() => setIsMenuOpen(false)}
+              >
+                About
               </Link>
             </div>
             
@@ -224,23 +216,22 @@ export default function Header() {
                   </div>
                 </div>
                 <div className="mt-3 space-y-1">
-                  <Link href={user.role === 'seller' ? '/seller/dashboard' : '/buyer/dashboard'}>
-                    <a 
-                      className="block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100"
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      Dashboard
-                    </a>
+                  <Link 
+                    href={user.role === 'seller' ? '/seller/dashboard' : '/buyer/dashboard'}
+                    className="block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Dashboard
                   </Link>
-                  <a 
-                    className="block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100 cursor-pointer"
+                  <button 
+                    className="w-full text-left block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100 cursor-pointer"
                     onClick={() => {
                       handleLogout();
                       setIsMenuOpen(false);
                     }}
                   >
                     Sign out
-                  </a>
+                  </button>
                 </div>
               </div>
             ) : (
