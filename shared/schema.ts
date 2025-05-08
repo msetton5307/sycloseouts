@@ -67,7 +67,11 @@ export const productsRelations = relations(products, ({ one, many }) => ({
   orderItems: many(orderItems),
 }));
 
-export const insertProductSchema = createInsertSchema(products)
+export const insertProductSchema = createInsertSchema(products, {
+  fobLocation: z.string().optional().nullable(),
+  retailComparisonUrl: z.string().optional().nullable(),
+  upc: z.string().optional().nullable()
+})
   .omit({
     id: true,
     createdAt: true,

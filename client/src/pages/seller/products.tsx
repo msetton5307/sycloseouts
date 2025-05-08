@@ -165,10 +165,10 @@ export default function SellerProducts() {
         
         {/* Product Form Dialog */}
         <Dialog open={showNewProductForm} onOpenChange={setShowNewProductForm}>
-          <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
+          <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto" aria-describedby="create-product-description">
             <DialogHeader>
               <DialogTitle>Add New Product</DialogTitle>
-              <DialogDescription>
+              <DialogDescription id="create-product-description">
                 List a new closeout lot for sale. Fill out all the details below.
               </DialogDescription>
             </DialogHeader>
@@ -178,10 +178,10 @@ export default function SellerProducts() {
         
         {/* Edit Product Dialog */}
         <Dialog open={!!selectedProduct} onOpenChange={() => setSelectedProduct(null)}>
-          <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
+          <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto" aria-describedby="edit-product-description">
             <DialogHeader>
               <DialogTitle>Edit Product</DialogTitle>
-              <DialogDescription>
+              <DialogDescription id="edit-product-description">
                 Update your product listing details.
               </DialogDescription>
             </DialogHeader>
@@ -193,10 +193,10 @@ export default function SellerProducts() {
         
         {/* Delete Confirmation Dialog */}
         <Dialog open={isConfirmDeleteOpen} onOpenChange={setIsConfirmDeleteOpen}>
-          <DialogContent>
+          <DialogContent className="sm:max-w-[500px]" aria-describedby="delete-description">
             <DialogHeader>
               <DialogTitle>Confirm Deletion</DialogTitle>
-              <DialogDescription>
+              <DialogDescription id="delete-description">
                 Are you sure you want to delete this product? This action cannot be undone.
               </DialogDescription>
             </DialogHeader>

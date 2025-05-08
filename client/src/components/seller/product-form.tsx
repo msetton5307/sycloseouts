@@ -115,6 +115,7 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
   });
   
   function onSubmit(data: InsertProduct) {
+    console.log("Submitting form with data:", data);
     if (imageUrls.length === 0) {
       toast({
         title: "Error",
@@ -133,7 +134,16 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
       return;
     }
     
-    saveProduct(data);
+    // Make sure all numeric fields are actually numbers, not strings
+    const formattedData = {
+      ...data,
+      price: typeof data.price === 'string' ? parseFloat(data.price) : data.price,
+      totalUnits: typeof data.totalUnits === 'string' ? parseInt(data.totalUnits) : data.totalUnits,
+      availableUnits: typeof data.availableUnits === 'string' ? parseInt(data.availableUnits) : data.availableUnits,
+      minOrderQuantity: typeof data.minOrderQuantity === 'string' ? parseInt(data.minOrderQuantity) : data.minOrderQuantity,
+    };
+    
+    saveProduct(formattedData);
   }
   
   const addImageUrl = () => {
@@ -399,7 +409,11 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
               <FormItem>
                 <FormLabel>FOB Location</FormLabel>
                 <FormControl>
-                  <Input placeholder="City, State (e.g., Los Angeles, CA)" {...field} />
+                  <Input 
+                    placeholder="City, State (e.g., Los Angeles, CA)" 
+                    {...field} 
+                    value={field.value || ''}
+                  />
                 </FormControl>
                 <FormDescription>
                   Shipping origin location.
@@ -418,7 +432,11 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
               <FormItem>
                 <FormLabel>Retail Comparison URL (Optional)</FormLabel>
                 <FormControl>
-                  <Input placeholder="https://example.com/product" {...field} />
+                  <Input 
+                    placeholder="https://example.com/product" 
+                    {...field} 
+                    value={field.value || ''}
+                  />
                 </FormControl>
                 <FormDescription>
                   Link to the product on a retail site for price comparison.
@@ -435,7 +453,11 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
               <FormItem>
                 <FormLabel>UPC (Optional)</FormLabel>
                 <FormControl>
-                  <Input placeholder="123456789012" {...field} />
+                  <Input 
+                    placeholder="123456789012" 
+                    {...field} 
+                    value={field.value || ''}
+                  />
                 </FormControl>
                 <FormDescription>
                   Universal Product Code if available.
