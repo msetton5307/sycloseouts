@@ -45,9 +45,10 @@ type ApplicationFormData = z.infer<typeof applicationSchema>;
 
 export default function SellerApply() {
   const [, setLocation] = useLocation();
-  const { user } = useAuth();
+  const { user, makeSeller } = useAuth();
   const { toast } = useToast();
   const [isSubmitSuccess, setIsSubmitSuccess] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   // Setup form with zod validation
   const form = useForm<ApplicationFormData>({
@@ -180,6 +181,51 @@ export default function SellerApply() {
               <p className="text-gray-600 mb-8">
                 Please fill out the form below to apply as a seller. Our team will review your application and get back to you within 2-3 business days.
               </p>
+              
+              {/* Quick Seller Approval (For testing) */}
+              <div className="mb-8 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <h3 className="text-lg font-medium mb-2">Developer Testing</h3>
+                <p className="text-sm text-gray-600 mb-4">
+                  Need to test seller features? Skip the application process and become a seller instantly.
+                </p>
+                <Button 
+                  type="button"
+                  variant="outline"
+                  onClick={async () => {
+                    setIsProcessing(true);
+                    try {
+                      const updatedUser = await makeSeller();
+                      if (updatedUser) {
+                        toast({
+                          title: "Success!",
+                          description: "You are now a seller. Redirecting to seller dashboard...",
+                        });
+                        setTimeout(() => {
+                          setLocation("/seller/dashboard");
+                        }, 1500);
+                      }
+                    } catch (error) {
+                      toast({
+                        title: "Error",
+                        description: "Failed to become a seller. Please try again.",
+                        variant: "destructive",
+                      });
+                    } finally {
+                      setIsProcessing(false);
+                    }
+                  }}
+                  disabled={isProcessing}
+                >
+                  {isProcessing ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    "Make Me a Seller Instantly"
+                  )}
+                </Button>
+              </div>
               
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
