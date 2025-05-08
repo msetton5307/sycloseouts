@@ -147,6 +147,41 @@ export function setupAuth(app: Express) {
     const { password, ...userWithoutPassword } = req.user;
     res.json(userWithoutPassword);
   });
+  
+  // Temporary endpoint to make the current user a seller for testing
+  app.post("/api/make-seller", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+    
+    try {
+      const user = req.user;
+      console.log("Updating user to seller role:", user.id);
+      
+      const updatedUser = await storage.updateUser(user.id, {
+        role: "seller",
+        isSeller: true,
+        isApproved: true
+      });
+      
+      if (!updatedUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Update the session user data
+      req.login(updatedUser, (err) => {
+        if (err) return res.status(500).json({ message: "Session update failed" });
+        
+        // Return user without password
+        const { password, ...userWithoutPassword } = updatedUser;
+        console.log("User updated to seller:", userWithoutPassword);
+        res.json(userWithoutPassword);
+      });
+    } catch (error) {
+      console.error("Error making user a seller:", error);
+      res.status(500).json({ message: "Failed to update user role" });
+    }
+  });
 }
 
 export function isAuthenticated(req: Request, res: Response, next: NextFunction) {
@@ -157,9 +192,15 @@ export function isAuthenticated(req: Request, res: Response, next: NextFunction)
 }
 
 export function isSeller(req: Request, res: Response, next: NextFunction) {
+  console.log("isSeller check - User:", req.user);
+  console.log("isAuthenticated:", req.isAuthenticated());
+  console.log("isSeller value:", req.user?.isSeller);
+  
   if (req.isAuthenticated() && req.user.isSeller) {
+    console.log("User is authenticated and is a seller, proceeding");
     return next();
   }
+  console.log("User denied access to seller route");
   res.status(403).json({ error: "Forbidden - Seller access required" });
 }
 
