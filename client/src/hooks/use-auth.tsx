@@ -37,39 +37,23 @@ type AuthContextType = {
   loginMutation: UseMutationResult<User, Error, z.infer<typeof loginSchema>>;
   logoutMutation: UseMutationResult<void, Error, void>;
   registerMutation: UseMutationResult<User, Error, z.infer<typeof registerSchema>>;
+  makeSeller: () => Promise<User | null>;
 };
 
 export const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
+  
+  // Use the new QueryClient settings
   const {
     data: user,
     error,
     isLoading,
+    refetch: refetchUser,
   } = useQuery<User | null>({
     queryKey: ["/api/user"],
-    queryFn: async ({ queryKey }) => {
-      try {
-        const response = await fetch(queryKey[0] as string, {
-          credentials: "include",
-        });
-        
-        if (response.status === 401) {
-          return null;
-        }
-        
-        if (!response.ok) {
-          throw new Error("Failed to fetch user");
-        }
-        
-        const userData = await response.json();
-        return userData as User;
-      } catch (err) {
-        console.error("Error fetching user:", err);
-        return null;
-      }
-    },
+    queryFn: getQueryFn({ on401: "returnNull" }),
   });
 
   const loginMutation = useMutation({
@@ -134,6 +118,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
     },
   });
+  
+  // Function to make the user a seller (for testing)
+  const makeSeller = async (): Promise<User | null> => {
+    try {
+      if (!user) {
+        toast({
+          title: "Error",
+          description: "You must be logged in to become a seller",
+          variant: "destructive",
+        });
+        return null;
+      }
+      
+      const res = await apiRequest("POST", "/api/make-seller");
+      const updatedUser = await res.json();
+      
+      // Update the user in the cache
+      queryClient.setQueryData(["/api/user"], updatedUser);
+      
+      toast({
+        title: "Success",
+        description: "You are now a seller!",
+      });
+      
+      // Refresh the user data
+      await refetchUser();
+      
+      return updatedUser;
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to become a seller. " + (error as Error).message,
+        variant: "destructive",
+      });
+      return null;
+    }
+  };
 
   return (
     <AuthContext.Provider
@@ -144,6 +165,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loginMutation,
         logoutMutation,
         registerMutation,
+        makeSeller
       }}
     >
       {children}
