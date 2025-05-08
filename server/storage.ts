@@ -7,9 +7,11 @@ import {
   carts, Cart, InsertCart
 } from "@shared/schema";
 import session from "express-session";
-import createMemoryStore from "memorystore";
+import { db, pool } from "./db";
+import { eq, and, desc, SQL } from "drizzle-orm";
+import connectPgSimple from "connect-pg-simple";
 
-const MemoryStore = createMemoryStore(session);
+const PgStore = connectPgSimple(session);
 
 // Storage interface
 export interface IStorage {
@@ -50,266 +52,273 @@ export interface IStorage {
   createOrUpdateCart(cart: InsertCart): Promise<Cart>;
   
   // Session store
-  sessionStore: session.SessionStore;
+  sessionStore: session.Store;
 }
 
-// In-memory storage implementation
-export class MemStorage implements IStorage {
-  private usersMap: Map<number, User>;
-  private productsMap: Map<number, Product>;
-  private ordersMap: Map<number, Order>;
-  private orderItemsMap: Map<number, OrderItem>;
-  private sellerApplicationsMap: Map<number, SellerApplication>;
-  private cartsMap: Map<number, Cart>;
-  
-  userIdCounter: number = 1;
-  productIdCounter: number = 1;
-  orderIdCounter: number = 1;
-  orderItemIdCounter: number = 1;
-  sellerApplicationIdCounter: number = 1;
-  cartIdCounter: number = 1;
-  
-  sessionStore: session.SessionStore;
+export class DatabaseStorage implements IStorage {
+  sessionStore: session.Store;
 
   constructor() {
-    this.usersMap = new Map();
-    this.productsMap = new Map();
-    this.ordersMap = new Map();
-    this.orderItemsMap = new Map();
-    this.sellerApplicationsMap = new Map();
-    this.cartsMap = new Map();
-    
-    this.sessionStore = new MemoryStore({
-      checkPeriod: 86400000, // prune expired entries every 24h
-    });
-    
-    // Initialize with a demo admin user
-    this.createUser({
-      username: "admin",
-      password: "admin123", // This will be hashed by the auth service
-      email: "admin@sycloseouts.com",
-      firstName: "Admin",
-      lastName: "User",
-      company: "SY Closeouts",
-      role: "admin",
+    this.sessionStore = new PgStore({ 
+      pool, 
+      createTableIfMissing: true 
     });
   }
 
   // User methods
   async getUser(id: number): Promise<User | undefined> {
-    return this.usersMap.get(id);
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.usersMap.values()).find(
-      (user) => user.username.toLowerCase() === username.toLowerCase(),
-    );
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user;
   }
-  
+
   async getUserByEmail(email: string): Promise<User | undefined> {
-    return Array.from(this.usersMap.values()).find(
-      (user) => user.email.toLowerCase() === email.toLowerCase(),
-    );
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user;
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const id = this.userIdCounter++;
-    const now = new Date();
-    const user: User = { 
-      ...insertUser, 
-      id, 
-      isSeller: insertUser.role === "seller",
-      isApproved: insertUser.role === "buyer", // Auto approve buyers, sellers need manual approval
-      createdAt: now
-    };
-    this.usersMap.set(id, user);
+    const [user] = await db.insert(users).values(insertUser).returning();
     return user;
   }
-  
+
   async updateUser(id: number, userData: Partial<User>): Promise<User | undefined> {
-    const user = await this.getUser(id);
-    if (!user) return undefined;
-    
-    const updatedUser = { ...user, ...userData };
-    this.usersMap.set(id, updatedUser);
+    const [updatedUser] = await db
+      .update(users)
+      .set(userData)
+      .where(eq(users.id, id))
+      .returning();
     return updatedUser;
   }
-  
+
   async getUsers(): Promise<User[]> {
-    return Array.from(this.usersMap.values());
+    return await db.select().from(users);
   }
-  
+
   // Product methods
   async getProduct(id: number): Promise<Product | undefined> {
-    return this.productsMap.get(id);
-  }
-  
-  async getProducts(filter?: Partial<Product>): Promise<Product[]> {
-    let products = Array.from(this.productsMap.values());
-    
-    if (filter) {
-      products = products.filter(product => {
-        return Object.entries(filter).every(([key, value]) => {
-          const productKey = key as keyof Product;
-          return product[productKey] === value;
-        });
-      });
-    }
-    
-    return products;
-  }
-  
-  async createProduct(insertProduct: InsertProduct): Promise<Product> {
-    const id = this.productIdCounter++;
-    const now = new Date();
-    const product: Product = { ...insertProduct, id, createdAt: now };
-    this.productsMap.set(id, product);
+    const [product] = await db.select().from(products).where(eq(products.id, id));
     return product;
   }
-  
+
+  async getProducts(filter?: Partial<Product>): Promise<Product[]> {
+    if (!filter) {
+      return await db.select().from(products).orderBy(desc(products.createdAt));
+    }
+
+    // Build the conditions based on the filter
+    const conditions: SQL<unknown>[] = [];
+    if (filter.id !== undefined) conditions.push(eq(products.id, filter.id));
+    if (filter.sellerId !== undefined) conditions.push(eq(products.sellerId, filter.sellerId));
+    if (filter.category !== undefined) conditions.push(eq(products.category, filter.category));
+    if (filter.condition !== undefined) conditions.push(eq(products.condition, filter.condition));
+
+    // If there are no conditions, return all products
+    if (conditions.length === 0) {
+      return await db.select().from(products).orderBy(desc(products.createdAt));
+    }
+
+    // Combine all conditions with AND
+    let combinedCondition = conditions[0];
+    for (let i = 1; i < conditions.length; i++) {
+      combinedCondition = and(combinedCondition, conditions[i]);
+    }
+
+    return await db
+      .select()
+      .from(products)
+      .where(combinedCondition)
+      .orderBy(desc(products.createdAt));
+  }
+
+  async createProduct(insertProduct: InsertProduct): Promise<Product> {
+    const [product] = await db.insert(products).values(insertProduct).returning();
+    return product;
+  }
+
   async updateProduct(id: number, productData: Partial<Product>): Promise<Product | undefined> {
-    const product = await this.getProduct(id);
-    if (!product) return undefined;
-    
-    const updatedProduct = { ...product, ...productData };
-    this.productsMap.set(id, updatedProduct);
+    const [updatedProduct] = await db
+      .update(products)
+      .set(productData)
+      .where(eq(products.id, id))
+      .returning();
     return updatedProduct;
   }
-  
+
   async deleteProduct(id: number): Promise<boolean> {
-    return this.productsMap.delete(id);
+    const [deletedProduct] = await db
+      .delete(products)
+      .where(eq(products.id, id))
+      .returning();
+    return !!deletedProduct;
   }
-  
+
   // Order methods
   async getOrder(id: number): Promise<Order | undefined> {
-    return this.ordersMap.get(id);
-  }
-  
-  async getOrders(filter?: Partial<Order>): Promise<Order[]> {
-    let orders = Array.from(this.ordersMap.values());
-    
-    if (filter) {
-      orders = orders.filter(order => {
-        return Object.entries(filter).every(([key, value]) => {
-          const orderKey = key as keyof Order;
-          return order[orderKey] === value;
-        });
-      });
-    }
-    
-    return orders;
-  }
-  
-  async createOrder(insertOrder: InsertOrder): Promise<Order> {
-    const id = this.orderIdCounter++;
-    const now = new Date();
-    const order: Order = { ...insertOrder, id, createdAt: now };
-    this.ordersMap.set(id, order);
+    const [order] = await db.select().from(orders).where(eq(orders.id, id));
     return order;
   }
-  
+
+  async getOrders(filter?: Partial<Order>): Promise<Order[]> {
+    if (!filter) {
+      return await db.select().from(orders).orderBy(desc(orders.createdAt));
+    }
+
+    const conditions: SQL<unknown>[] = [];
+    if (filter.id !== undefined) conditions.push(eq(orders.id, filter.id));
+    if (filter.buyerId !== undefined) conditions.push(eq(orders.buyerId, filter.buyerId));
+    if (filter.sellerId !== undefined) conditions.push(eq(orders.sellerId, filter.sellerId));
+    if (filter.status !== undefined) conditions.push(eq(orders.status, filter.status));
+
+    if (conditions.length === 0) {
+      return await db.select().from(orders).orderBy(desc(orders.createdAt));
+    }
+
+    let combinedCondition = conditions[0];
+    for (let i = 1; i < conditions.length; i++) {
+      combinedCondition = and(combinedCondition, conditions[i]);
+    }
+
+    return await db
+      .select()
+      .from(orders)
+      .where(combinedCondition)
+      .orderBy(desc(orders.createdAt));
+  }
+
+  async createOrder(insertOrder: InsertOrder): Promise<Order> {
+    const [order] = await db.insert(orders).values(insertOrder).returning();
+    return order;
+  }
+
   async updateOrder(id: number, orderData: Partial<Order>): Promise<Order | undefined> {
-    const order = await this.getOrder(id);
-    if (!order) return undefined;
-    
-    const updatedOrder = { ...order, ...orderData };
-    this.ordersMap.set(id, updatedOrder);
+    const [updatedOrder] = await db
+      .update(orders)
+      .set(orderData)
+      .where(eq(orders.id, id))
+      .returning();
     return updatedOrder;
   }
-  
+
   // Order item methods
   async getOrderItems(orderId: number): Promise<OrderItem[]> {
-    return Array.from(this.orderItemsMap.values()).filter(
-      item => item.orderId === orderId
-    );
+    return await db
+      .select()
+      .from(orderItems)
+      .where(eq(orderItems.orderId, orderId));
   }
-  
+
   async createOrderItem(insertOrderItem: InsertOrderItem): Promise<OrderItem> {
-    const id = this.orderItemIdCounter++;
-    const orderItem: OrderItem = { ...insertOrderItem, id };
-    this.orderItemsMap.set(id, orderItem);
+    const [orderItem] = await db
+      .insert(orderItems)
+      .values(insertOrderItem)
+      .returning();
     return orderItem;
   }
-  
+
   // Seller application methods
   async getSellerApplication(id: number): Promise<SellerApplication | undefined> {
-    return this.sellerApplicationsMap.get(id);
-  }
-  
-  async getSellerApplicationByUserId(userId: number): Promise<SellerApplication | undefined> {
-    return Array.from(this.sellerApplicationsMap.values()).find(
-      app => app.userId === userId
-    );
-  }
-  
-  async getSellerApplications(filter?: Partial<SellerApplication>): Promise<SellerApplication[]> {
-    let applications = Array.from(this.sellerApplicationsMap.values());
-    
-    if (filter) {
-      applications = applications.filter(app => {
-        return Object.entries(filter).every(([key, value]) => {
-          const appKey = key as keyof SellerApplication;
-          return app[appKey] === value;
-        });
-      });
-    }
-    
-    return applications;
-  }
-  
-  async createSellerApplication(insertApplication: InsertSellerApplication): Promise<SellerApplication> {
-    const id = this.sellerApplicationIdCounter++;
-    const now = new Date();
-    const application: SellerApplication = { 
-      ...insertApplication, 
-      id, 
-      status: "pending", 
-      createdAt: now 
-    };
-    this.sellerApplicationsMap.set(id, application);
+    const [application] = await db
+      .select()
+      .from(sellerApplications)
+      .where(eq(sellerApplications.id, id));
     return application;
   }
-  
+
+  async getSellerApplicationByUserId(userId: number): Promise<SellerApplication | undefined> {
+    const [application] = await db
+      .select()
+      .from(sellerApplications)
+      .where(eq(sellerApplications.userId, userId));
+    return application;
+  }
+
+  async getSellerApplications(filter?: Partial<SellerApplication>): Promise<SellerApplication[]> {
+    if (!filter) {
+      return await db
+        .select()
+        .from(sellerApplications)
+        .orderBy(desc(sellerApplications.createdAt));
+    }
+
+    const conditions: SQL<unknown>[] = [];
+    if (filter.id !== undefined) conditions.push(eq(sellerApplications.id, filter.id));
+    if (filter.userId !== undefined) conditions.push(eq(sellerApplications.userId, filter.userId));
+    if (filter.status !== undefined) conditions.push(eq(sellerApplications.status, filter.status));
+
+    if (conditions.length === 0) {
+      return await db
+        .select()
+        .from(sellerApplications)
+        .orderBy(desc(sellerApplications.createdAt));
+    }
+
+    let combinedCondition = conditions[0];
+    for (let i = 1; i < conditions.length; i++) {
+      combinedCondition = and(combinedCondition, conditions[i]);
+    }
+
+    return await db
+      .select()
+      .from(sellerApplications)
+      .where(combinedCondition)
+      .orderBy(desc(sellerApplications.createdAt));
+  }
+
+  async createSellerApplication(insertApplication: InsertSellerApplication): Promise<SellerApplication> {
+    const [application] = await db
+      .insert(sellerApplications)
+      .values(insertApplication)
+      .returning();
+    return application;
+  }
+
   async updateSellerApplication(id: number, applicationData: Partial<SellerApplication>): Promise<SellerApplication | undefined> {
-    const application = await this.getSellerApplication(id);
-    if (!application) return undefined;
-    
-    const updatedApplication = { ...application, ...applicationData };
-    this.sellerApplicationsMap.set(id, updatedApplication);
+    const [updatedApplication] = await db
+      .update(sellerApplications)
+      .set(applicationData)
+      .where(eq(sellerApplications.id, id))
+      .returning();
     return updatedApplication;
   }
-  
+
   // Cart methods
   async getCart(userId: number): Promise<Cart | undefined> {
-    return Array.from(this.cartsMap.values()).find(
-      cart => cart.userId === userId
-    );
+    const [cart] = await db
+      .select()
+      .from(carts)
+      .where(eq(carts.userId, userId));
+    return cart;
   }
-  
+
   async createOrUpdateCart(insertCart: InsertCart): Promise<Cart> {
     const existingCart = await this.getCart(insertCart.userId);
     
     if (existingCart) {
-      const updatedCart = { 
-        ...existingCart, 
-        items: insertCart.items,
-        updatedAt: new Date()
-      };
-      this.cartsMap.set(existingCart.id, updatedCart);
+      // Update existing cart
+      const [updatedCart] = await db
+        .update(carts)
+        .set({
+          items: insertCart.items,
+          updatedAt: new Date(),
+        })
+        .where(eq(carts.userId, insertCart.userId))
+        .returning();
       return updatedCart;
+    } else {
+      // Create new cart
+      const [newCart] = await db
+        .insert(carts)
+        .values(insertCart)
+        .returning();
+      return newCart;
     }
-    
-    const id = this.cartIdCounter++;
-    const now = new Date();
-    const cart: Cart = { 
-      ...insertCart, 
-      id, 
-      updatedAt: now 
-    };
-    this.cartsMap.set(id, cart);
-    return cart;
   }
 }
 
-// Export singleton instance
-export const storage = new MemStorage();
+// Export an instance of the storage
+export const storage = new DatabaseStorage();

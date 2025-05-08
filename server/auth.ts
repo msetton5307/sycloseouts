@@ -1,15 +1,15 @@
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
-import { Express } from "express";
+import { Express, Request, Response, NextFunction } from "express";
 import session from "express-session";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
-import { User as SelectUser } from "@shared/schema";
+import { User } from "@shared/schema";
 
 declare global {
   namespace Express {
-    interface User extends SelectUser {}
+    interface User extends User {}
   }
 }
 
@@ -29,13 +29,18 @@ async function comparePasswords(supplied: string, stored: string) {
 }
 
 export function setupAuth(app: Express) {
+  if (!process.env.SESSION_SECRET) {
+    process.env.SESSION_SECRET = randomBytes(32).toString("hex");
+    console.log("Generated session secret:", process.env.SESSION_SECRET);
+  }
+
   const sessionSettings: session.SessionOptions = {
-    secret: process.env.SESSION_SECRET || "sy-closeouts-secret-key",
+    secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
     store: storage.sessionStore,
     cookie: {
-      maxAge: 1000 * 60 * 60 * 24, // 1 day
+      maxAge: 1000 * 60 * 60 * 24 * 7, // 1 week
       secure: process.env.NODE_ENV === "production",
     }
   };
@@ -46,18 +51,14 @@ export function setupAuth(app: Express) {
   app.use(passport.session());
 
   passport.use(
-    new LocalStrategy(async (username, password, done) => {
+    new LocalStrategy(async (username: string, password: string, done) => {
       try {
         const user = await storage.getUserByUsername(username);
         if (!user || !(await comparePasswords(password, user.password))) {
-          return done(null, false, { message: "Incorrect username or password" });
+          return done(null, false);
+        } else {
+          return done(null, user);
         }
-        
-        if (user.role === "seller" && !user.isApproved) {
-          return done(null, false, { message: "Seller account is pending approval" });
-        }
-        
-        return done(null, user);
       } catch (error) {
         return done(error);
       }
@@ -76,28 +77,28 @@ export function setupAuth(app: Express) {
 
   app.post("/api/register", async (req, res, next) => {
     try {
-      // Check if username or email already exists
-      const existingUsername = await storage.getUserByUsername(req.body.username);
-      if (existingUsername) {
-        return res.status(400).json({ message: "Username already exists" });
+      // Check if user already exists
+      const existingUser = await storage.getUserByUsername(req.body.username);
+      if (existingUser) {
+        return res.status(400).json({ error: "Username already exists" });
       }
 
       const existingEmail = await storage.getUserByEmail(req.body.email);
       if (existingEmail) {
-        return res.status(400).json({ message: "Email already exists" });
+        return res.status(400).json({ error: "Email already exists" });
       }
 
-      // Create user with hashed password
+      // Create new user with hashed password
       const user = await storage.createUser({
         ...req.body,
         password: await hashPassword(req.body.password),
       });
 
-      // Remove password from response
-      const { password, ...userWithoutPassword } = user;
-
+      // Log user in after registration
       req.login(user, (err) => {
         if (err) return next(err);
+        // Return user without password
+        const { password, ...userWithoutPassword } = user;
         res.status(201).json(userWithoutPassword);
       });
     } catch (error) {
@@ -106,13 +107,14 @@ export function setupAuth(app: Express) {
   });
 
   app.post("/api/login", (req, res, next) => {
-    passport.authenticate("local", (err, user, info) => {
+    passport.authenticate("local", (err: Error | null, user: User | false, info: any) => {
       if (err) return next(err);
-      if (!user) return res.status(401).json({ message: info.message || "Authentication failed" });
-      
-      req.login(user, (err) => {
-        if (err) return next(err);
-        // Remove password from response
+      if (!user) {
+        return res.status(401).json({ error: "Invalid username or password" });
+      }
+      req.login(user, (loginErr) => {
+        if (loginErr) return next(loginErr);
+        // Return user without password
         const { password, ...userWithoutPassword } = user;
         res.status(200).json(userWithoutPassword);
       });
@@ -128,29 +130,29 @@ export function setupAuth(app: Express) {
 
   app.get("/api/user", (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
-    // Remove password from response
-    const { password, ...userWithoutPassword } = req.user as SelectUser;
+    // Return user without password
+    const { password, ...userWithoutPassword } = req.user;
     res.json(userWithoutPassword);
   });
 }
 
-export function isAuthenticated(req: Express.Request, res: Express.Response, next: Express.NextFunction) {
+export function isAuthenticated(req: Request, res: Response, next: NextFunction) {
   if (req.isAuthenticated()) {
     return next();
   }
-  res.status(401).json({ message: "Unauthorized" });
+  res.status(401).json({ error: "Unauthorized" });
 }
 
-export function isSeller(req: Express.Request, res: Express.Response, next: Express.NextFunction) {
-  if (req.isAuthenticated() && (req.user as SelectUser).role === "seller") {
+export function isSeller(req: Request, res: Response, next: NextFunction) {
+  if (req.isAuthenticated() && req.user.isSeller) {
     return next();
   }
-  res.status(403).json({ message: "Forbidden - Seller access only" });
+  res.status(403).json({ error: "Forbidden - Seller access required" });
 }
 
-export function isAdmin(req: Express.Request, res: Express.Response, next: Express.NextFunction) {
-  if (req.isAuthenticated() && (req.user as SelectUser).role === "admin") {
+export function isAdmin(req: Request, res: Response, next: NextFunction) {
+  if (req.isAuthenticated() && req.user.role === "admin") {
     return next();
   }
-  res.status(403).json({ message: "Forbidden - Admin access only" });
+  res.status(403).json({ error: "Forbidden - Admin access required" });
 }
