@@ -40,7 +40,7 @@ type AuthContextType = {
   makeSeller: () => Promise<User | null>;
 };
 
-export const AuthContext = createContext<AuthContextType | null>(null);
+const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
