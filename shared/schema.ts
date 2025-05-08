@@ -1,6 +1,7 @@
-import { pgTable, text, serial, integer, boolean, jsonb, timestamp, doublePrecision } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, jsonb, timestamp, doublePrecision, uuid } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+import { relations } from "drizzle-orm";
 
 // User schema
 export const users = pgTable("users", {
@@ -16,6 +17,13 @@ export const users = pgTable("users", {
   isApproved: boolean("is_approved").default(false),
   createdAt: timestamp("created_at").defaultNow(),
 });
+
+export const usersRelations = relations(users, ({ many }) => ({
+  products: many(products),
+  orders: many(orders),
+  sellerApplications: many(sellerApplications),
+  carts: many(carts),
+}));
 
 export const insertUserSchema = createInsertSchema(users)
   .pick({
@@ -51,6 +59,14 @@ export const products = pgTable("products", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const productsRelations = relations(products, ({ one, many }) => ({
+  seller: one(users, {
+    fields: [products.sellerId],
+    references: [users.id],
+  }),
+  orderItems: many(orderItems),
+}));
+
 export const insertProductSchema = createInsertSchema(products)
   .omit({
     id: true,
@@ -74,6 +90,18 @@ export const orders = pgTable("orders", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const ordersRelations = relations(orders, ({ one, many }) => ({
+  buyer: one(users, {
+    fields: [orders.buyerId],
+    references: [users.id],
+  }),
+  seller: one(users, {
+    fields: [orders.sellerId],
+    references: [users.id],
+  }),
+  orderItems: many(orderItems),
+}));
+
 export const insertOrderSchema = createInsertSchema(orders)
   .omit({
     id: true,
@@ -89,6 +117,17 @@ export const orderItems = pgTable("order_items", {
   unitPrice: doublePrecision("unit_price").notNull(),
   totalPrice: doublePrecision("total_price").notNull(),
 });
+
+export const orderItemsRelations = relations(orderItems, ({ one }) => ({
+  order: one(orders, {
+    fields: [orderItems.orderId],
+    references: [orders.id],
+  }),
+  product: one(products, {
+    fields: [orderItems.productId],
+    references: [products.id],
+  }),
+}));
 
 export const insertOrderItemSchema = createInsertSchema(orderItems)
   .omit({
@@ -110,6 +149,13 @@ export const sellerApplications = pgTable("seller_applications", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const sellerApplicationsRelations = relations(sellerApplications, ({ one }) => ({
+  user: one(users, {
+    fields: [sellerApplications.userId],
+    references: [users.id],
+  }),
+}));
+
 export const insertSellerApplicationSchema = createInsertSchema(sellerApplications)
   .omit({
     id: true,
@@ -124,6 +170,13 @@ export const carts = pgTable("carts", {
   items: jsonb("items").notNull(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
+
+export const cartsRelations = relations(carts, ({ one }) => ({
+  user: one(users, {
+    fields: [carts.userId],
+    references: [users.id],
+  }),
+}));
 
 export const insertCartSchema = createInsertSchema(carts)
   .omit({
