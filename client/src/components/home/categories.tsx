@@ -49,13 +49,11 @@ export default function Categories() {
         
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
           {categories.map((category) => (
-            <Link key={category.name} href={category.href}>
-              <a className="bg-gray-50 rounded-lg p-4 flex flex-col items-center justify-center hover:bg-gray-100 transition-colors duration-200">
-                <div className="h-12 w-12 text-primary mb-2 flex items-center justify-center">
-                  <category.icon className="h-8 w-8" />
-                </div>
-                <h3 className="text-sm font-medium text-gray-900 text-center">{category.name}</h3>
-              </a>
+            <Link key={category.name} href={category.href} className="bg-gray-50 rounded-lg p-4 flex flex-col items-center justify-center hover:bg-gray-100 transition-colors duration-200">
+              <div className="h-12 w-12 text-primary mb-2 flex items-center justify-center">
+                <category.icon className="h-8 w-8" />
+              </div>
+              <h3 className="text-sm font-medium text-gray-900 text-center">{category.name}</h3>
             </Link>
           ))}
         </div>
