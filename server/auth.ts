@@ -49,12 +49,13 @@ export function setupAuth(app: Express) {
 
   const sessionSettings: session.SessionOptions = {
     secret: process.env.SESSION_SECRET,
-    resave: false,
-    saveUninitialized: false,
+    resave: true,
+    saveUninitialized: true,
     store: storage.sessionStore,
     cookie: {
       maxAge: 1000 * 60 * 60 * 24 * 7, // 1 week
       secure: process.env.NODE_ENV === "production",
+      httpOnly: true
     }
   };
 
@@ -158,6 +159,7 @@ export function setupAuth(app: Express) {
       const user = req.user;
       console.log("Updating user to seller role:", user.id);
       
+      // Update the user in the database
       const updatedUser = await storage.updateUser(user.id, {
         role: "seller",
         isSeller: true,
@@ -168,33 +170,22 @@ export function setupAuth(app: Express) {
         return res.status(404).json({ message: "User not found" });
       }
       
-      // Regenerate the session to update the user data
-      req.session.regenerate((err) => {
+      // Simplify by just updating the user in the session directly
+      req.user.role = "seller";
+      req.user.isSeller = true;
+      req.user.isApproved = true;
+      
+      // Return user without password (using the updated session user)
+      const { password, ...userWithoutPassword } = req.user;
+      console.log("User updated to seller:", userWithoutPassword);
+      
+      // Save the session to ensure changes persist
+      req.session.save((err) => {
         if (err) {
-          console.error("Session regeneration error:", err);
-          return res.status(500).json({ message: "Session regeneration failed" });
+          console.error("Session save error:", err);
+          return res.status(500).json({ message: "Session save failed" });
         }
-        
-        // Update the user data in the session
-        req.login(updatedUser, (loginErr) => {
-          if (loginErr) {
-            console.error("Login error:", loginErr);
-            return res.status(500).json({ message: "Session update failed" });
-          }
-          
-          // Save the session to confirm changes
-          req.session.save((saveErr) => {
-            if (saveErr) {
-              console.error("Session save error:", saveErr);
-              return res.status(500).json({ message: "Session save failed" });
-            }
-            
-            // Return user without password
-            const { password, ...userWithoutPassword } = updatedUser;
-            console.log("User updated to seller:", userWithoutPassword);
-            res.json(userWithoutPassword);
-          });
-        });
+        res.json(userWithoutPassword);
       });
     } catch (error) {
       console.error("Error making user a seller:", error);
