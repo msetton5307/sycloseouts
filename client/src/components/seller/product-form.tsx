@@ -125,6 +125,8 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
   
   function onSubmit(data: InsertProduct) {
     console.log("Submitting form with data:", data);
+    console.log("Image URLs:", imageUrls);
+    
     if (imageUrls.length === 0) {
       toast({
         title: "Error",
@@ -152,7 +154,18 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
       minOrderQuantity: typeof data.minOrderQuantity === 'string' ? parseInt(data.minOrderQuantity) : data.minOrderQuantity,
     };
     
-    saveProduct(formattedData);
+    console.log("Formatted data for submission:", formattedData);
+    try {
+      saveProduct(formattedData);
+      console.log("saveProduct function called");
+    } catch (error) {
+      console.error("Error calling saveProduct:", error);
+      toast({
+        title: "Error",
+        description: "There was an unexpected error submitting the form.",
+        variant: "destructive",
+      });
+    }
   }
   
   const addImageUrl = () => {
