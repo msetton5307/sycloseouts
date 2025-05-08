@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useLocation } from "wouter";
+import { Link, useLocation, useSearch } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Product } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
@@ -105,13 +105,16 @@ export default function SellerProducts() {
     }
   });
   
+  // Use the useSearch hook to handle query parameters
+  const searchParams = useSearch();
+  
   // Check if we need to show the new product form based on URL params
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
+    const params = new URLSearchParams(searchParams);
     if (params.get("action") === "new") {
       setShowNewProductForm(true);
     }
-  }, []);
+  }, [searchParams]);
   
   const handleEditProduct = (product: Product) => {
     setSelectedProduct(product);

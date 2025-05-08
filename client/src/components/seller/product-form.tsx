@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertProductSchema, InsertProduct, Product } from "@shared/schema";
@@ -24,7 +24,7 @@ import {
 import { toast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { Loader2, Plus, X } from "lucide-react";
+import { Loader2, Plus, X, Upload, ImagePlus } from "lucide-react";
 
 interface ProductFormProps {
   product?: Product;
@@ -35,6 +35,8 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
   const queryClient = useQueryClient();
   const [imageUrls, setImageUrls] = useState<string[]>(product?.images || []);
   const [newImageUrl, setNewImageUrl] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   
   const categories = [
     "Electronics",
@@ -155,6 +157,53 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
     const updatedUrls = [...imageUrls];
     updatedUrls.splice(index, 1);
     setImageUrls(updatedUrls);
+  };
+  
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    
+    setUploading(true);
+    const file = files[0];
+    
+    // Create a FileReader to convert the image to a data URL
+    const reader = new FileReader();
+    
+    reader.onload = (event) => {
+      if (event.target && event.target.result) {
+        // Add the data URL to our image URLs
+        setImageUrls([...imageUrls, event.target.result.toString()]);
+        setUploading(false);
+        
+        // Reset the file input
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
+        
+        toast({
+          title: "Image Uploaded",
+          description: "The image has been added to your product."
+        });
+      }
+    };
+    
+    reader.onerror = () => {
+      setUploading(false);
+      toast({
+        title: "Upload Failed",
+        description: "There was a problem uploading your image.",
+        variant: "destructive"
+      });
+    };
+    
+    // Read the file as a data URL
+    reader.readAsDataURL(file);
+  };
+  
+  const triggerFileUpload = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
   };
 
   return (
@@ -419,24 +468,57 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
             ))}
           </div>
           
-          <div className="flex gap-2">
-            <Input
-              type="url"
-              placeholder="Image URL"
-              value={newImageUrl}
-              onChange={(e) => setNewImageUrl(e.target.value)}
-            />
-            <Button 
-              type="button" 
-              variant="outline" 
-              size="icon"
-              onClick={addImageUrl}
-            >
-              <Plus className="h-4 w-4" />
-            </Button>
+          <div className="flex flex-col gap-4">
+            {/* URL Input */}
+            <div className="flex gap-2">
+              <Input
+                type="url"
+                placeholder="Image URL"
+                value={newImageUrl}
+                onChange={(e) => setNewImageUrl(e.target.value)}
+              />
+              <Button 
+                type="button" 
+                variant="outline" 
+                size="icon"
+                onClick={addImageUrl}
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+            </div>
+            
+            {/* Upload from Computer */}
+            <div>
+              <input
+                type="file"
+                ref={fileInputRef}
+                className="hidden"
+                accept="image/*"
+                onChange={handleFileUpload}
+              />
+              <Button 
+                type="button" 
+                variant="outline" 
+                className="w-full"
+                onClick={triggerFileUpload}
+                disabled={uploading}
+              >
+                {uploading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Uploading...
+                  </>
+                ) : (
+                  <>
+                    <ImagePlus className="mr-2 h-4 w-4" />
+                    Upload Image from Computer
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
           <FormDescription>
-            Add image URLs for your product. At least one image is required.
+            Add images for your product by URL or uploading from your computer. At least one image is required.
           </FormDescription>
           {imageUrls.length === 0 && (
             <p className="text-sm font-medium text-destructive mt-1">At least one product image is required</p>
