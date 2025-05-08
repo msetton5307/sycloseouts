@@ -62,10 +62,10 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
     resolver: zodResolver(insertProductSchema),
     defaultValues: product ? {
       ...product,
-      price: typeof product.price === 'number' ? product.price : 0,
-      totalUnits: typeof product.totalUnits === 'number' ? product.totalUnits : 0,
-      availableUnits: typeof product.availableUnits === 'number' ? product.availableUnits : 0,
-      minOrderQuantity: typeof product.minOrderQuantity === 'number' ? product.minOrderQuantity : 1,
+      price: typeof product.price === 'number' && !isNaN(product.price) ? product.price : 0,
+      totalUnits: typeof product.totalUnits === 'number' && !isNaN(product.totalUnits) ? product.totalUnits : 0,
+      availableUnits: typeof product.availableUnits === 'number' && !isNaN(product.availableUnits) ? product.availableUnits : 0,
+      minOrderQuantity: typeof product.minOrderQuantity === 'number' && !isNaN(product.minOrderQuantity) ? product.minOrderQuantity : 1,
       fobLocation: product.fobLocation || '',
       retailComparisonUrl: product.retailComparisonUrl || '',
       upc: product.upc || '',
@@ -145,7 +145,7 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
       return;
     }
     
-    // Make sure all numeric fields are actually numbers, not strings
+    // Make sure all numeric fields are actually numbers, not strings or NaN
     const formattedData = {
       ...data,
       price: typeof data.price === 'string' ? parseFloat(data.price) : data.price,
@@ -153,6 +153,12 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
       availableUnits: typeof data.availableUnits === 'string' ? parseInt(data.availableUnits) : data.availableUnits,
       minOrderQuantity: typeof data.minOrderQuantity === 'string' ? parseInt(data.minOrderQuantity) : data.minOrderQuantity,
     };
+    
+    // Check for NaN values and replace with defaults
+    if (isNaN(formattedData.price)) formattedData.price = 0;
+    if (isNaN(formattedData.totalUnits)) formattedData.totalUnits = 0;
+    if (isNaN(formattedData.availableUnits)) formattedData.availableUnits = 0;
+    if (isNaN(formattedData.minOrderQuantity)) formattedData.minOrderQuantity = 1;
     
     console.log("Formatted data for submission:", formattedData);
     try {
@@ -374,7 +380,10 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
                     min="1"
                     placeholder="0"
                     {...field}
-                    onChange={(e) => field.onChange(parseInt(e.target.value))}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      field.onChange(value === "" ? 0 : parseInt(value));
+                    }}
                   />
                 </FormControl>
                 <FormMessage />
@@ -394,7 +403,10 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
                     min="0"
                     placeholder="0"
                     {...field}
-                    onChange={(e) => field.onChange(parseInt(e.target.value))}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      field.onChange(value === "" ? 0 : parseInt(value));
+                    }}
                   />
                 </FormControl>
                 <FormMessage />
@@ -416,7 +428,10 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
                     min="1"
                     placeholder="1"
                     {...field}
-                    onChange={(e) => field.onChange(parseInt(e.target.value))}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      field.onChange(value === "" ? 0 : parseInt(value));
+                    }}
                   />
                 </FormControl>
                 <FormDescription>
