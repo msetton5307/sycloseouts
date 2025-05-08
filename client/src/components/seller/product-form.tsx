@@ -405,22 +405,26 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
           <FormField
             control={form.control}
             name="fobLocation"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>FOB Location</FormLabel>
-                <FormControl>
-                  <Input 
-                    placeholder="City, State (e.g., Los Angeles, CA)" 
-                    {...field} 
-                    value={field.value || ''}
-                  />
-                </FormControl>
-                <FormDescription>
-                  Shipping origin location.
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
+            render={({ field }) => {
+              // Destructure the field to handle null values correctly
+              const { value, ...restField } = field;
+              return (
+                <FormItem>
+                  <FormLabel>FOB Location</FormLabel>
+                  <FormControl>
+                    <Input 
+                      placeholder="City, State (e.g., Los Angeles, CA)" 
+                      {...restField} 
+                      value={value ?? ''}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Shipping origin location.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              );
+            }}
           />
         </div>
         
@@ -428,43 +432,51 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
           <FormField
             control={form.control}
             name="retailComparisonUrl"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Retail Comparison URL (Optional)</FormLabel>
-                <FormControl>
-                  <Input 
-                    placeholder="https://example.com/product" 
-                    {...field} 
-                    value={field.value || ''}
-                  />
-                </FormControl>
-                <FormDescription>
-                  Link to the product on a retail site for price comparison.
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
+            render={({ field }) => {
+              // Destructure the field to handle null values correctly
+              const { value, ...restField } = field;
+              return (
+                <FormItem>
+                  <FormLabel>Retail Comparison URL (Optional)</FormLabel>
+                  <FormControl>
+                    <Input 
+                      placeholder="https://example.com/product" 
+                      {...restField} 
+                      value={value ?? ''}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Link to the product on a retail site for price comparison.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              );
+            }}
           />
           
           <FormField
             control={form.control}
             name="upc"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>UPC (Optional)</FormLabel>
-                <FormControl>
-                  <Input 
-                    placeholder="123456789012" 
-                    {...field} 
-                    value={field.value || ''}
-                  />
-                </FormControl>
-                <FormDescription>
-                  Universal Product Code if available.
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
+            render={({ field }) => {
+              // Destructure the field to handle null values correctly
+              const { value, ...restField } = field;
+              return (
+                <FormItem>
+                  <FormLabel>UPC (Optional)</FormLabel>
+                  <FormControl>
+                    <Input 
+                      placeholder="123456789012" 
+                      {...restField} 
+                      value={value ?? ''}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Universal Product Code if available.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              );
+            }}
           />
         </div>
         

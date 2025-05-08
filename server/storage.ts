@@ -122,10 +122,17 @@ export class DatabaseStorage implements IStorage {
       return await db.select().from(products).orderBy(desc(products.createdAt));
     }
 
-    // Combine all conditions with AND
-    let combinedCondition = conditions[0];
-    for (let i = 1; i < conditions.length; i++) {
-      combinedCondition = and(combinedCondition, conditions[i]);
+    // Filter out undefined conditions and check if there are any conditions left
+    const validConditions = conditions.filter(c => c !== undefined);
+    
+    if (validConditions.length === 0) {
+      return await db.select().from(products).orderBy(desc(products.createdAt));
+    }
+    
+    // Combine all valid conditions with AND
+    let combinedCondition = validConditions[0];
+    for (let i = 1; i < validConditions.length; i++) {
+      combinedCondition = and(combinedCondition, validConditions[i]);
     }
 
     return await db
@@ -174,13 +181,17 @@ export class DatabaseStorage implements IStorage {
     if (filter.sellerId !== undefined) conditions.push(eq(orders.sellerId, filter.sellerId));
     if (filter.status !== undefined) conditions.push(eq(orders.status, filter.status));
 
-    if (conditions.length === 0) {
+    // Filter out undefined conditions and check if there are any conditions left
+    const validConditions = conditions.filter(c => c !== undefined);
+    
+    if (validConditions.length === 0) {
       return await db.select().from(orders).orderBy(desc(orders.createdAt));
     }
-
-    let combinedCondition = conditions[0];
-    for (let i = 1; i < conditions.length; i++) {
-      combinedCondition = and(combinedCondition, conditions[i]);
+    
+    // Combine all valid conditions with AND
+    let combinedCondition = validConditions[0];
+    for (let i = 1; i < validConditions.length; i++) {
+      combinedCondition = and(combinedCondition, validConditions[i]);
     }
 
     return await db
@@ -250,16 +261,20 @@ export class DatabaseStorage implements IStorage {
     if (filter.userId !== undefined) conditions.push(eq(sellerApplications.userId, filter.userId));
     if (filter.status !== undefined) conditions.push(eq(sellerApplications.status, filter.status));
 
-    if (conditions.length === 0) {
+    // Filter out undefined conditions and check if there are any conditions left
+    const validConditions = conditions.filter(c => c !== undefined);
+    
+    if (validConditions.length === 0) {
       return await db
         .select()
         .from(sellerApplications)
         .orderBy(desc(sellerApplications.createdAt));
     }
-
-    let combinedCondition = conditions[0];
-    for (let i = 1; i < conditions.length; i++) {
-      combinedCondition = and(combinedCondition, conditions[i]);
+    
+    // Combine all valid conditions with AND
+    let combinedCondition = validConditions[0];
+    for (let i = 1; i < validConditions.length; i++) {
+      combinedCondition = and(combinedCondition, validConditions[i]);
     }
 
     return await db

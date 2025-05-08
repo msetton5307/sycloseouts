@@ -9,7 +9,20 @@ import { User } from "@shared/schema";
 
 declare global {
   namespace Express {
-    interface User extends User {}
+    // Define the User interface in Express namespace without extending the imported User
+    interface User {
+      id: number;
+      username: string;
+      password: string;
+      email: string;
+      firstName: string;
+      lastName: string;
+      company?: string | null;
+      role: string;
+      isSeller: boolean | null;
+      isApproved: boolean | null;
+      createdAt?: Date | null;
+    }
   }
 }
 
