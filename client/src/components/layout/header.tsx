@@ -52,8 +52,11 @@ export default function Header() {
                 <Link href="/products" className={`${isActive('/products') ? 'border-primary text-gray-900' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}>
                     Products
                 </Link>
-                <Link href="/seller/apply" className={`${isActive('/seller/apply') ? 'border-primary text-gray-900' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}>
-                  Sell with Us
+                <Link 
+                  href={user?.isSeller ? "/seller/dashboard" : "/seller/apply"} 
+                  className={`${isActive('/seller/apply') || isActive('/seller/dashboard') ? 'border-primary text-gray-900' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
+                >
+                  {user?.isSeller ? "Seller Dashboard" : "Sell with Us"}
                 </Link>
                 <Link href="/about" className={`${isActive('/about') ? 'border-primary text-gray-900' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}>
                   About
@@ -158,11 +161,11 @@ export default function Header() {
                 Products
               </Link>
               <Link 
-                href="/seller/apply"
-                className={`${isActive('/seller/apply') ? 'bg-primary border-primary text-white' : 'border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800'} block pl-3 pr-4 py-2 border-l-4 text-base font-medium`}
+                href={user?.isSeller ? "/seller/dashboard" : "/seller/apply"}
+                className={`${isActive('/seller/apply') || isActive('/seller/dashboard') ? 'bg-primary border-primary text-white' : 'border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800'} block pl-3 pr-4 py-2 border-l-4 text-base font-medium`}
                 onClick={() => setIsMenuOpen(false)}
               >
-                Sell with Us
+                {user?.isSeller ? "Seller Dashboard" : "Sell with Us"}
               </Link>
               <Link 
                 href="/about"

@@ -138,11 +138,12 @@ export default function SellerProducts() {
       <Header />
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-6">
-          <Link href="/seller/dashboard">
-            <a className="text-primary hover:underline flex items-center">
-              <ArrowLeft className="h-4 w-4 mr-1" />
-              Back to Dashboard
-            </a>
+          <Link 
+            href="/seller/dashboard"
+            className="text-primary hover:underline flex items-center"
+          >
+            <ArrowLeft className="h-4 w-4 mr-1" />
+            Back to Dashboard
           </Link>
         </div>
         
