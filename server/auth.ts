@@ -168,14 +168,33 @@ export function setupAuth(app: Express) {
         return res.status(404).json({ message: "User not found" });
       }
       
-      // Update the session user data
-      req.login(updatedUser, (err) => {
-        if (err) return res.status(500).json({ message: "Session update failed" });
+      // Regenerate the session to update the user data
+      req.session.regenerate((err) => {
+        if (err) {
+          console.error("Session regeneration error:", err);
+          return res.status(500).json({ message: "Session regeneration failed" });
+        }
         
-        // Return user without password
-        const { password, ...userWithoutPassword } = updatedUser;
-        console.log("User updated to seller:", userWithoutPassword);
-        res.json(userWithoutPassword);
+        // Update the user data in the session
+        req.login(updatedUser, (loginErr) => {
+          if (loginErr) {
+            console.error("Login error:", loginErr);
+            return res.status(500).json({ message: "Session update failed" });
+          }
+          
+          // Save the session to confirm changes
+          req.session.save((saveErr) => {
+            if (saveErr) {
+              console.error("Session save error:", saveErr);
+              return res.status(500).json({ message: "Session save failed" });
+            }
+            
+            // Return user without password
+            const { password, ...userWithoutPassword } = updatedUser;
+            console.log("User updated to seller:", userWithoutPassword);
+            res.json(userWithoutPassword);
+          });
+        });
       });
     } catch (error) {
       console.error("Error making user a seller:", error);
