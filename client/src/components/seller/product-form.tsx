@@ -60,7 +60,16 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
   
   const form = useForm<InsertProduct>({
     resolver: zodResolver(insertProductSchema),
-    defaultValues: product || {
+    defaultValues: product ? {
+      ...product,
+      price: typeof product.price === 'number' ? product.price : 0,
+      totalUnits: typeof product.totalUnits === 'number' ? product.totalUnits : 0,
+      availableUnits: typeof product.availableUnits === 'number' ? product.availableUnits : 0,
+      minOrderQuantity: typeof product.minOrderQuantity === 'number' ? product.minOrderQuantity : 1,
+      fobLocation: product.fobLocation || '',
+      retailComparisonUrl: product.retailComparisonUrl || '',
+      upc: product.upc || '',
+    } : {
       sellerId: 0, // Will be set by the server
       title: "",
       description: "",
@@ -329,7 +338,10 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
                     step="0.01"
                     placeholder="0.00"
                     {...field}
-                    onChange={(e) => field.onChange(parseFloat(e.target.value))}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      field.onChange(value === "" ? 0 : parseFloat(value));
+                    }}
                   />
                 </FormControl>
                 <FormMessage />
