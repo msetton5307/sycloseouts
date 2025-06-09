@@ -2,7 +2,9 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated, isSeller, isAdmin } from "./auth";
-import { insertProductSchema, insertOrderSchema, insertOrderItemSchema, insertSellerApplicationSchema } from "@shared/schema";
+import { insertProductSchema, insertOrderSchema, insertOrderItemSchema, insertSellerApplicationSchema, orders as ordersTable, orderItems as orderItemsTable, products as productsTable } from "@shared/schema";
+import { db } from "./db";
+import { eq } from "drizzle-orm";
 import { ZodError } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -185,39 +187,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/orders", isAuthenticated, async (req, res) => {
     try {
       const user = req.user as Express.User;
-      
+
       if (user.role !== "buyer") {
         return res.status(403).json({ message: "Only buyers can create orders" });
       }
-      
+
       const orderData = insertOrderSchema.parse({
         ...req.body,
         buyerId: user.id
       });
-      
-      // Create the order
-      const order = await storage.createOrder(orderData);
-      
-      // Create order items
-      if (req.body.items && Array.isArray(req.body.items)) {
-        for (const item of req.body.items) {
-          const orderItemData = insertOrderItemSchema.parse({
-            ...item,
-            orderId: order.id
-          });
-          
-          await storage.createOrderItem(orderItemData);
-          
-          // Update product available units
-          const product = await storage.getProduct(item.productId);
-          if (product) {
-            await storage.updateProduct(item.productId, {
-              availableUnits: product.availableUnits - item.quantity
+
+      const order = await db.transaction(async (tx) => {
+        const [createdOrder] = await tx
+          .insert(ordersTable)
+          .values(orderData)
+          .returning();
+
+        if (req.body.items && Array.isArray(req.body.items)) {
+          for (const item of req.body.items) {
+            const orderItemData = insertOrderItemSchema.parse({
+              ...item,
+              orderId: createdOrder.id
             });
+
+            await tx.insert(orderItemsTable).values(orderItemData);
+
+            const [product] = await tx
+              .select()
+              .from(productsTable)
+              .where(eq(productsTable.id, item.productId));
+
+            if (product) {
+              await tx
+                .update(productsTable)
+                .set({ availableUnits: product.availableUnits - item.quantity })
+                .where(eq(productsTable.id, item.productId));
+            }
           }
         }
-      }
-      
+
+        return createdOrder;
+      });
+
       res.status(201).json(order);
     } catch (error) {
       handleApiError(res, error);
