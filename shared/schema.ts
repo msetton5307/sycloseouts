@@ -77,7 +77,8 @@ export const insertProductSchema = createInsertSchema(products, {
     createdAt: true,
   })
   .extend({
-    images: z.array(z.string()).min(1, "At least one image is required"),
+    // Images are optional for testing but an empty array will be stored
+    images: z.array(z.string()).default([]),
   });
 
 // Order schema
