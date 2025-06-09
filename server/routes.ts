@@ -26,9 +26,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { category, sellerId } = req.query;
       const filter: any = {};
-      
+
       if (category) filter.category = category;
-      if (sellerId) filter.sellerId = Number(sellerId);
+      if (sellerId) {
+        const sellerIdNum = Number(sellerId);
+        if (Number.isNaN(sellerIdNum)) {
+          return res.status(400).json({ message: "Invalid sellerId" });
+        }
+        filter.sellerId = sellerIdNum;
+      }
       
       const products = await storage.getProducts(filter);
       res.json(products);
@@ -39,7 +45,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/products/:id", async (req, res) => {
     try {
-      const id = parseInt(req.params.id);
+      const id = parseInt(req.params.id, 10);
+      if (Number.isNaN(id)) {
+        return res.status(400).json({ message: "Invalid product ID" });
+      }
       const product = await storage.getProduct(id);
       
       if (!product) {
@@ -77,7 +86,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put("/api/products/:id", isAuthenticated, async (req, res) => {
     try {
-      const id = parseInt(req.params.id);
+      const id = parseInt(req.params.id, 10);
+      if (Number.isNaN(id)) {
+        return res.status(400).json({ message: "Invalid product ID" });
+      }
       const user = req.user as Express.User;
       const product = await storage.getProduct(id);
       
@@ -99,7 +111,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/products/:id", isAuthenticated, async (req, res) => {
     try {
-      const id = parseInt(req.params.id);
+      const id = parseInt(req.params.id, 10);
+      if (Number.isNaN(id)) {
+        return res.status(400).json({ message: "Invalid product ID" });
+      }
       const user = req.user as Express.User;
       const product = await storage.getProduct(id);
       
@@ -142,7 +157,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/orders/:id", isAuthenticated, async (req, res) => {
     try {
-      const id = parseInt(req.params.id);
+      const id = parseInt(req.params.id, 10);
+      if (Number.isNaN(id)) {
+        return res.status(400).json({ message: "Invalid order ID" });
+      }
       const user = req.user as Express.User;
       const order = await storage.getOrder(id);
       
@@ -208,7 +226,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put("/api/orders/:id", isAuthenticated, async (req, res) => {
     try {
-      const id = parseInt(req.params.id);
+      const id = parseInt(req.params.id, 10);
+      if (Number.isNaN(id)) {
+        return res.status(400).json({ message: "Invalid order ID" });
+      }
       const user = req.user as Express.User;
       const order = await storage.getOrder(id);
       
@@ -284,7 +305,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put("/api/seller-applications/:id", isAuthenticated, isAdmin, async (req, res) => {
     try {
-      const id = parseInt(req.params.id);
+      const id = parseInt(req.params.id, 10);
+      if (Number.isNaN(id)) {
+        return res.status(400).json({ message: "Invalid application ID" });
+      }
       const application = await storage.getSellerApplication(id);
       
       if (!application) {
@@ -325,7 +349,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put("/api/users/:id", isAuthenticated, isAdmin, async (req, res) => {
     try {
-      const id = parseInt(req.params.id);
+      const id = parseInt(req.params.id, 10);
+      if (Number.isNaN(id)) {
+        return res.status(400).json({ message: "Invalid user ID" });
+      }
       const user = await storage.getUser(id);
       
       if (!user) {
