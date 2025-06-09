@@ -150,10 +150,8 @@ export function setupAuth(app: Express) {
   });
   
   // Temporary endpoint to make the current user a seller for testing
-  app.post("/api/make-seller", async (req, res) => {
-    if (!req.isAuthenticated()) {
-      return res.status(401).json({ error: "Unauthorized" });
-    }
+  // Protected by admin check to prevent privilege escalation
+  app.post("/api/make-seller", isAuthenticated, isAdmin, async (req, res) => {
     
     try {
       const user = req.user;
