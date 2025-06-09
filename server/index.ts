@@ -59,7 +59,16 @@ app.use((req, res, next) => {
 
   // Determine the port from the environment with a fallback to 5000.
   const envPort = parseInt(process.env.PORT ?? "", 10);
-  const port = Number.isFinite(envPort) ? envPort : 5000;
+  const port = Number.isFinite(envPort) && envPort > 0 ? envPort : 5000;
+
+  server.on("error", (err: NodeJS.ErrnoException) => {
+    if (err.code === "EADDRINUSE") {
+      console.error(`Port ${port} is already in use.`);
+    } else {
+      console.error("Failed to start server:", err);
+    }
+    process.exit(1);
+  });
 
   server.listen(
     {
@@ -69,14 +78,6 @@ app.use((req, res, next) => {
     },
     () => {
       log(`serving on port ${port}`);
-    },
-  );
-
-  server.on("error", (err: NodeJS.ErrnoException) => {
-    if (err.code === "EADDRINUSE") {
-      console.error(`Port ${port} is already in use.`);
-    } else {
-      console.error("Failed to start server:", err);
     }
-  });
+  );
 })();
