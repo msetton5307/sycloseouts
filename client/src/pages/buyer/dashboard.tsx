@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Order, Product } from "@shared/schema";
@@ -18,6 +18,9 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import { apiRequest } from "@/lib/queryClient";
 import { ChangePasswordDialog } from "@/components/account/change-password-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { 
@@ -39,6 +42,8 @@ import OrderStatus from "@/components/buyer/order-status";
 export default function BuyerDashboard() {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("overview");
+  const [addresses, setAddresses] = useState<any[]>([]);
+  const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
   
   const { data: orders = [], isLoading: isLoadingOrders } = useQuery<Order[]>({
     queryKey: ["/api/orders"],
@@ -55,6 +60,25 @@ export default function BuyerDashboard() {
   const pendingOrders = orders.filter(order => order.status === "ordered").length;
   const deliveredOrders = orders.filter(order => order.status === "delivered").length;
   const totalSpent = orders.reduce((sum, order) => sum + order.totalAmount, 0);
+
+  useEffect(() => {
+    if (activeTab !== "profile" || !user) return;
+    const load = async () => {
+      try {
+        const res = await apiRequest("GET", "/api/addresses");
+        setAddresses(await res.json());
+      } catch (err) {
+        console.error("Failed to fetch addresses", err);
+      }
+      try {
+        const res = await apiRequest("GET", "/api/payment-methods");
+        setPaymentMethods(await res.json());
+      } catch (err) {
+        console.error("Failed to fetch payment methods", err);
+      }
+    };
+    load();
+  }, [activeTab, user]);
   
   return (
     <>
@@ -401,6 +425,61 @@ export default function BuyerDashboard() {
                       <p className="mt-1">{user?.createdAt ? formatDate(user.createdAt) : "N/A"}</p>
                     </div>
                   </div>
+                </CardContent>
+              </Card>
+
+              <Card className="md:col-span-3">
+                <CardHeader>
+                  <CardTitle>Saved Addresses</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {addresses.length > 0 ? (
+                    <RadioGroup className="space-y-4">
+                      {addresses.map(addr => (
+                        <div key={addr.id} className="flex items-start space-x-2">
+                          <RadioGroupItem value={String(addr.id)} id={`addr-${addr.id}`} />
+                          <Label htmlFor={`addr-${addr.id}`} className="cursor-pointer">
+                            <div className="font-medium">{addr.name}</div>
+                            <div className="text-sm text-gray-500">
+                              {addr.address}, {addr.city}, {addr.state} {addr.zipCode}
+                            </div>
+                          </Label>
+                        </div>
+                      ))}
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="new" id="addr-new" />
+                        <Label htmlFor="addr-new" className="cursor-pointer">Add New Address</Label>
+                      </div>
+                    </RadioGroup>
+                  ) : (
+                    <p className="text-sm text-gray-500">No saved addresses</p>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card className="md:col-span-3">
+                <CardHeader>
+                  <CardTitle>Payment Methods</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {paymentMethods.length > 0 ? (
+                    <RadioGroup className="space-y-4">
+                      {paymentMethods.map(pm => (
+                        <div key={pm.id} className="flex items-center space-x-2">
+                          <RadioGroupItem value={String(pm.id)} id={`pm-${pm.id}`} />
+                          <Label htmlFor={`pm-${pm.id}`} className="cursor-pointer">
+                            **** **** **** {pm.cardNumber.slice(-4)}
+                          </Label>
+                        </div>
+                      ))}
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="new" id="pm-new" />
+                        <Label htmlFor="pm-new" className="cursor-pointer">Add New Payment Method</Label>
+                      </div>
+                    </RadioGroup>
+                  ) : (
+                    <p className="text-sm text-gray-500">No saved payment methods</p>
+                  )}
                 </CardContent>
               </Card>
             </div>

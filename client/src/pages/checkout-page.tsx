@@ -38,6 +38,9 @@ export default function CheckoutPage() {
   const [addresses, setAddresses] = useState<any[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<string | number>("new");
 
+  const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
+  const [selectedPaymentMethodId, setSelectedPaymentMethodId] = useState<string | number>("new");
+
   const [shippingInfo, setShippingInfo] = useState({
     name: user ? `${user.firstName} ${user.lastName}` : "",
     company: user?.company || "",
@@ -80,6 +83,27 @@ export default function CheckoutPage() {
       }
     };
     fetchAddresses();
+
+    const fetchPaymentMethods = async () => {
+      if (!user) return;
+      try {
+        const res = await apiRequest("GET", "/api/payment-methods");
+        const data = await res.json();
+        setPaymentMethods(data);
+        if (data.length > 0) {
+          setSelectedPaymentMethodId(data[0].id);
+          setPaymentInfo(info => ({
+            ...info,
+            cardNumber: data[0].cardNumber,
+            nameOnCard: data[0].nameOnCard,
+            expirationDate: data[0].expirationDate,
+          }));
+        }
+      } catch (err) {
+        console.error("Failed to load payment methods", err);
+      }
+    };
+    fetchPaymentMethods();
   }, [user]);
 
   useEffect(() => {
@@ -92,6 +116,19 @@ export default function CheckoutPage() {
       }));
     }
   }, [selectedAddressId, addresses]);
+
+  useEffect(() => {
+    if (selectedPaymentMethodId === "new") return;
+    const method = paymentMethods.find(m => m.id === selectedPaymentMethodId);
+    if (method) {
+      setPaymentInfo(info => ({
+        ...info,
+        cardNumber: method.cardNumber,
+        nameOnCard: method.nameOnCard,
+        expirationDate: method.expirationDate,
+      }));
+    }
+  }, [selectedPaymentMethodId, paymentMethods]);
   
   const handleShippingSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -148,6 +185,33 @@ export default function CheckoutPage() {
         setAddresses(await res.json());
       } catch (err) {
         console.error("Failed to save address", err);
+      }
+
+      // Save or update payment method
+      try {
+        if (selectedPaymentMethodId === "new") {
+          const res = await apiRequest("POST", "/api/payment-methods", {
+            cardNumber: paymentInfo.cardNumber,
+            nameOnCard: paymentInfo.nameOnCard,
+            expirationDate: paymentInfo.expirationDate,
+          });
+          const created = await res.json();
+          setSelectedPaymentMethodId(created.id);
+        } else {
+          await apiRequest(
+            "PUT",
+            `/api/payment-methods/${selectedPaymentMethodId}`,
+            {
+              cardNumber: paymentInfo.cardNumber,
+              nameOnCard: paymentInfo.nameOnCard,
+              expirationDate: paymentInfo.expirationDate,
+            },
+          );
+        }
+        const pmRes = await apiRequest("GET", "/api/payment-methods");
+        setPaymentMethods(await pmRes.json());
+      } catch (err) {
+        console.error("Failed to save payment method", err);
       }
       
       // Group items by seller
@@ -358,6 +422,27 @@ export default function CheckoutPage() {
   const renderPaymentForm = () => (
     <form onSubmit={handlePaymentSubmit}>
       <div className="space-y-6">
+        {paymentMethods.length > 0 && (
+          <div>
+            <Label htmlFor="paymentSelect">Saved Payment Methods</Label>
+            <Select
+              value={String(selectedPaymentMethodId)}
+              onValueChange={(value) => setSelectedPaymentMethodId(value === "new" ? "new" : parseInt(value))}
+            >
+              <SelectTrigger id="paymentSelect">
+                <SelectValue placeholder="Choose a payment method" />
+              </SelectTrigger>
+              <SelectContent>
+                {paymentMethods.map((pm) => (
+                  <SelectItem key={pm.id} value={String(pm.id)}>
+                    **** **** **** {pm.cardNumber.slice(-4)}
+                  </SelectItem>
+                ))}
+                <SelectItem value="new">Add New Payment Method</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        )}
         <div>
           <Label>Payment Method</Label>
           <RadioGroup 
