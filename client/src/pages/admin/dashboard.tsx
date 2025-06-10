@@ -38,25 +38,41 @@ export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState("overview");
   
   // Fetch all users
-  const { data: users = [], isLoading: isLoadingUsers } = useQuery<User[]>({
+  const {
+    data: users = [],
+    isLoading: isLoadingUsers,
+    error: usersError,
+  } = useQuery<User[]>({
     queryKey: ["/api/users"],
     enabled: !!user && user.role === "admin",
   });
   
   // Fetch all orders
-  const { data: orders = [], isLoading: isLoadingOrders } = useQuery<Order[]>({
+  const {
+    data: orders = [],
+    isLoading: isLoadingOrders,
+    error: ordersError,
+  } = useQuery<Order[]>({
     queryKey: ["/api/orders"],
     enabled: !!user && user.role === "admin",
   });
   
   // Fetch all seller applications
-  const { data: applications = [], isLoading: isLoadingApplications } = useQuery<SellerApplication[]>({
+  const {
+    data: applications = [],
+    isLoading: isLoadingApplications,
+    error: applicationsError,
+  } = useQuery<SellerApplication[]>({
     queryKey: ["/api/seller-applications"],
     enabled: !!user && user.role === "admin",
   });
   
   // Fetch all products
-  const { data: products = [], isLoading: isLoadingProducts } = useQuery<Product[]>({
+  const {
+    data: products = [],
+    isLoading: isLoadingProducts,
+    error: productsError,
+  } = useQuery<Product[]>({
     queryKey: ["/api/products"],
     enabled: !!user && user.role === "admin",
   });
@@ -72,8 +88,9 @@ export default function AdminDashboard() {
   const totalOrders = orders.length;
   const totalRevenue = orders.reduce((sum, order) => sum + order.totalAmount, 0);
   const platformFees = totalRevenue * 0.10; // Assuming 10% platform fee
-  
+
   const isLoading = isLoadingUsers || isLoadingOrders || isLoadingApplications || isLoadingProducts;
+  const isError = usersError || ordersError || applicationsError || productsError;
   
   return (
     <>
@@ -132,7 +149,11 @@ export default function AdminDashboard() {
         </div>
         
         <TabsContent value="overview" className="space-y-6">
-            {isLoading ? (
+            {isError ? (
+              <div className="flex justify-center py-12 text-red-600">
+                Failed to load dashboard data.
+              </div>
+            ) : isLoading ? (
               <div className="flex justify-center py-12">
                 <Loader2 className="h-12 w-12 animate-spin text-primary" />
               </div>
