@@ -19,7 +19,7 @@ import { Separator } from "@/components/ui/separator";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Loader2, CheckCircle, CreditCard, Building, ShoppingCart } from "lucide-react";
 import { InsertOrder, InsertOrderItem } from "@shared/schema";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
@@ -38,12 +38,12 @@ export default function CheckoutPage() {
   const [shippingInfo, setShippingInfo] = useState({
     name: user ? `${user.firstName} ${user.lastName}` : "",
     company: user?.company || "",
-    address: "",
+    address: user?.address || "",
     city: "",
     state: "",
     zipCode: "",
     country: "United States",
-    phone: "",
+    phone: user?.phone || "",
     email: user?.email || "",
     notes: ""
   });
@@ -83,6 +83,17 @@ export default function CheckoutPage() {
       // For each item, find the seller ID
       if (items.length === 0) {
         throw new Error("Your cart is empty");
+      }
+
+      // Save phone and address for future checkouts
+      try {
+        await apiRequest("PUT", "/api/users/me", {
+          phone: shippingInfo.phone,
+          address: shippingInfo.address,
+        });
+        queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+      } catch (err) {
+        console.error("Failed to save contact info", err);
       }
       
       // Group items by seller
