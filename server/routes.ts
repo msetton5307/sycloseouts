@@ -384,6 +384,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Allow authenticated users to update their own contact info
+  app.put("/api/users/me", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user as Express.User;
+      const updatedUser = await storage.updateUser(user.id, {
+        phone: req.body.phone,
+        address: req.body.address,
+      });
+
+      if (!updatedUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const { password, ...userWithoutPassword } = updatedUser;
+      res.json(userWithoutPassword);
+    } catch (error) {
+      handleApiError(res, error);
+    }
+  });
+
   // Create the HTTP server
   const httpServer = createServer(app);
   return httpServer;
