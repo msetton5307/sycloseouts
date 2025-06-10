@@ -40,6 +40,35 @@ export async function sendInvoiceEmail(
     )
     .join("\n");
 
+  const itemRows = items
+    .map(
+      (i) =>
+        `<tr>\n          <td style="padding:8px;border-bottom:1px solid #eee;">${i.title}</td>\n          <td style="padding:8px;text-align:center;border-bottom:1px solid #eee;">${i.quantity}</td>\n          <td style="padding:8px;text-align:right;border-bottom:1px solid #eee;">$${i.unitPrice.toFixed(2)}</td>\n          <td style="padding:8px;text-align:right;border-bottom:1px solid #eee;">$${i.totalPrice.toFixed(2)}</td>\n        </tr>`,
+    )
+    .join("\n");
+
+  const html = `
+    <div style="font-family: Arial, sans-serif; line-height:1.6;">
+      <h2 style="color:#333;">Thank you for your order!</h2>
+      <p>Order ID: <strong>${order.id}</strong></p>
+      <table style="border-collapse:collapse;width:100%;margin-top:1em;">
+        <thead>
+          <tr>
+            <th style="text-align:left;border-bottom:2px solid #333;padding:8px;">Product</th>
+            <th style="text-align:center;border-bottom:2px solid #333;padding:8px;">Qty</th>
+            <th style="text-align:right;border-bottom:2px solid #333;padding:8px;">Unit Price</th>
+            <th style="text-align:right;border-bottom:2px solid #333;padding:8px;">Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${itemRows}
+        </tbody>
+      </table>
+      <p style="text-align:right;font-size:1.1em;margin-top:1em;"><strong>Grand Total: $${order.totalAmount.toFixed(2)}</strong></p>
+      <p>We appreciate your business!</p>
+    </div>
+  `;
+
   const mailOptions = {
     from: process.env.SMTP_FROM || user,
     to,
@@ -50,6 +79,7 @@ export async function sendInvoiceEmail(
       `Total: $${order.totalAmount.toFixed(2)}\n\n` +
       `Items:\n${itemLines}\n\n` +
       `We appreciate your business!`,
+    html,
   };
 
   try {
