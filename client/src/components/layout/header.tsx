@@ -149,8 +149,8 @@ export default function Header({ dashboardTabs }: HeaderProps) {
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem>
                       <UserIcon className="mr-2 h-4 w-4" />
-                      <Link href={user.role === 'seller' ? '/seller/dashboard' : '/buyer/dashboard'}>
-                        <span>Dashboard</span>
+                      <Link href={user.role === 'seller' ? '/seller/dashboard#profile' : '/buyer/dashboard#profile'}>
+                        <span>Profile</span>
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={handleLogout}>
@@ -273,11 +273,11 @@ export default function Header({ dashboardTabs }: HeaderProps) {
                 </div>
                 <div className="mt-3 space-y-1">
                   <Link
-                    href={user.role === "seller" ? "/seller/dashboard" : "/buyer/dashboard"}
+                    href={user.role === 'seller' ? '/seller/dashboard#profile' : '/buyer/dashboard#profile'}
                     className="block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100"
                     onClick={() => setIsMenuOpen(false)}
                   >
-                    Dashboard
+                    Profile
                   </Link>
                   <button
                     className="w-full text-left block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100 cursor-pointer"
