@@ -18,7 +18,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Loader2, CheckCircle, CreditCard, Building, ShoppingCart } from "lucide-react";
-import { InsertOrder, InsertOrderItem } from "@shared/schema";
+import { InsertOrder, InsertOrderItem, PaymentMethod } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import Header from "@/components/layout/header";
@@ -60,6 +60,13 @@ export default function CheckoutPage() {
     billingAddressSameAsShipping: true
   });
 
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
+  const [selectedPaymentId, setSelectedPaymentId] = useState<string | number>("new");
+
+  const [contactOption, setContactOption] = useState<"saved" | "new">(
+    user?.phone || user?.email ? "saved" : "new"
+  );
+
   useEffect(() => {
     const fetchAddresses = async () => {
       if (!user) return;
@@ -83,6 +90,30 @@ export default function CheckoutPage() {
   }, [user]);
 
   useEffect(() => {
+    const fetchPaymentMethods = async () => {
+      if (!user) return;
+      try {
+        const res = await apiRequest("GET", "/api/payment-methods");
+        const data = await res.json();
+        setPaymentMethods(data);
+        if (data.length > 0) {
+          setSelectedPaymentId(data[0].id);
+          setPaymentInfo((info) => ({
+            ...info,
+            cardNumber: "", // don't prefill sensitive data
+            nameOnCard: data[0].cardholderName,
+            expirationDate: `${data[0].expMonth}/${data[0].expYear}`,
+            paymentMethod: "credit_card",
+          }));
+        }
+      } catch (err) {
+        console.error("Failed to load payment methods", err);
+      }
+    };
+    fetchPaymentMethods();
+  }, [user]);
+
+  useEffect(() => {
     if (selectedAddressId === "new") return;
     const addr = addresses.find(a => a.id === selectedAddressId);
     if (addr) {
@@ -92,6 +123,30 @@ export default function CheckoutPage() {
       }));
     }
   }, [selectedAddressId, addresses]);
+
+  useEffect(() => {
+    if (selectedPaymentId === "new") return;
+    const pm = paymentMethods.find(p => p.id === selectedPaymentId);
+    if (pm) {
+      setPaymentInfo(info => ({
+        ...info,
+        nameOnCard: pm.cardholderName,
+        expirationDate: `${pm.expMonth}/${pm.expYear}`,
+        cardNumber: "",
+        paymentMethod: "credit_card",
+      }));
+    }
+  }, [selectedPaymentId, paymentMethods]);
+
+  useEffect(() => {
+    if (contactOption === "saved" && user) {
+      setShippingInfo(info => ({
+        ...info,
+        phone: user.phone || "",
+        email: user.email || "",
+      }));
+    }
+  }, [contactOption, user]);
   
   const handleShippingSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -149,6 +204,34 @@ export default function CheckoutPage() {
       } catch (err) {
         console.error("Failed to save address", err);
       }
+
+      // Save or update payment method
+      try {
+        const [expMonth, expYear] = paymentInfo.expirationDate.split("/");
+        if (selectedPaymentId === "new") {
+          const createRes = await apiRequest("POST", "/api/payment-methods", {
+            cardLast4: paymentInfo.cardNumber.slice(-4),
+            cardholderName: paymentInfo.nameOnCard,
+            expMonth,
+            expYear,
+            brand: "card",
+          });
+          const created = await createRes.json();
+          setSelectedPaymentId(created.id);
+        } else {
+          await apiRequest("PUT", `/api/payment-methods/${selectedPaymentId}`, {
+            cardLast4: paymentInfo.cardNumber.slice(-4),
+            cardholderName: paymentInfo.nameOnCard,
+            expMonth,
+            expYear,
+            brand: "card",
+          });
+        }
+        const res = await apiRequest("GET", "/api/payment-methods");
+        setPaymentMethods(await res.json());
+      } catch (err) {
+        console.error("Failed to save payment method", err);
+      }
       
       // Group items by seller
       const itemsBySeller: Record<number, any[]> = {};
@@ -171,6 +254,11 @@ export default function CheckoutPage() {
         const trackingNumber = generateTrackingNumber();
         const sellerTotal = sellerItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
         
+        const last4 =
+          selectedPaymentId === "new"
+            ? paymentInfo.cardNumber.slice(-4)
+            : paymentMethods.find((pm) => pm.id === selectedPaymentId)?.cardLast4 || "";
+
         const orderData: InsertOrder = {
           buyerId: user.id,
           sellerId: parseInt(sellerId),
@@ -179,7 +267,7 @@ export default function CheckoutPage() {
           shippingDetails: shippingInfo,
           paymentDetails: {
             method: paymentInfo.paymentMethod,
-            last4: paymentInfo.cardNumber.slice(-4),
+            last4,
           },
           estimatedDeliveryDate: estimatedDelivery,
           trackingNumber
@@ -219,135 +307,215 @@ export default function CheckoutPage() {
       <div className="space-y-6">
         {addresses.length > 0 && (
           <div>
-            <Label htmlFor="addressSelect">Saved Addresses</Label>
-            <Select
+            <Label>Saved Addresses</Label>
+            <RadioGroup
               value={String(selectedAddressId)}
-              onValueChange={(value) => setSelectedAddressId(value === "new" ? "new" : parseInt(value))}
+              onValueChange={(value) =>
+                setSelectedAddressId(value === "new" ? "new" : parseInt(value))
+              }
+              className="space-y-2 mt-2"
             >
-              <SelectTrigger id="addressSelect">
-                <SelectValue placeholder="Choose an address" />
-              </SelectTrigger>
-              <SelectContent>
-                {addresses.map((addr) => (
-                  <SelectItem key={addr.id} value={String(addr.id)}>
+              {addresses.map((addr) => (
+                <div
+                  key={addr.id}
+                  className="flex items-start space-x-2 border rounded-md p-3"
+                >
+                  <RadioGroupItem
+                    value={String(addr.id)}
+                    id={`checkout-addr-${addr.id}`}
+                  />
+                  <label
+                    htmlFor={`checkout-addr-${addr.id}`}
+                    className="text-sm leading-none cursor-pointer"
+                  >
                     {addr.address}, {addr.city}
-                  </SelectItem>
-                ))}
-                <SelectItem value="new">Add New Address</SelectItem>
-              </SelectContent>
-            </Select>
+                  </label>
+                </div>
+              ))}
+              <div className="flex items-start space-x-2 border rounded-md p-3">
+                <RadioGroupItem value="new" id="checkout-new-address" />
+                <label
+                  htmlFor="checkout-new-address"
+                  className="text-sm leading-none cursor-pointer"
+                >
+                  Add New Address
+                </label>
+              </div>
+            </RadioGroup>
           </div>
         )}
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+
+        {(user?.phone || user?.email) && (
           <div>
-            <Label htmlFor="name">Full Name</Label>
-            <Input 
-              id="name" 
-              value={shippingInfo.name}
-              onChange={(e) => setShippingInfo({...shippingInfo, name: e.target.value})}
-              required
-            />
-          </div>
-          <div>
-            <Label htmlFor="company">Company (Optional)</Label>
-            <Input 
-              id="company" 
-              value={shippingInfo.company}
-              onChange={(e) => setShippingInfo({...shippingInfo, company: e.target.value})}
-            />
-          </div>
-        </div>
-        
-        <div>
-          <Label htmlFor="address">Street Address</Label>
-          <Input 
-            id="address" 
-            value={shippingInfo.address}
-            onChange={(e) => setShippingInfo({...shippingInfo, address: e.target.value})}
-            required
-          />
-        </div>
-        
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
-          <div>
-            <Label htmlFor="city">City</Label>
-            <Input 
-              id="city" 
-              value={shippingInfo.city}
-              onChange={(e) => setShippingInfo({...shippingInfo, city: e.target.value})}
-              required
-            />
-          </div>
-          <div>
-            <Label htmlFor="state">State / Province</Label>
-            <Input 
-              id="state" 
-              value={shippingInfo.state}
-              onChange={(e) => setShippingInfo({...shippingInfo, state: e.target.value})}
-              required
-            />
-          </div>
-          <div>
-            <Label htmlFor="zipCode">ZIP / Postal Code</Label>
-            <Input 
-              id="zipCode" 
-              value={shippingInfo.zipCode}
-              onChange={(e) => setShippingInfo({...shippingInfo, zipCode: e.target.value})}
-              required
-            />
-          </div>
-        </div>
-        
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-          <div>
-            <Label htmlFor="country">Country</Label>
-            <Select 
-              value={shippingInfo.country}
-              onValueChange={(value) => setShippingInfo({...shippingInfo, country: value})}
+            <Label>Contact Info</Label>
+            <RadioGroup
+              value={contactOption}
+              onValueChange={(value) =>
+                setContactOption(value as "saved" | "new")
+              }
+              className="space-y-2 mt-2"
             >
-              <SelectTrigger id="country">
-                <SelectValue placeholder="Select a country" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="United States">United States</SelectItem>
-                <SelectItem value="Canada">Canada</SelectItem>
-                <SelectItem value="Mexico">Mexico</SelectItem>
-              </SelectContent>
-            </Select>
+              <div className="flex items-start space-x-2 border rounded-md p-3">
+                <RadioGroupItem value="saved" id="contact-saved" />
+                <label
+                  htmlFor="contact-saved"
+                  className="text-sm leading-none cursor-pointer"
+                >
+                  {user?.phone} {user?.email ? `| ${user.email}` : ""}
+                </label>
+              </div>
+              <div className="flex items-start space-x-2 border rounded-md p-3">
+                <RadioGroupItem value="new" id="contact-new" />
+                <label
+                  htmlFor="contact-new"
+                  className="text-sm leading-none cursor-pointer"
+                >
+                  Add New Contact Info
+                </label>
+              </div>
+            </RadioGroup>
           </div>
-          <div>
-            <Label htmlFor="phone">Phone Number</Label>
-            <Input 
-              id="phone" 
-              type="tel" 
-              value={shippingInfo.phone}
-              onChange={(e) => setShippingInfo({...shippingInfo, phone: e.target.value})}
-              required
-            />
-          </div>
-        </div>
-        
-        <div>
-          <Label htmlFor="email">Email Address</Label>
-          <Input 
-            id="email" 
-            type="email" 
-            value={shippingInfo.email}
-            onChange={(e) => setShippingInfo({...shippingInfo, email: e.target.value})}
-            required
-          />
-        </div>
-        
+        )}
+
+        {(selectedAddressId === "new" || addresses.length === 0) && (
+          <>
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+              <div>
+                <Label htmlFor="name">Full Name</Label>
+                <Input
+                  id="name"
+                  value={shippingInfo.name}
+                  onChange={(e) =>
+                    setShippingInfo({ ...shippingInfo, name: e.target.value })
+                  }
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="company">Company (Optional)</Label>
+                <Input
+                  id="company"
+                  value={shippingInfo.company}
+                  onChange={(e) =>
+                    setShippingInfo({ ...shippingInfo, company: e.target.value })
+                  }
+                />
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="address">Street Address</Label>
+              <Input
+                id="address"
+                value={shippingInfo.address}
+                onChange={(e) =>
+                  setShippingInfo({ ...shippingInfo, address: e.target.value })
+                }
+                required
+              />
+            </div>
+
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
+              <div>
+                <Label htmlFor="city">City</Label>
+                <Input
+                  id="city"
+                  value={shippingInfo.city}
+                  onChange={(e) =>
+                    setShippingInfo({ ...shippingInfo, city: e.target.value })
+                  }
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="state">State / Province</Label>
+                <Input
+                  id="state"
+                  value={shippingInfo.state}
+                  onChange={(e) =>
+                    setShippingInfo({ ...shippingInfo, state: e.target.value })
+                  }
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="zipCode">ZIP / Postal Code</Label>
+                <Input
+                  id="zipCode"
+                  value={shippingInfo.zipCode}
+                  onChange={(e) =>
+                    setShippingInfo({ ...shippingInfo, zipCode: e.target.value })
+                  }
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+              <div>
+                <Label htmlFor="country">Country</Label>
+                <Select
+                  value={shippingInfo.country}
+                  onValueChange={(value) =>
+                    setShippingInfo({ ...shippingInfo, country: value })
+                  }
+                >
+                  <SelectTrigger id="country">
+                    <SelectValue placeholder="Select a country" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="United States">United States</SelectItem>
+                    <SelectItem value="Canada">Canada</SelectItem>
+                    <SelectItem value="Mexico">Mexico</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </>
+        )}
+
+        {(contactOption === "new" || !(user?.phone || user?.email)) && (
+          <>
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 mt-6">
+              <div>
+                <Label htmlFor="phone">Phone Number</Label>
+                <Input
+                  id="phone"
+                  type="tel"
+                  value={shippingInfo.phone}
+                  onChange={(e) =>
+                    setShippingInfo({ ...shippingInfo, phone: e.target.value })
+                  }
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="email">Email Address</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={shippingInfo.email}
+                  onChange={(e) =>
+                    setShippingInfo({ ...shippingInfo, email: e.target.value })
+                  }
+                  required
+                />
+              </div>
+            </div>
+          </>
+        )}
         <div>
           <Label htmlFor="notes">Order Notes (Optional)</Label>
-          <Textarea 
-            id="notes" 
-            placeholder="Any special instructions for delivery" 
+          <Textarea
+            id="notes"
+            placeholder="Any special instructions for delivery"
             value={shippingInfo.notes}
-            onChange={(e) => setShippingInfo({...shippingInfo, notes: e.target.value})}
+            onChange={(e) =>
+              setShippingInfo({ ...shippingInfo, notes: e.target.value })
+            }
           />
         </div>
-        
+
         <Button type="submit" className="w-full">
           Continue to Payment
         </Button>
@@ -360,7 +528,29 @@ export default function CheckoutPage() {
       <div className="space-y-6">
         <div>
           <Label>Payment Method</Label>
-          <RadioGroup 
+          {paymentMethods.length > 0 && (
+            <RadioGroup
+              value={String(selectedPaymentId)}
+              onValueChange={(value) => setSelectedPaymentId(value === "new" ? "new" : parseInt(value))}
+              className="space-y-2 mt-2"
+            >
+              {paymentMethods.map((pm) => (
+                <div key={pm.id} className="flex items-start space-x-2 border rounded-md p-3">
+                  <RadioGroupItem value={String(pm.id)} id={`pay-${pm.id}`} />
+                  <label htmlFor={`pay-${pm.id}`} className="text-sm leading-none cursor-pointer">
+                    {pm.brand} ending in {pm.cardLast4}
+                  </label>
+                </div>
+              ))}
+              <div className="flex items-start space-x-2 border rounded-md p-3">
+                <RadioGroupItem value="new" id="new-payment" />
+                <label htmlFor="new-payment" className="text-sm leading-none cursor-pointer">
+                  Add New Payment Method
+                </label>
+              </div>
+            </RadioGroup>
+          )}
+          <RadioGroup
             defaultValue="credit_card"
             value={paymentInfo.paymentMethod}
             onValueChange={(value) => setPaymentInfo({...paymentInfo, paymentMethod: value})}
@@ -383,7 +573,7 @@ export default function CheckoutPage() {
           </RadioGroup>
         </div>
         
-        {paymentInfo.paymentMethod === "credit_card" && (
+        {paymentInfo.paymentMethod === "credit_card" && selectedPaymentId === "new" && (
           <>
             <div>
               <Label htmlFor="cardNumber">Card Number</Label>
