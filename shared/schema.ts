@@ -111,6 +111,10 @@ export const insertOrderSchema = createInsertSchema(orders)
   .omit({
     id: true,
     createdAt: true,
+  })
+  .extend({
+    // Accept ISO date strings from the client
+    estimatedDeliveryDate: z.coerce.date().optional(),
   });
 
 // Order items schema
