@@ -57,8 +57,8 @@ export function setupAuth(app: Express) {
     cookie: {
       maxAge: 1000 * 60 * 60 * 24 * 7, // 1 week
       secure: process.env.NODE_ENV === "production",
-      httpOnly: true
-    }
+      httpOnly: true,
+    },
   };
 
   app.set("trust proxy", 1);
@@ -91,6 +91,18 @@ export function setupAuth(app: Express) {
     }
   });
 
+  async function loginAndSaveSession(req: Request, user: Express.User) {
+    await new Promise<void>((resolve, reject) => {
+      req.login(user, (err) => {
+        if (err) return reject(err);
+        req.session.save((saveErr) => {
+          if (saveErr) return reject(saveErr);
+          resolve();
+        });
+      });
+    });
+  }
+
   app.post("/api/register", async (req, res, next) => {
     try {
       // Check if user already exists
@@ -104,7 +116,8 @@ export function setupAuth(app: Express) {
         return res.status(400).json({ error: "Email already exists" });
       }
 
-      const { address, city, state, zipCode, country, phone, ...userFields } = req.body;
+      const { address, city, state, zipCode, country, phone, ...userFields } =
+        req.body;
 
       // Create new user with hashed password
       const user = await storage.createUser({
@@ -128,31 +141,43 @@ export function setupAuth(app: Express) {
         });
       }
 
-      // Log user in after registration
-      req.login(user, (err) => {
-        if (err) return next(err);
-        // Return user without password
-        const { password, ...userWithoutPassword } = user;
-        res.status(201).json(userWithoutPassword);
-      });
-    } catch (error) {
+      // Log user in after registration and wait for the session to be saved
+      await loginAndSaveSession(req, user);
+
+      // Return user without password
+      const { password, ...userWithoutPassword } = user;
+      res.status(201).json(userWithoutPassword);
+    } catch (error: any) {
+      if (
+        (typeof error.message === "string" && error.message.includes("duplicate key")) ||
+        error?.code === "23505"
+      ) {
+        return res
+          .status(400)
+          .json({ error: "Username or email already exists" });
+      }
       next(error);
     }
   });
 
   app.post("/api/login", (req, res, next) => {
-    passport.authenticate("local", (err: Error | null, user: User | false, info: any) => {
-      if (err) return next(err);
-      if (!user) {
-        return res.status(401).json({ error: "Invalid username or password" });
-      }
-      req.login(user, (loginErr) => {
-        if (loginErr) return next(loginErr);
-        // Return user without password
-        const { password, ...userWithoutPassword } = user;
-        res.status(200).json(userWithoutPassword);
-      });
-    })(req, res, next);
+    passport.authenticate(
+      "local",
+      (err: Error | null, user: User | false, info: any) => {
+        if (err) return next(err);
+        if (!user) {
+          return res
+            .status(401)
+            .json({ error: "Invalid username or password" });
+        }
+        loginAndSaveSession(req, user)
+          .then(() => {
+            const { password, ...userWithoutPassword } = user;
+            res.status(200).json(userWithoutPassword);
+          })
+          .catch(next);
+      },
+    )(req, res, next);
   });
 
   app.post("/api/logout", (req, res, next) => {
@@ -168,35 +193,34 @@ export function setupAuth(app: Express) {
     const { password, ...userWithoutPassword } = req.user;
     res.json(userWithoutPassword);
   });
-  
+
   // Temporary endpoint to make the current user a seller for testing
   // Protected by admin check to prevent privilege escalation
   app.post("/api/make-seller", isAuthenticated, isAdmin, async (req, res) => {
-    
     try {
       const user = req.user;
       console.log("Updating user to seller role:", user.id);
-      
+
       // Update the user in the database
       const updatedUser = await storage.updateUser(user.id, {
         role: "seller",
         isSeller: true,
-        isApproved: true
+        isApproved: true,
       });
-      
+
       if (!updatedUser) {
         return res.status(404).json({ message: "User not found" });
       }
-      
+
       // Simplify by just updating the user in the session directly
       req.user.role = "seller";
       req.user.isSeller = true;
       req.user.isApproved = true;
-      
+
       // Return user without password (using the updated session user)
       const { password, ...userWithoutPassword } = req.user;
       console.log("User updated to seller:", userWithoutPassword);
-      
+
       // Save the session to ensure changes persist
       req.session.save((err) => {
         if (err) {
@@ -212,7 +236,11 @@ export function setupAuth(app: Express) {
   });
 }
 
-export function isAuthenticated(req: Request, res: Response, next: NextFunction) {
+export function isAuthenticated(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
   if (req.isAuthenticated()) {
     return next();
   }
@@ -223,7 +251,7 @@ export function isSeller(req: Request, res: Response, next: NextFunction) {
   console.log("isSeller check - User:", req.user);
   console.log("isAuthenticated:", req.isAuthenticated());
   console.log("isSeller value:", req.user?.isSeller);
-  
+
   if (req.isAuthenticated() && req.user.isSeller) {
     console.log("User is authenticated and is a seller, proceeding");
     return next();
