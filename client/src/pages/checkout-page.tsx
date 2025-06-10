@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useLocation } from "wouter";
+import { useLocation, Link } from "wouter";
 import { useCart } from "@/hooks/use-cart";
 import { useAuth } from "@/hooks/use-auth";
 import { formatCurrency, getEstimatedDeliveryDate, generateTrackingNumber } from "@/lib/utils";
@@ -41,7 +41,7 @@ export default function CheckoutPage() {
   const [shippingInfo, setShippingInfo] = useState({
     name: user ? `${user.firstName} ${user.lastName}` : "",
     company: user?.company || "",
-    address: "",
+    address: user?.address || "",
     city: "",
     state: "",
     zipCode: "",
@@ -116,19 +116,22 @@ export default function CheckoutPage() {
     setIsProcessing(true);
     
     try {
-      // For each item, find the seller ID
       if (items.length === 0) {
         throw new Error("Your cart is empty");
       }
 
       // Save phone and address for future checkouts
       try {
-        await apiRequest("PUT", "/api/users/me", { phone: shippingInfo.phone });
+        await apiRequest("PUT", "/api/users/me", {
+          phone: shippingInfo.phone,
+          address: shippingInfo.address,
+        });
         queryClient.invalidateQueries({ queryKey: ["/api/user"] });
       } catch (err) {
         console.error("Failed to save contact info", err);
       }
 
+      // Save or update shipping address
       try {
         if (selectedAddressId === "new") {
           await apiRequest("POST", "/api/addresses", shippingInfo);
@@ -147,38 +150,24 @@ export default function CheckoutPage() {
       
       // Group items by seller
       const itemsBySeller: Record<number, any[]> = {};
-      
-      // Fetch product details for each item to get seller ID
       for (const item of items) {
         const res = await fetch(`/api/products/${item.productId}`);
-        
         if (!res.ok) {
           throw new Error(`Failed to fetch product ${item.productId}`);
         }
-        
         const product = await res.json();
-        
         if (!itemsBySeller[product.sellerId]) {
           itemsBySeller[product.sellerId] = [];
         }
-        
-        itemsBySeller[product.sellerId].push({
-          ...item,
-          product
-        });
+        itemsBySeller[product.sellerId].push({ ...item, product });
       }
       
-      // Create an order for each seller
+      // Create orders per seller
       const orders = [];
-      
       for (const [sellerId, sellerItems] of Object.entries(itemsBySeller)) {
         const estimatedDelivery = getEstimatedDeliveryDate();
         const trackingNumber = generateTrackingNumber();
-        
-        // Calculate order total for this seller
-        const sellerTotal = sellerItems.reduce((total, item) => {
-          return total + (item.price * item.quantity);
-        }, 0);
+        const sellerTotal = sellerItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
         
         const orderData: InsertOrder = {
           buyerId: user.id,
@@ -188,35 +177,27 @@ export default function CheckoutPage() {
           shippingDetails: shippingInfo,
           paymentDetails: {
             method: paymentInfo.paymentMethod,
-            // Don't include sensitive payment details in the stored order
             last4: paymentInfo.cardNumber.slice(-4),
           },
           estimatedDeliveryDate: estimatedDelivery,
-          trackingNumber: trackingNumber,
+          trackingNumber
         };
         
-        // Create the order
         const orderRes = await apiRequest("POST", "/api/orders", {
           ...orderData,
-          items: sellerItems.map(item => ({
-            productId: item.productId,
-            quantity: item.quantity,
-            unitPrice: item.price,
-            totalPrice: item.price * item.quantity
+          items: sellerItems.map(i => ({
+            productId: i.productId,
+            quantity: i.quantity,
+            unitPrice: i.price,
+            totalPrice: i.price * i.quantity
           }))
         });
-        
-        if (!orderRes.ok) {
-          throw new Error("Failed to create order");
-        }
-        
-        const order = await orderRes.json();
-        orders.push(order);
+        if (!orderRes.ok) throw new Error("Failed to create order");
+        orders.push(await orderRes.json());
       }
       
-      // Clear the cart and show confirmation
       clearCart();
-      setOrder(orders[0]); // Just show the first order in confirmation
+      setOrder(orders[0]);
       setCurrentStep("confirmation");
       
     } catch (error) {
@@ -536,19 +517,15 @@ export default function CheckoutPage() {
       
       <div className="flex flex-col sm:flex-row gap-4">
         <Button className="flex-1" asChild>
-          <Link href="/buyer/orders">
-            View Order
-          </Link>
+          <Link href="/buyer/orders">View Order</Link>
         </Button>
         <Button variant="outline" className="flex-1" asChild>
-          <Link href="/products">
-            Continue Shopping
-          </Link>
+          <Link href="/products">Continue Shopping</Link>
         </Button>
       </div>
     </div>
   );
-  
+
   return (
     <>
       <Header />
@@ -563,16 +540,12 @@ export default function CheckoutPage() {
             <h2 className="text-xl font-medium text-gray-900 mb-2">Your cart is empty</h2>
             <p className="text-gray-500 mb-6">You don't have any items to checkout.</p>
             <Link href="/products">
-              <Button>
-                Browse Products
-              </Button>
+              <Button>Browse Products</Button>
             </Link>
           </div>
         ) : (
           <div className="lg:grid lg:grid-cols-12 lg:gap-x-12 lg:items-start">
-            {/* Main content */}
             <div className="lg:col-span-7">
-              {/* Progress Steps */}
               <div className="mb-8">
                 <div className="relative">
                   <div className="absolute top-4 w-full h-0.5 bg-gray-200 z-0"></div>
@@ -615,7 +588,6 @@ export default function CheckoutPage() {
               </Card>
             </div>
             
-            {/* Order Summary */}
             <div className="lg:col-span-5 mt-8 lg:mt-0">
               <div className="bg-gray-50 rounded-lg p-6 sticky top-6">
                 <h2 className="text-lg font-medium text-gray-900 mb-4">Order Summary</h2>

@@ -40,18 +40,13 @@ export default function BuyerOrdersPage() {
     enabled: !!user,
   });
   
-  // Filter orders based on status and search term
   const filteredOrders = orders.filter(order => {
-    // Filter by status
     if (filter !== "all" && order.status !== filter) {
       return false;
     }
-    
-    // Filter by search term (order ID)
     if (searchTerm && !order.id.toString().includes(searchTerm)) {
       return false;
     }
-    
     return true;
   });
 
@@ -73,19 +68,19 @@ export default function BuyerOrdersPage() {
         </h1>
         
         <Card>
-          <CardHeader>
+          <CardHeader className="md:static sticky top-16 z-20 bg-white border-b">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <div>
                 <CardTitle>Order History</CardTitle>
                 <CardDescription>View and track all your orders</CardDescription>
               </div>
               
-              <div className="flex flex-col sm:flex-row gap-3">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                   <Input
                     placeholder="Search by order #"
-                    className="pl-10 min-w-[200px]"
+                    className="pl-10 w-full sm:w-[200px] rounded-full"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
@@ -95,7 +90,7 @@ export default function BuyerOrdersPage() {
                   value={filter}
                   onValueChange={(value) => setFilter(value)}
                 >
-                  <SelectTrigger className="w-[180px]">
+                  <SelectTrigger className="w-full sm:w-[180px] rounded-full">
                     <SelectValue placeholder="Filter by status" />
                   </SelectTrigger>
                   <SelectContent>
