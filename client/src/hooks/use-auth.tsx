@@ -104,6 +104,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         variant: "destructive",
       });
     },
+    // Avoid retrying registration automatically to prevent duplicate requests
+    // which can lead to a "username already exists" error even when the first
+    // attempt succeeds.
+    retry: false,
   });
 
   const logoutMutation = useMutation({
