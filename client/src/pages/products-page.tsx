@@ -13,8 +13,6 @@ export default function ProductsPage() {
   const [filters, setFilters] = useState({
     search: "",
     category: "All Categories",
-    minPrice: 0,
-    maxPrice: 1000,
     condition: "All Conditions",
     sort: "newest"
   });
@@ -38,11 +36,6 @@ export default function ProductsPage() {
     
     // Filter by category
     if (filters.category !== "All Categories" && product.category !== filters.category) {
-      return false;
-    }
-    
-    // Filter by price range
-    if (product.price < filters.minPrice || product.price > filters.maxPrice) {
       return false;
     }
     
@@ -108,7 +101,6 @@ export default function ProductsPage() {
             "Refurbished",
             "Used"
           ]}
-          maxPriceValue={1000}
         />
         
         <div className="flex justify-between items-center mb-6">
