@@ -21,8 +21,12 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/use-auth";
 import { useCart } from "@/hooks/use-cart";
 import CartDrawer from "@/components/cart/cart-drawer";
+import { ReactNode } from "react";
 
-export default function Header() {
+interface HeaderProps {
+  dashboardTabs?: ReactNode;
+}
+export default function Header({ dashboardTabs }: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [location] = useLocation();
   const { user, logoutMutation } = useAuth();
@@ -254,7 +258,15 @@ export default function Header() {
           </div>
         )}
       </header>
-      
+
+      {dashboardTabs && (
+        <div className="bg-gray-50 border-t">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2">
+            {dashboardTabs}
+          </div>
+        </div>
+      )}
+
       <CartDrawer />
     </>
   );
