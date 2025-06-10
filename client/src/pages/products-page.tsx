@@ -6,7 +6,7 @@ import Footer from "@/components/layout/footer";
 import ProductCard from "@/components/products/product-card";
 import ProductFilter from "@/components/products/product-filter";
 import { Button } from "@/components/ui/button";
-import { Loader2, Grid3X3, List } from "lucide-react";
+import { Loader2, Grid3X3, List, ShoppingCart } from "lucide-react";
 
 export default function ProductsPage() {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
