@@ -5,7 +5,8 @@ import {
   orderItems, OrderItem, InsertOrderItem,
   sellerApplications, SellerApplication, InsertSellerApplication,
   carts, Cart, InsertCart,
-  addresses, Address, InsertAddress
+  addresses, Address, InsertAddress,
+  paymentMethods, PaymentMethod, InsertPaymentMethod
 } from "@shared/schema";
 import session from "express-session";
 import { db, pool } from "./db";
@@ -55,6 +56,13 @@ export interface IStorage {
   createAddress(address: InsertAddress): Promise<Address>;
   updateAddress(id: number, address: Partial<Address>): Promise<Address | undefined>;
   deleteAddress(id: number): Promise<boolean>;
+
+  // Payment method methods
+  getPaymentMethods(userId: number): Promise<PaymentMethod[]>;
+  getPaymentMethod(id: number): Promise<PaymentMethod | undefined>;
+  createPaymentMethod(method: InsertPaymentMethod): Promise<PaymentMethod>;
+  updatePaymentMethod(id: number, method: Partial<PaymentMethod>): Promise<PaymentMethod | undefined>;
+  deletePaymentMethod(id: number): Promise<boolean>;
 
   getLowStockProducts(userId: number, threshold: number): Promise<Product[]>;
   
@@ -366,6 +374,35 @@ export class DatabaseStorage implements IStorage {
   async deleteAddress(id: number): Promise<boolean> {
     const [address] = await db.delete(addresses).where(eq(addresses.id, id)).returning();
     return !!address;
+  }
+
+  // Payment method methods
+  async getPaymentMethods(userId: number): Promise<PaymentMethod[]> {
+    return await db.select().from(paymentMethods).where(eq(paymentMethods.userId, userId));
+  }
+
+  async getPaymentMethod(id: number): Promise<PaymentMethod | undefined> {
+    const [method] = await db.select().from(paymentMethods).where(eq(paymentMethods.id, id));
+    return method;
+  }
+
+  async createPaymentMethod(methodData: InsertPaymentMethod): Promise<PaymentMethod> {
+    const [method] = await db.insert(paymentMethods).values(methodData).returning();
+    return method;
+  }
+
+  async updatePaymentMethod(id: number, methodData: Partial<PaymentMethod>): Promise<PaymentMethod | undefined> {
+    const [method] = await db
+      .update(paymentMethods)
+      .set(methodData)
+      .where(eq(paymentMethods.id, id))
+      .returning();
+    return method;
+  }
+
+  async deletePaymentMethod(id: number): Promise<boolean> {
+    const [method] = await db.delete(paymentMethods).where(eq(paymentMethods.id, id)).returning();
+    return !!method;
   }
 
   // Cart methods
