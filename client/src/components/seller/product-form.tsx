@@ -129,11 +129,9 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
     
     if (imageUrls.length === 0) {
       toast({
-        title: "Error",
-        description: "Please add at least one product image.",
-        variant: "destructive",
+        title: "Warning",
+        description: "Submitting product without any images.",
       });
-      return;
     }
     
     // Ensure available units don't exceed total units
@@ -592,11 +590,8 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
             </div>
           </div>
           <FormDescription>
-            Add images for your product by URL or uploading from your computer. At least one image is required.
+            Add images for your product by URL or upload from your computer. Images are optional.
           </FormDescription>
-          {imageUrls.length === 0 && (
-            <p className="text-sm font-medium text-destructive mt-1">At least one product image is required</p>
-          )}
         </div>
         
         <Button type="submit" className="w-full" disabled={isPending}>
