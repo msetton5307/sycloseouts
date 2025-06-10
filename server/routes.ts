@@ -384,6 +384,75 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Allow authenticated users to update their own contact info
+  app.put("/api/users/me", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user as Express.User;
+      const updatedUser = await storage.updateUser(user.id, {
+        phone: req.body.phone,
+      });
+
+      if (!updatedUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const { password, ...userWithoutPassword } = updatedUser;
+      res.json(userWithoutPassword);
+    } catch (error) {
+      handleApiError(res, error);
+    }
+  });
+
+  // Address routes
+  app.get("/api/addresses", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user as Express.User;
+      const addresses = await storage.getAddresses(user.id);
+      res.json(addresses);
+    } catch (error) {
+      handleApiError(res, error);
+    }
+  });
+
+  app.post("/api/addresses", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user as Express.User;
+      const address = await storage.createAddress({ ...req.body, userId: user.id });
+      res.status(201).json(address);
+    } catch (error) {
+      handleApiError(res, error);
+    }
+  });
+
+  app.put("/api/addresses/:id", isAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id, 10);
+      const existing = await storage.getAddress(id);
+      if (!existing || existing.userId !== (req.user as Express.User).id) {
+        return res.status(404).json({ message: "Address not found" });
+      }
+
+      const updated = await storage.updateAddress(id, req.body);
+      res.json(updated);
+    } catch (error) {
+      handleApiError(res, error);
+    }
+  });
+
+  app.delete("/api/addresses/:id", isAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id, 10);
+      const existing = await storage.getAddress(id);
+      if (!existing || existing.userId !== (req.user as Express.User).id) {
+        return res.status(404).json({ message: "Address not found" });
+      }
+      await storage.deleteAddress(id);
+      res.sendStatus(204);
+    } catch (error) {
+      handleApiError(res, error);
+    }
+  });
+
   // Create the HTTP server
   const httpServer = createServer(app);
   return httpServer;

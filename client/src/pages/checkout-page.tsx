@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useCart } from "@/hooks/use-cart";
 import { useAuth } from "@/hooks/use-auth";
@@ -19,7 +19,7 @@ import { Separator } from "@/components/ui/separator";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Loader2, CheckCircle, CreditCard, Building, ShoppingCart } from "lucide-react";
 import { InsertOrder, InsertOrderItem } from "@shared/schema";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
@@ -35,6 +35,9 @@ export default function CheckoutPage() {
   const [order, setOrder] = useState<any | null>(null);
   
   // Form states
+  const [addresses, setAddresses] = useState<any[]>([]);
+  const [selectedAddressId, setSelectedAddressId] = useState<string | number>("new");
+
   const [shippingInfo, setShippingInfo] = useState({
     name: user ? `${user.firstName} ${user.lastName}` : "",
     company: user?.company || "",
@@ -43,7 +46,7 @@ export default function CheckoutPage() {
     state: "",
     zipCode: "",
     country: "United States",
-    phone: "",
+    phone: user?.phone || "",
     email: user?.email || "",
     notes: ""
   });
@@ -56,6 +59,39 @@ export default function CheckoutPage() {
     paymentMethod: "credit_card",
     billingAddressSameAsShipping: true
   });
+
+  useEffect(() => {
+    const fetchAddresses = async () => {
+      if (!user) return;
+      try {
+        const res = await apiRequest("GET", "/api/addresses");
+        const data = await res.json();
+        setAddresses(data);
+        if (data.length > 0) {
+          setSelectedAddressId(data[0].id);
+          setShippingInfo({
+            ...data[0],
+            email: user.email || "",
+            notes: "",
+          });
+        }
+      } catch (err) {
+        console.error("Failed to load addresses", err);
+      }
+    };
+    fetchAddresses();
+  }, [user]);
+
+  useEffect(() => {
+    if (selectedAddressId === "new") return;
+    const addr = addresses.find(a => a.id === selectedAddressId);
+    if (addr) {
+      setShippingInfo(info => ({
+        ...info,
+        ...addr,
+      }));
+    }
+  }, [selectedAddressId, addresses]);
   
   const handleShippingSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -83,6 +119,30 @@ export default function CheckoutPage() {
       // For each item, find the seller ID
       if (items.length === 0) {
         throw new Error("Your cart is empty");
+      }
+
+      // Save phone and address for future checkouts
+      try {
+        await apiRequest("PUT", "/api/users/me", { phone: shippingInfo.phone });
+        queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+      } catch (err) {
+        console.error("Failed to save contact info", err);
+      }
+
+      try {
+        if (selectedAddressId === "new") {
+          await apiRequest("POST", "/api/addresses", shippingInfo);
+        } else {
+          await apiRequest(
+            "PUT",
+            `/api/addresses/${selectedAddressId}`,
+            shippingInfo,
+          );
+        }
+        const res = await apiRequest("GET", "/api/addresses");
+        setAddresses(await res.json());
+      } catch (err) {
+        console.error("Failed to save address", err);
       }
       
       // Group items by seller
@@ -174,6 +234,27 @@ export default function CheckoutPage() {
   const renderShippingForm = () => (
     <form onSubmit={handleShippingSubmit}>
       <div className="space-y-6">
+        {addresses.length > 0 && (
+          <div>
+            <Label htmlFor="addressSelect">Saved Addresses</Label>
+            <Select
+              value={String(selectedAddressId)}
+              onValueChange={(value) => setSelectedAddressId(value === "new" ? "new" : parseInt(value))}
+            >
+              <SelectTrigger id="addressSelect">
+                <SelectValue placeholder="Choose an address" />
+              </SelectTrigger>
+              <SelectContent>
+                {addresses.map((addr) => (
+                  <SelectItem key={addr.id} value={String(addr.id)}>
+                    {addr.address}, {addr.city}
+                  </SelectItem>
+                ))}
+                <SelectItem value="new">Add New Address</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        )}
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
           <div>
             <Label htmlFor="name">Full Name</Label>
