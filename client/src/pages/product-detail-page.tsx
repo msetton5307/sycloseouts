@@ -249,7 +249,7 @@ export default function ProductDetailPage() {
                   </div>
                   
                   <Button
-                    className="w-full"
+                    className="w-full hidden md:flex"
                     size="lg"
                     onClick={handleAddToCart}
                     disabled={quantity < product.minOrderQuantity}
@@ -339,9 +339,24 @@ export default function ProductDetailPage() {
         </div>
         
         <Separator className="my-10" />
-        
+
         {/* Related Products would go here */}
-        
+
+        {/* Sticky Add to Cart bar for mobile */}
+        {product.availableUnits > 0 && (
+          <div className="fixed inset-x-0 bottom-0 z-40 bg-white border-t shadow p-4 md:hidden">
+            <Button
+              className="w-full"
+              size="lg"
+              onClick={handleAddToCart}
+              disabled={quantity < product.minOrderQuantity}
+            >
+              <ShoppingCart className="mr-2 h-5 w-5" />
+              Add to Cart
+            </Button>
+          </div>
+        )}
+
       </main>
       <Footer />
     </>
