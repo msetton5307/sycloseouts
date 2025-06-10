@@ -21,8 +21,12 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/use-auth";
 import { useCart } from "@/hooks/use-cart";
 import CartDrawer from "@/components/cart/cart-drawer";
+import { ReactNode } from "react";
 
-export default function Header() {
+interface HeaderProps {
+  dashboardTabs?: ReactNode;
+}
+export default function Header({ dashboardTabs }: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [location] = useLocation();
   const { user, logoutMutation } = useAuth();
@@ -45,7 +49,7 @@ export default function Header() {
                   <span className="text-primary font-bold text-2xl cursor-pointer">SY Closeouts</span>
                 </Link>
               </div>
-              <nav className="hidden sm:ml-6 sm:flex sm:space-x-8">
+              <nav className="hidden sm:ml-6 sm:flex sm:space-x-8 items-center">
                 <Link href="/" className={`${isActive('/') ? 'border-primary text-gray-900' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}>
                   Home
                 </Link>
@@ -61,6 +65,9 @@ export default function Header() {
                 <Link href="/about" className={`${isActive('/about') ? 'border-primary text-gray-900' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}>
                   About
                 </Link>
+                {dashboardTabs && (
+                  <div className="ml-8">{dashboardTabs}</div>
+                )}
               </nav>
             </div>
             
@@ -254,7 +261,7 @@ export default function Header() {
           </div>
         )}
       </header>
-      
+
       <CartDrawer />
     </>
   );

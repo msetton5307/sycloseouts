@@ -69,7 +69,20 @@ export default function SellerDashboard() {
   
   return (
     <>
-      <Header />
+    <Tabs
+      defaultValue={activeTab}
+      onValueChange={setActiveTab}
+      className="space-y-6"
+    >
+      <Header
+        dashboardTabs={
+          <TabsList className="grid grid-cols-3 md:flex md:w-auto">
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="orders">Orders</TabsTrigger>
+            <TabsTrigger value="profile">Profile</TabsTrigger>
+          </TabsList>
+        }
+      />
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -96,14 +109,7 @@ export default function SellerDashboard() {
           </div>
         </div>
         
-        <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid grid-cols-3 md:flex md:w-auto">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="orders">Orders</TabsTrigger>
-            <TabsTrigger value="profile">Profile</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="overview" className="space-y-6">
+        <TabsContent value="overview" className="space-y-6">
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               <Card>
@@ -488,9 +494,9 @@ export default function SellerDashboard() {
               </Card>
             </div>
           </TabsContent>
+        </main>
         </Tabs>
-      </main>
-      <Footer />
-    </>
+        <Footer />
+      </>
   );
 }

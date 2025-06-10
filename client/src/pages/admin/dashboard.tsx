@@ -77,7 +77,29 @@ export default function AdminDashboard() {
   
   return (
     <>
-      <Header />
+    <Tabs
+      defaultValue={activeTab}
+      onValueChange={setActiveTab}
+      className="space-y-6"
+    >
+      <Header
+        dashboardTabs={
+          <TabsList className="grid grid-cols-3 md:flex md:w-auto">
+            <TabsTrigger value="overview">
+              <LayoutDashboard className="h-4 w-4 mr-2" />
+              Overview
+            </TabsTrigger>
+            <TabsTrigger value="users">
+              <Users className="h-4 w-4 mr-2" />
+              Users
+            </TabsTrigger>
+            <TabsTrigger value="sales">
+              <BarChart4 className="h-4 w-4 mr-2" />
+              Sales
+            </TabsTrigger>
+          </TabsList>
+        }
+      />
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -109,23 +131,7 @@ export default function AdminDashboard() {
           </div>
         </div>
         
-        <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid grid-cols-3 md:flex md:w-auto">
-            <TabsTrigger value="overview">
-              <LayoutDashboard className="h-4 w-4 mr-2" />
-              Overview
-            </TabsTrigger>
-            <TabsTrigger value="users">
-              <Users className="h-4 w-4 mr-2" />
-              Users
-            </TabsTrigger>
-            <TabsTrigger value="sales">
-              <BarChart4 className="h-4 w-4 mr-2" />
-              Sales
-            </TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="overview" className="space-y-6">
+        <TabsContent value="overview" className="space-y-6">
             {isLoading ? (
               <div className="flex justify-center py-12">
                 <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -554,9 +560,9 @@ export default function AdminDashboard() {
               </CardContent>
             </Card>
           </TabsContent>
-        </Tabs>
       </main>
-      <Footer />
-    </>
+    </Tabs>
+    <Footer />
+  </>
   );
 }
