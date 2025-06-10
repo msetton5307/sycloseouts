@@ -219,7 +219,7 @@ export default function ProductDetailPage() {
                   <label htmlFor="quantity" className="block text-sm font-medium text-gray-700 mb-2">
                     Quantity
                   </label>
-                  <div className="flex items-center mb-4">
+                  <div className="flex flex-col sm:flex-row items-center mb-4 space-y-2 sm:space-y-0 sm:space-x-2">
                     <Button
                       variant="outline"
                       size="icon"
