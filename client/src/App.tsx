@@ -22,6 +22,7 @@ import SellerApply from "@/pages/seller/apply";
 import AdminDashboard from "@/pages/admin/dashboard";
 import AdminUsers from "@/pages/admin/users";
 import AdminApplications from "@/pages/admin/applications";
+import AboutPage from "@/pages/about-page";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -33,6 +34,7 @@ function Router() {
       <Route path="/products/:id" component={ProductDetailPage} />
       <Route path="/auth" component={AuthPage} />
       <Route path="/cart" component={CartPage} />
+      <Route path="/about" component={AboutPage} />
       
       {/* Protected seller application route */}
       <ProtectedRoute path="/seller/apply" component={SellerApply} allowedRoles={["buyer", "seller", "admin"]} />
