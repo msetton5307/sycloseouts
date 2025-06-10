@@ -25,9 +25,10 @@ import { ReactNode } from "react";
 
 interface HeaderProps {
   dashboardTabs?: ReactNode;
+  onProfileClick?: () => void;
 }
 
-export default function Header({ dashboardTabs }: HeaderProps) {
+export default function Header({ dashboardTabs, onProfileClick }: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [location] = useLocation();
   const { user, logoutMutation } = useAuth();
@@ -139,21 +140,29 @@ export default function Header({ dashboardTabs }: HeaderProps) {
               {user ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                    <Button
+                      variant="ghost"
+                      className="relative h-8 w-8 rounded-full"
+                    >
                       <Avatar className="h-8 w-8">
-                        <AvatarImage src="https://github.com/shadcn.png" alt={user.username} />
-                        <AvatarFallback>{user.firstName.charAt(0)}{user.lastName.charAt(0)}</AvatarFallback>
+                        <AvatarImage
+                          src="https://github.com/shadcn.png"
+                          alt={user.username}
+                        />
+                        <AvatarFallback>
+                          {user.firstName.charAt(0)}
+                          {user.lastName.charAt(0)}
+                        </AvatarFallback>
                       </Avatar>
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem>
-                      <UserIcon className="mr-2 h-4 w-4" />
-                      <Link href={user.role === 'seller' ? '/seller/dashboard' : '/buyer/dashboard'}>
-                        <span>Dashboard</span>
-                      </Link>
+                    <DropdownMenuItem onSelect={() => onProfileClick?.()}>
+                      \
+                      <UserIcon className="mr-2 h-4 w-4" />\<span>Profile</span>
+                      \
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={handleLogout}>
+                    <DropdownMenuItem onSelect={handleLogout}>
                       <LogOut className="mr-2 h-4 w-4" />
                       <span>Logout</span>
                     </DropdownMenuItem>
@@ -161,7 +170,9 @@ export default function Header({ dashboardTabs }: HeaderProps) {
                 </DropdownMenu>
               ) : (
                 <Link href="/auth">
-                  <Button className="bg-primary hover:bg-blue-700">Sign In</Button>
+                  <Button className="bg-primary hover:bg-blue-700">
+                    Sign In
+                  </Button>
                 </Link>
               )}
             </div>
@@ -175,7 +186,11 @@ export default function Header({ dashboardTabs }: HeaderProps) {
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
               >
                 <span className="sr-only">Open main menu</span>
-                {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+                {isMenuOpen ? (
+                  <X className="h-6 w-6" />
+                ) : (
+                  <Menu className="h-6 w-6" />
+                )}
               </Button>
             </div>
           </div>
@@ -236,18 +251,30 @@ export default function Header({ dashboardTabs }: HeaderProps) {
                 <div className="flex items-center px-4">
                   <div className="flex-shrink-0">
                     <Avatar className="h-10 w-10">
-                      <AvatarImage src="https://github.com/shadcn.png" alt={user.username} />
-                      <AvatarFallback>{user.firstName.charAt(0)}{user.lastName.charAt(0)}</AvatarFallback>
+                      <AvatarImage
+                        src="https://github.com/shadcn.png"
+                        alt={user.username}
+                      />
+                      <AvatarFallback>
+                        {user.firstName.charAt(0)}
+                        {user.lastName.charAt(0)}
+                      </AvatarFallback>
                     </Avatar>
                   </div>
                   <div className="ml-3">
                     <div className="text-base font-medium text-gray-800">
                       {user.firstName} {user.lastName}
                     </div>
-                    <div className="text-sm font-medium text-gray-500">{user.email}</div>
+                    <div className="text-sm font-medium text-gray-500">
+                      {user.email}
+                    </div>
                   </div>
                   <div className="ml-auto flex space-x-4">
-                    <Button variant="ghost" size="icon" className="text-gray-400 hover:text-gray-500 relative">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="text-gray-400 hover:text-gray-500 relative"
+                    >
                       <Bell className="h-5 w-5" />
                       <Badge className="absolute -top-2 -right-2 bg-primary text-white text-xs h-5 w-5 flex items-center justify-center p-0">
                         2
@@ -272,13 +299,15 @@ export default function Header({ dashboardTabs }: HeaderProps) {
                   </div>
                 </div>
                 <div className="mt-3 space-y-1">
-                  <Link
-                    href={user.role === "seller" ? "/seller/dashboard" : "/buyer/dashboard"}
-                    className="block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100"
-                    onClick={() => setIsMenuOpen(false)}
+                  <button
+                    className="w-full text-left block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100"
+                    onClick={() => {
+                      onProfileClick?.();
+                      setIsMenuOpen(false);
+                    }}
                   >
-                    Dashboard
-                  </Link>
+                    Profile
+                  </button>
                   <button
                     className="w-full text-left block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100 cursor-pointer"
                     onClick={() => {
@@ -294,7 +323,10 @@ export default function Header({ dashboardTabs }: HeaderProps) {
               <div className="pt-4 pb-3 border-t border-gray-200">
                 <div className="flex justify-center">
                   <Link href="/auth">
-                    <Button className="w-full max-w-xs mx-4 bg-primary hover:bg-blue-700" onClick={() => setIsMenuOpen(false)}>
+                    <Button
+                      className="w-full max-w-xs mx-4 bg-primary hover:bg-blue-700"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
                       Sign In
                     </Button>
                   </Link>
@@ -304,14 +336,6 @@ export default function Header({ dashboardTabs }: HeaderProps) {
           </div>
         )}
       </header>
-
-      {dashboardTabs && (
-        <div className="bg-gray-50 border-t">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2">
-            {dashboardTabs}
-          </div>
-        </div>
-      )}
 
       <CartDrawer />
     </>

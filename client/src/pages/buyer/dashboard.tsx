@@ -11,26 +11,21 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { ChangePasswordDialog } from "@/components/account/change-password-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { 
-  CalendarIcon, 
-  Package, 
-  Truck, 
-  Home, 
-  ShoppingBag, 
-  ShoppingCart, 
+import {
+  CalendarIcon,
+  Package,
+  Truck,
+  Home,
+  ShoppingBag,
+  ShoppingCart,
   BarChart4,
   PieChart,
   ListOrdered,
-  UserIcon
+  UserIcon,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { formatCurrency, formatDate } from "@/lib/utils";
@@ -39,60 +34,76 @@ import OrderStatus from "@/components/buyer/order-status";
 export default function BuyerDashboard() {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("overview");
-  
+
   const { data: orders = [], isLoading: isLoadingOrders } = useQuery<Order[]>({
     queryKey: ["/api/orders"],
     enabled: !!user,
   });
-  
-  const { data: recentProducts = [], isLoading: isLoadingProducts } = useQuery<Product[]>({
+
+  const { data: recentProducts = [], isLoading: isLoadingProducts } = useQuery<
+    Product[]
+  >({
     queryKey: ["/api/products"],
     enabled: !!user,
   });
 
   // Calculate dashboard stats
   const totalOrders = orders.length;
-  const pendingOrders = orders.filter(order => order.status === "ordered").length;
-  const deliveredOrders = orders.filter(order => order.status === "delivered").length;
+  const pendingOrders = orders.filter(
+    (order) => order.status === "ordered",
+  ).length;
+  const deliveredOrders = orders.filter(
+    (order) => order.status === "delivered",
+  ).length;
   const totalSpent = orders.reduce((sum, order) => sum + order.totalAmount, 0);
-  
+
   return (
     <>
-    <Tabs
-      defaultValue={activeTab}
-      onValueChange={setActiveTab}
-      className="space-y-6"
-    >
-      <Header
-        dashboardTabs={
-          <TabsList className="grid grid-cols-3 md:flex md:w-auto">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="orders">Orders</TabsTrigger>
-            <TabsTrigger value="profile">Profile</TabsTrigger>
-          </TabsList>
-        }
-      />
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-3xl font-extrabold tracking-tight text-gray-900">
-              Buyer Dashboard
-            </h1>
-            <p className="text-gray-500 mt-1">
-              Welcome back, {user?.firstName}
-            </p>
+      <Tabs
+        defaultValue={activeTab}
+        onValueChange={setActiveTab}
+        className="space-y-6"
+      >
+        <Header
+          dashboardTabs={
+            <TabsList className="flex space-x-8">
+              <TabsTrigger
+                value="overview"
+                className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium data-[state=active]:border-primary data-[state=active]:text-gray-900"
+              >
+                Overview
+              </TabsTrigger>
+              <TabsTrigger
+                value="orders"
+                className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium data-[state=active]:border-primary data-[state=active]:text-gray-900"
+              >
+                Orders
+              </TabsTrigger>
+            </TabsList>
+          }
+          onProfileClick={() => setActiveTab("profile")}
+        />
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h1 className="text-3xl font-extrabold tracking-tight text-gray-900">
+                Buyer Dashboard
+              </h1>
+              <p className="text-gray-500 mt-1">
+                Welcome back, {user?.firstName}
+              </p>
+            </div>
+            <div className="flex items-center space-x-4">
+              <Link href="/products">
+                <Button className="flex items-center">
+                  <ShoppingCart className="mr-2 h-4 w-4" />
+                  Shop Products
+                </Button>
+              </Link>
+            </div>
           </div>
-          <div className="flex items-center space-x-4">
-            <Link href="/products">
-              <Button className="flex items-center">
-                <ShoppingCart className="mr-2 h-4 w-4" />
-                Shop Products
-              </Button>
-            </Link>
-          </div>
-        </div>
-        
-        <TabsContent value="overview" className="space-y-6">
+
+          <TabsContent value="overview" className="space-y-6">
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               <Card>
@@ -107,7 +118,7 @@ export default function BuyerDashboard() {
                   </div>
                 </CardContent>
               </Card>
-              
+
               <Card>
                 <CardHeader className="pb-2">
                   <CardDescription>Pending Orders</CardDescription>
@@ -120,7 +131,7 @@ export default function BuyerDashboard() {
                   </div>
                 </CardContent>
               </Card>
-              
+
               <Card>
                 <CardHeader className="pb-2">
                   <CardDescription>Delivered Orders</CardDescription>
@@ -133,11 +144,13 @@ export default function BuyerDashboard() {
                   </div>
                 </CardContent>
               </Card>
-              
+
               <Card>
                 <CardHeader className="pb-2">
                   <CardDescription>Total Spent</CardDescription>
-                  <CardTitle className="text-3xl">{formatCurrency(totalSpent)}</CardTitle>
+                  <CardTitle className="text-3xl">
+                    {formatCurrency(totalSpent)}
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="text-sm text-gray-500 flex items-center">
@@ -147,7 +160,7 @@ export default function BuyerDashboard() {
                 </CardContent>
               </Card>
             </div>
-            
+
             {/* Recent Orders */}
             <Card>
               <CardHeader>
@@ -178,29 +191,37 @@ export default function BuyerDashboard() {
                             </p>
                           </div>
                           <div className="text-right">
-                            <p className="font-medium">{formatCurrency(order.totalAmount)}</p>
-                            <span className={`text-xs px-2 py-1 rounded-full ${
-                              order.status === "delivered" 
-                                ? "bg-green-100 text-green-800" 
-                                : order.status === "shipped" || order.status === "out_for_delivery"
-                                ? "bg-blue-100 text-blue-800"
-                                : "bg-yellow-100 text-yellow-800"
-                            }`}>
-                              {order.status.charAt(0).toUpperCase() + order.status.slice(1).replace("_", " ")}
+                            <p className="font-medium">
+                              {formatCurrency(order.totalAmount)}
+                            </p>
+                            <span
+                              className={`text-xs px-2 py-1 rounded-full ${
+                                order.status === "delivered"
+                                  ? "bg-green-100 text-green-800"
+                                  : order.status === "shipped" ||
+                                      order.status === "out_for_delivery"
+                                    ? "bg-blue-100 text-blue-800"
+                                    : "bg-yellow-100 text-yellow-800"
+                              }`}
+                            >
+                              {order.status.charAt(0).toUpperCase() +
+                                order.status.slice(1).replace("_", " ")}
                             </span>
                           </div>
                         </div>
-                        
+
                         <OrderStatus order={order} />
-                        
+
                         <div className="mt-4 flex justify-end">
                           <Link href={`/buyer/orders/${order.id}`}>
-                            <Button variant="outline" size="sm">View Details</Button>
+                            <Button variant="outline" size="sm">
+                              View Details
+                            </Button>
                           </Link>
                         </div>
                       </div>
                     ))}
-                    
+
                     <div className="text-center">
                       <Link href="/buyer/orders">
                         <Button variant="outline">View All Orders</Button>
@@ -210,8 +231,12 @@ export default function BuyerDashboard() {
                 ) : (
                   <div className="text-center py-6">
                     <ShoppingBag className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-1">No orders yet</h3>
-                    <p className="text-gray-500 mb-4">Start shopping to see your orders here.</p>
+                    <h3 className="text-lg font-medium text-gray-900 mb-1">
+                      No orders yet
+                    </h3>
+                    <p className="text-gray-500 mb-4">
+                      Start shopping to see your orders here.
+                    </p>
                     <Link href="/products">
                       <Button>Browse Products</Button>
                     </Link>
@@ -219,12 +244,14 @@ export default function BuyerDashboard() {
                 )}
               </CardContent>
             </Card>
-            
+
             {/* Product Recommendations */}
             <Card>
               <CardHeader>
                 <CardTitle>Recommended for You</CardTitle>
-                <CardDescription>Based on your purchase history</CardDescription>
+                <CardDescription>
+                  Based on your purchase history
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 {isLoadingProducts ? (
@@ -242,13 +269,15 @@ export default function BuyerDashboard() {
                     {recentProducts.slice(0, 3).map((product) => (
                       <Link key={product.id} href={`/products/${product.id}`}>
                         <div className="border rounded-lg overflow-hidden hover:shadow-md transition-shadow cursor-pointer">
-                          <img 
-                            src={product.images[0]} 
+                          <img
+                            src={product.images[0]}
                             alt={product.title}
                             className="h-40 w-full object-cover"
                           />
                           <div className="p-4">
-                            <h3 className="font-medium truncate">{product.title}</h3>
+                            <h3 className="font-medium truncate">
+                              {product.title}
+                            </h3>
                             <p className="text-primary font-semibold mt-1">
                               {formatCurrency(product.price)}/unit
                             </p>
@@ -259,18 +288,22 @@ export default function BuyerDashboard() {
                   </div>
                 ) : (
                   <div className="text-center py-6">
-                    <p className="text-gray-500">No product recommendations available.</p>
+                    <p className="text-gray-500">
+                      No product recommendations available.
+                    </p>
                   </div>
                 )}
               </CardContent>
             </Card>
           </TabsContent>
-          
+
           <TabsContent value="orders">
             <Card>
               <CardHeader>
                 <CardTitle>My Orders</CardTitle>
-                <CardDescription>Track and manage your purchases</CardDescription>
+                <CardDescription>
+                  Track and manage your purchases
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 {isLoadingOrders ? (
@@ -296,32 +329,40 @@ export default function BuyerDashboard() {
                             </p>
                           </div>
                           <div className="text-right">
-                            <p className="font-medium">{formatCurrency(order.totalAmount)}</p>
-                            <span className={`text-xs px-2 py-1 rounded-full ${
-                              order.status === "delivered" 
-                                ? "bg-green-100 text-green-800" 
-                                : order.status === "shipped" || order.status === "out_for_delivery"
-                                ? "bg-blue-100 text-blue-800"
-                                : "bg-yellow-100 text-yellow-800"
-                            }`}>
-                              {order.status.charAt(0).toUpperCase() + order.status.slice(1).replace("_", " ")}
+                            <p className="font-medium">
+                              {formatCurrency(order.totalAmount)}
+                            </p>
+                            <span
+                              className={`text-xs px-2 py-1 rounded-full ${
+                                order.status === "delivered"
+                                  ? "bg-green-100 text-green-800"
+                                  : order.status === "shipped" ||
+                                      order.status === "out_for_delivery"
+                                    ? "bg-blue-100 text-blue-800"
+                                    : "bg-yellow-100 text-yellow-800"
+                              }`}
+                            >
+                              {order.status.charAt(0).toUpperCase() +
+                                order.status.slice(1).replace("_", " ")}
                             </span>
                           </div>
                         </div>
-                        
+
                         <OrderStatus order={order} />
-                        
+
                         <div className="mt-4 flex justify-end space-x-2">
                           <Button variant="outline" size="sm" asChild>
-                            <Link href={`/buyer/orders/${order.id}`}>View Details</Link>
+                            <Link href={`/buyer/orders/${order.id}`}>
+                              View Details
+                            </Link>
                           </Button>
-                          
+
                           {order.trackingNumber && (
                             <Button variant="outline" size="sm">
                               Track Package
                             </Button>
                           )}
-                          
+
                           <Button variant="outline" size="sm">
                             Download Invoice
                           </Button>
@@ -332,8 +373,12 @@ export default function BuyerDashboard() {
                 ) : (
                   <div className="text-center py-6">
                     <ShoppingBag className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-1">No orders yet</h3>
-                    <p className="text-gray-500 mb-4">Start shopping to see your orders here.</p>
+                    <h3 className="text-lg font-medium text-gray-900 mb-1">
+                      No orders yet
+                    </h3>
+                    <p className="text-gray-500 mb-4">
+                      Start shopping to see your orders here.
+                    </p>
                     <Link href="/products">
                       <Button>Browse Products</Button>
                     </Link>
@@ -342,7 +387,7 @@ export default function BuyerDashboard() {
               </CardContent>
             </Card>
           </TabsContent>
-          
+
           <TabsContent value="profile">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <Card className="md:col-span-1">
@@ -353,23 +398,31 @@ export default function BuyerDashboard() {
                 <CardContent>
                   <div className="flex flex-col items-center">
                     <Avatar className="h-24 w-24 mb-4">
-                      <AvatarImage src="https://github.com/shadcn.png" alt={user?.username} />
+                      <AvatarImage
+                        src="https://github.com/shadcn.png"
+                        alt={user?.username}
+                      />
                       <AvatarFallback className="text-lg">
-                        {user?.firstName?.charAt(0)}{user?.lastName?.charAt(0)}
+                        {user?.firstName?.charAt(0)}
+                        {user?.lastName?.charAt(0)}
                       </AvatarFallback>
                     </Avatar>
-                    
-                    <h3 className="text-xl font-semibold mb-1">{user?.firstName} {user?.lastName}</h3>
+
+                    <h3 className="text-xl font-semibold mb-1">
+                      {user?.firstName} {user?.lastName}
+                    </h3>
                     <p className="text-gray-500 mb-4">{user?.email}</p>
-                    
+
                     <Button className="w-full mb-2">Edit Profile</Button>
                     <ChangePasswordDialog>
-                      <Button variant="outline" className="w-full">Change Password</Button>
+                      <Button variant="outline" className="w-full">
+                        Change Password
+                      </Button>
                     </ChangePasswordDialog>
                   </div>
                 </CardContent>
               </Card>
-              
+
               <Card className="md:col-span-2">
                 <CardHeader>
                   <CardTitle>Account Details</CardTitle>
@@ -377,35 +430,47 @@ export default function BuyerDashboard() {
                 <CardContent>
                   <div className="space-y-4">
                     <div>
-                      <h4 className="text-sm font-medium text-gray-500">Username</h4>
+                      <h4 className="text-sm font-medium text-gray-500">
+                        Username
+                      </h4>
                       <p className="mt-1">{user?.username}</p>
                     </div>
-                    
+
                     <div>
-                      <h4 className="text-sm font-medium text-gray-500">Email Address</h4>
+                      <h4 className="text-sm font-medium text-gray-500">
+                        Email Address
+                      </h4>
                       <p className="mt-1">{user?.email}</p>
                     </div>
-                    
+
                     <div>
-                      <h4 className="text-sm font-medium text-gray-500">Company</h4>
+                      <h4 className="text-sm font-medium text-gray-500">
+                        Company
+                      </h4>
                       <p className="mt-1">{user?.company || "Not specified"}</p>
                     </div>
-                    
+
                     <div>
-                      <h4 className="text-sm font-medium text-gray-500">Account Type</h4>
+                      <h4 className="text-sm font-medium text-gray-500">
+                        Account Type
+                      </h4>
                       <p className="mt-1 capitalize">{user?.role}</p>
                     </div>
-                    
+
                     <div>
-                      <h4 className="text-sm font-medium text-gray-500">Member Since</h4>
-                      <p className="mt-1">{user?.createdAt ? formatDate(user.createdAt) : "N/A"}</p>
+                      <h4 className="text-sm font-medium text-gray-500">
+                        Member Since
+                      </h4>
+                      <p className="mt-1">
+                        {user?.createdAt ? formatDate(user.createdAt) : "N/A"}
+                      </p>
                     </div>
                   </div>
                 </CardContent>
               </Card>
             </div>
           </TabsContent>
-      </main>
+        </main>
       </Tabs>
       <Footer />
     </>
