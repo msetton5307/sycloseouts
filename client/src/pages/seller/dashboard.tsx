@@ -18,6 +18,7 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
+import { ChangePasswordDialog } from "@/components/account/change-password-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { 
   BarChart4,
@@ -436,7 +437,9 @@ export default function SellerDashboard() {
                     <p className="text-primary font-medium mb-4">Verified Seller</p>
                     
                     <Button className="w-full mb-2">Edit Profile</Button>
-                    <Button variant="outline" className="w-full">Change Password</Button>
+                    <ChangePasswordDialog>
+                      <Button variant="outline" className="w-full">Change Password</Button>
+                    </ChangePasswordDialog>
                   </div>
                 </CardContent>
               </Card>
