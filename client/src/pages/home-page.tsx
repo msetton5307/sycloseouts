@@ -1,7 +1,6 @@
 import Hero from "@/components/home/hero";
-import Features from "@/components/home/features";
 import FeaturedProducts from "@/components/home/featured-products";
-import Categories from "@/components/home/categories";
+import Features from "@/components/home/features";
 import SellWithUs from "@/components/home/sell-with-us";
 import Testimonials from "@/components/home/testimonials";
 import CTA from "@/components/home/cta";
@@ -14,9 +13,8 @@ export default function HomePage() {
       <Header />
       <main className="flex-grow">
         <Hero />
-        <Features />
         <FeaturedProducts />
-        <Categories />
+        <Features />
         <SellWithUs />
         <Testimonials />
         <CTA />
