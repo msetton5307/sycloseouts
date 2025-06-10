@@ -85,7 +85,11 @@ export default function BuyerOrdersPage() {
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                   <Input
                     placeholder="Search by order #"
+ o480jd-codex/improve-mobile-view-for-buyer-screens
                     className="pl-10 w-full sm:w-[200px] rounded-full"
+
+                    className="pl-10 w-full sm:w-[200px]"
+ main
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
@@ -95,7 +99,11 @@ export default function BuyerOrdersPage() {
                   value={filter}
                   onValueChange={(value) => setFilter(value)}
                 >
+ o480jd-codex/improve-mobile-view-for-buyer-screens
                   <SelectTrigger className="w-full sm:w-[180px] rounded-full">
+
+                  <SelectTrigger className="w-full sm:w-[180px]">
+ main
                     <SelectValue placeholder="Filter by status" />
                   </SelectTrigger>
                   <SelectContent>
