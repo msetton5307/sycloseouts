@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated, isSeller, isAdmin } from "./auth";
+import { sendInvoiceEmail } from "./email";
 import { insertProductSchema, insertOrderSchema, insertOrderItemSchema, insertSellerApplicationSchema, orders as ordersTable, orderItems as orderItemsTable, products as productsTable } from "@shared/schema";
 import { db } from "./db";
 import { eq } from "drizzle-orm";
@@ -197,6 +198,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         buyerId: user.id
       });
 
+      const invoiceItems: {
+        title: string;
+        quantity: number;
+        unitPrice: number;
+        totalPrice: number;
+      }[] = [];
+
       const order = await db.transaction(async (tx) => {
         const [createdOrder] = await tx
           .insert(ordersTable)
@@ -207,7 +215,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           for (const item of req.body.items) {
             const orderItemData = insertOrderItemSchema.parse({
               ...item,
-              orderId: createdOrder.id
+              orderId: createdOrder.id,
             });
 
             await tx.insert(orderItemsTable).values(orderItemData);
@@ -222,12 +230,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 .update(productsTable)
                 .set({ availableUnits: product.availableUnits - item.quantity })
                 .where(eq(productsTable.id, item.productId));
+
+              invoiceItems.push({
+                title: product.title,
+                quantity: item.quantity,
+                unitPrice: item.unitPrice,
+                totalPrice: item.totalPrice,
+              });
             }
           }
         }
 
         return createdOrder;
       });
+
+      // send invoice email asynchronously, do not block response
+      sendInvoiceEmail(user.email, order, invoiceItems).catch(console.error);
 
       res.status(201).json(order);
     } catch (error) {
