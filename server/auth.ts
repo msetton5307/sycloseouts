@@ -18,6 +18,8 @@ declare global {
       firstName: string;
       lastName: string;
       company?: string | null;
+      phone?: string | null;
+      address?: string | null;
       role: string;
       isSeller: boolean | null;
       isApproved: boolean | null;

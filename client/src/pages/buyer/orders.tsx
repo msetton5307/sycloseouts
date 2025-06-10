@@ -40,18 +40,13 @@ export default function BuyerOrdersPage() {
     enabled: !!user,
   });
   
-  // Filter orders based on status and search term
   const filteredOrders = orders.filter(order => {
-    // Filter by status
     if (filter !== "all" && order.status !== filter) {
       return false;
     }
-    
-    // Filter by search term (order ID)
     if (searchTerm && !order.id.toString().includes(searchTerm)) {
       return false;
     }
-    
     return true;
   });
 
