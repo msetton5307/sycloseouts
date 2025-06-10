@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link } from "wouter";
+import { useState, useEffect } from "react";
+import { Link, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Order, Product } from "@shared/schema";
 import Header from "@/components/layout/header";
@@ -23,10 +23,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { 
   BarChart4,
   CalendarIcon, 
-  Package, 
+  Package,
   PackagePlus,
   PlusCircle,
-  UserIcon,
   DollarSign,
   PieChart,
   TrendingUp,
@@ -39,6 +38,14 @@ import { formatCurrency, formatDate } from "@/lib/utils";
 export default function SellerDashboard() {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("overview");
+  const [location] = useLocation();
+
+  useEffect(() => {
+    const hash = window.location.hash.replace("#", "");
+    if (hash) {
+      setActiveTab(hash);
+    }
+  }, [location]);
   
   const { data: products = [], isLoading: isLoadingProducts } = useQuery<Product[]>({
     queryKey: ["/api/products"],
@@ -75,16 +82,12 @@ export default function SellerDashboard() {
       onValueChange={setActiveTab}
       className="space-y-6"
     >
-      <Header
-        dashboardTabs={
-          <TabsList className="grid grid-cols-3 md:flex md:w-auto">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="orders">Orders</TabsTrigger>
-            <TabsTrigger value="profile">Profile</TabsTrigger>
-          </TabsList>
-        }
-      />
+      <Header />
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <TabsList className="mb-6 grid grid-cols-2 md:flex md:w-auto">
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="orders">Orders</TabsTrigger>
+        </TabsList>
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-3xl font-extrabold tracking-tight text-gray-900">

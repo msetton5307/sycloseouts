@@ -119,14 +119,17 @@ export default function Header() {
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem>
                       <UserIcon className="mr-2 h-4 w-4" />
-                      <span 
+                      <span
                         className="cursor-pointer"
                         onClick={() => {
-                          const path = user.role === 'seller' ? '/seller/dashboard' : '/buyer/dashboard';
+                          const path =
+                            user.role === 'seller'
+                              ? '/seller/dashboard#profile'
+                              : '/buyer/dashboard#profile';
                           window.location.href = path;
                         }}
                       >
-                        Dashboard
+                        Profile
                       </span>
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={handleLogout}>
@@ -240,15 +243,18 @@ export default function Header() {
                   </div>
                 </div>
                 <div className="mt-3 space-y-1">
-                  <div 
+                  <div
                     className="block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100 cursor-pointer"
                     onClick={() => {
                       setIsMenuOpen(false);
-                      const path = user.role === 'seller' ? '/seller/dashboard' : '/buyer/dashboard';
+                      const path =
+                        user.role === 'seller'
+                          ? '/seller/dashboard#profile'
+                          : '/buyer/dashboard#profile';
                       window.location.href = path;
                     }}
                   >
-                    Dashboard
+                    Profile
                   </div>
                   <div 
                     className="block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100 cursor-pointer"
