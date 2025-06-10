@@ -18,7 +18,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Loader2, CheckCircle, CreditCard, Building, ShoppingCart } from "lucide-react";
-import { InsertOrder, InsertOrderItem } from "@shared/schema";
+import { InsertOrder, InsertOrderItem, PaymentMethod } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import Header from "@/components/layout/header";
@@ -60,6 +60,9 @@ export default function CheckoutPage() {
     billingAddressSameAsShipping: true
   });
 
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
+  const [selectedPaymentId, setSelectedPaymentId] = useState<string | number>("new");
+
   useEffect(() => {
     const fetchAddresses = async () => {
       if (!user) return;
@@ -83,6 +86,30 @@ export default function CheckoutPage() {
   }, [user]);
 
   useEffect(() => {
+    const fetchPaymentMethods = async () => {
+      if (!user) return;
+      try {
+        const res = await apiRequest("GET", "/api/payment-methods");
+        const data = await res.json();
+        setPaymentMethods(data);
+        if (data.length > 0) {
+          setSelectedPaymentId(data[0].id);
+          setPaymentInfo((info) => ({
+            ...info,
+            cardNumber: "", // don't prefill sensitive data
+            nameOnCard: data[0].cardholderName,
+            expirationDate: `${data[0].expMonth}/${data[0].expYear}`,
+            paymentMethod: "credit_card",
+          }));
+        }
+      } catch (err) {
+        console.error("Failed to load payment methods", err);
+      }
+    };
+    fetchPaymentMethods();
+  }, [user]);
+
+  useEffect(() => {
     if (selectedAddressId === "new") return;
     const addr = addresses.find(a => a.id === selectedAddressId);
     if (addr) {
@@ -92,6 +119,20 @@ export default function CheckoutPage() {
       }));
     }
   }, [selectedAddressId, addresses]);
+
+  useEffect(() => {
+    if (selectedPaymentId === "new") return;
+    const pm = paymentMethods.find(p => p.id === selectedPaymentId);
+    if (pm) {
+      setPaymentInfo(info => ({
+        ...info,
+        nameOnCard: pm.cardholderName,
+        expirationDate: `${pm.expMonth}/${pm.expYear}`,
+        cardNumber: "",
+        paymentMethod: "credit_card",
+      }));
+    }
+  }, [selectedPaymentId, paymentMethods]);
   
   const handleShippingSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -149,6 +190,34 @@ export default function CheckoutPage() {
       } catch (err) {
         console.error("Failed to save address", err);
       }
+
+      // Save or update payment method
+      try {
+        const [expMonth, expYear] = paymentInfo.expirationDate.split("/");
+        if (selectedPaymentId === "new") {
+          const createRes = await apiRequest("POST", "/api/payment-methods", {
+            cardLast4: paymentInfo.cardNumber.slice(-4),
+            cardholderName: paymentInfo.nameOnCard,
+            expMonth,
+            expYear,
+            brand: "card",
+          });
+          const created = await createRes.json();
+          setSelectedPaymentId(created.id);
+        } else {
+          await apiRequest("PUT", `/api/payment-methods/${selectedPaymentId}`, {
+            cardLast4: paymentInfo.cardNumber.slice(-4),
+            cardholderName: paymentInfo.nameOnCard,
+            expMonth,
+            expYear,
+            brand: "card",
+          });
+        }
+        const res = await apiRequest("GET", "/api/payment-methods");
+        setPaymentMethods(await res.json());
+      } catch (err) {
+        console.error("Failed to save payment method", err);
+      }
       
       // Group items by seller
       const itemsBySeller: Record<number, any[]> = {};
@@ -171,6 +240,11 @@ export default function CheckoutPage() {
         const trackingNumber = generateTrackingNumber();
         const sellerTotal = sellerItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
         
+        const last4 =
+          selectedPaymentId === "new"
+            ? paymentInfo.cardNumber.slice(-4)
+            : paymentMethods.find((pm) => pm.id === selectedPaymentId)?.cardLast4 || "";
+
         const orderData: InsertOrder = {
           buyerId: user.id,
           sellerId: parseInt(sellerId),
@@ -179,7 +253,7 @@ export default function CheckoutPage() {
           shippingDetails: shippingInfo,
           paymentDetails: {
             method: paymentInfo.paymentMethod,
-            last4: paymentInfo.cardNumber.slice(-4),
+            last4,
           },
           estimatedDeliveryDate: estimatedDelivery,
           trackingNumber
@@ -219,23 +293,27 @@ export default function CheckoutPage() {
       <div className="space-y-6">
         {addresses.length > 0 && (
           <div>
-            <Label htmlFor="addressSelect">Saved Addresses</Label>
-            <Select
+            <Label>Saved Addresses</Label>
+            <RadioGroup
               value={String(selectedAddressId)}
               onValueChange={(value) => setSelectedAddressId(value === "new" ? "new" : parseInt(value))}
+              className="space-y-2 mt-2"
             >
-              <SelectTrigger id="addressSelect">
-                <SelectValue placeholder="Choose an address" />
-              </SelectTrigger>
-              <SelectContent>
-                {addresses.map((addr) => (
-                  <SelectItem key={addr.id} value={String(addr.id)}>
+              {addresses.map((addr) => (
+                <div key={addr.id} className="flex items-start space-x-2 border rounded-md p-3">
+                  <RadioGroupItem value={String(addr.id)} id={`checkout-addr-${addr.id}`} />
+                  <label htmlFor={`checkout-addr-${addr.id}`} className="text-sm leading-none cursor-pointer">
                     {addr.address}, {addr.city}
-                  </SelectItem>
-                ))}
-                <SelectItem value="new">Add New Address</SelectItem>
-              </SelectContent>
-            </Select>
+                  </label>
+                </div>
+              ))}
+              <div className="flex items-start space-x-2 border rounded-md p-3">
+                <RadioGroupItem value="new" id="checkout-new-address" />
+                <label htmlFor="checkout-new-address" className="text-sm leading-none cursor-pointer">
+                  Add New Address
+                </label>
+              </div>
+            </RadioGroup>
           </div>
         )}
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
@@ -360,7 +438,29 @@ export default function CheckoutPage() {
       <div className="space-y-6">
         <div>
           <Label>Payment Method</Label>
-          <RadioGroup 
+          {paymentMethods.length > 0 && (
+            <RadioGroup
+              value={String(selectedPaymentId)}
+              onValueChange={(value) => setSelectedPaymentId(value === "new" ? "new" : parseInt(value))}
+              className="space-y-2 mt-2"
+            >
+              {paymentMethods.map((pm) => (
+                <div key={pm.id} className="flex items-start space-x-2 border rounded-md p-3">
+                  <RadioGroupItem value={String(pm.id)} id={`pay-${pm.id}`} />
+                  <label htmlFor={`pay-${pm.id}`} className="text-sm leading-none cursor-pointer">
+                    {pm.brand} ending in {pm.cardLast4}
+                  </label>
+                </div>
+              ))}
+              <div className="flex items-start space-x-2 border rounded-md p-3">
+                <RadioGroupItem value="new" id="new-payment" />
+                <label htmlFor="new-payment" className="text-sm leading-none cursor-pointer">
+                  Add New Payment Method
+                </label>
+              </div>
+            </RadioGroup>
+          )}
+          <RadioGroup
             defaultValue="credit_card"
             value={paymentInfo.paymentMethod}
             onValueChange={(value) => setPaymentInfo({...paymentInfo, paymentMethod: value})}
@@ -383,7 +483,7 @@ export default function CheckoutPage() {
           </RadioGroup>
         </div>
         
-        {paymentInfo.paymentMethod === "credit_card" && (
+        {paymentInfo.paymentMethod === "credit_card" && selectedPaymentId === "new" && (
           <>
             <div>
               <Label htmlFor="cardNumber">Card Number</Label>

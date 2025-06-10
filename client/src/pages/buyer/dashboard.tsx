@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
-import { Order, Product } from "@shared/schema";
+import { Order, Product, Address, PaymentMethod } from "@shared/schema";
 import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
 import {
@@ -15,6 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { ChangePasswordDialog } from "@/components/account/change-password-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   CalendarIcon,
   Package,
@@ -44,6 +45,16 @@ export default function BuyerDashboard() {
     Product[]
   >({
     queryKey: ["/api/products"],
+    enabled: !!user,
+  });
+
+  const { data: addresses = [] } = useQuery<Address[]>({
+    queryKey: ["/api/addresses"],
+    enabled: !!user,
+  });
+
+  const { data: paymentMethods = [] } = useQuery<PaymentMethod[]>({
+    queryKey: ["/api/payment-methods"],
     enabled: !!user,
   });
 
@@ -466,6 +477,52 @@ export default function BuyerDashboard() {
                       </p>
                     </div>
                   </div>
+                </CardContent>
+              </Card>
+
+              <Card className="md:col-span-3">
+                <CardHeader>
+                  <CardTitle>Saved Addresses</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {addresses.length === 0 ? (
+                    <p className="text-sm text-gray-500">No saved addresses</p>
+                  ) : (
+                    <RadioGroup className="space-y-4">
+                      {addresses.map((addr) => (
+                        <div key={addr.id} className="flex items-start space-x-2 border rounded-md p-4">
+                          <RadioGroupItem value={String(addr.id)} id={`addr-${addr.id}`} />
+                          <label htmlFor={`addr-${addr.id}`} className="text-sm leading-none cursor-pointer">
+                            {addr.name} - {addr.address}, {addr.city}
+                          </label>
+                        </div>
+                      ))}
+                    </RadioGroup>
+                  )}
+                  <Button variant="outline" className="mt-4">Add New Address</Button>
+                </CardContent>
+              </Card>
+
+              <Card className="md:col-span-3">
+                <CardHeader>
+                  <CardTitle>Saved Payment Methods</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {paymentMethods.length === 0 ? (
+                    <p className="text-sm text-gray-500">No saved payment methods</p>
+                  ) : (
+                    <RadioGroup className="space-y-4">
+                      {paymentMethods.map((pm) => (
+                        <div key={pm.id} className="flex items-start space-x-2 border rounded-md p-4">
+                          <RadioGroupItem value={String(pm.id)} id={`pm-${pm.id}`} />
+                          <label htmlFor={`pm-${pm.id}`} className="text-sm leading-none cursor-pointer">
+                            {pm.brand} ending in {pm.cardLast4}
+                          </label>
+                        </div>
+                      ))}
+                    </RadioGroup>
+                  )}
+                  <Button variant="outline" className="mt-4">Add New Payment Method</Button>
                 </CardContent>
               </Card>
             </div>
