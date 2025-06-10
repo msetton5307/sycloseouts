@@ -195,3 +195,23 @@ export async function sendShippingUpdateEmail(to: string, order: Order) {
     console.error("Failed to send shipping update email", err);
   }
 }
+
+export async function sendSellerApprovalEmail(to: string) {
+  if (!transporter) {
+    console.warn("Email transport not configured; skipping seller approval email");
+    return;
+  }
+
+  const mailOptions = {
+    from: process.env.SMTP_FROM || user,
+    to,
+    subject: "Seller Application Approved",
+    text: "Your seller application has been approved. You can now access your seller dashboard.",
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+  } catch (err) {
+    console.error("Failed to send seller approval email", err);
+  }
+}

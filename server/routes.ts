@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated, isSeller, isAdmin } from "./auth";
-import { sendInvoiceEmail, sendShippingUpdateEmail } from "./email";
+import { sendInvoiceEmail, sendShippingUpdateEmail, sendSellerApprovalEmail } from "./email";
 import {
   insertProductSchema,
   insertOrderSchema,
@@ -409,13 +409,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         status: req.body.status
       });
 
-      // If approved, update user role to seller
+      // If approved, update user role to seller and notify via email
       if (req.body.status === "approved") {
         await storage.updateUser(application.userId, {
           role: "seller",
           isSeller: true,
           isApproved: true
         });
+
+        const user = await storage.getUser(application.userId);
+        if (user) {
+          sendSellerApprovalEmail(user.email).catch(console.error);
+        }
       }
 
       res.json(updatedApplication);

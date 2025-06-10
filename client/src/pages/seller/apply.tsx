@@ -45,10 +45,9 @@ type ApplicationFormData = z.infer<typeof applicationSchema>;
 
 export default function SellerApply() {
   const [, setLocation] = useLocation();
-  const { user, makeSeller } = useAuth();
+  const { user } = useAuth();
   const { toast } = useToast();
   const [isSubmitSuccess, setIsSubmitSuccess] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
 
   // Setup form with zod validation
   const form = useForm<ApplicationFormData>({
@@ -73,7 +72,7 @@ export default function SellerApply() {
     onSuccess: () => {
       toast({
         title: "Application Submitted",
-        description: "Your seller application has been submitted successfully. We'll review it shortly.",
+        description: "We received your application and will get back to you within 24 hours.",
       });
       setIsSubmitSuccess(true);
     },
@@ -102,7 +101,7 @@ export default function SellerApply() {
               Application Submitted!
             </h1>
             <p className="text-lg text-gray-600 mb-8">
-              Thank you for applying to be a seller on SY Closeouts. We'll review your application and get back to you within 2-3 business days.
+              Thank you for applying to be a seller on SY Closeouts. We received your application and will get back to you within 24 hours.
             </p>
             <div className="flex gap-4 justify-center">
               <Button 
@@ -179,53 +178,8 @@ export default function SellerApply() {
             <div className="bg-white rounded-lg shadow-lg p-8 lg:p-12">
               <h2 className="text-2xl font-bold mb-6">Seller Application</h2>
               <p className="text-gray-600 mb-8">
-                Please fill out the form below to apply as a seller. Our team will review your application and get back to you within 2-3 business days.
+                Please fill out the form below to apply as a seller. We will review your application and get back to you within 24 hours.
               </p>
-              
-              {/* Quick Seller Approval (For testing) */}
-              <div className="mb-8 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                <h3 className="text-lg font-medium mb-2">Developer Testing</h3>
-                <p className="text-sm text-gray-600 mb-4">
-                  Need to test seller features? Skip the application process and become a seller instantly.
-                </p>
-                <Button 
-                  type="button"
-                  variant="outline"
-                  onClick={async () => {
-                    setIsProcessing(true);
-                    try {
-                      const updatedUser = await makeSeller();
-                      if (updatedUser) {
-                        toast({
-                          title: "Success!",
-                          description: "You are now a seller. Redirecting to seller dashboard...",
-                        });
-                        setTimeout(() => {
-                          setLocation("/seller/dashboard");
-                        }, 1500);
-                      }
-                    } catch (error) {
-                      toast({
-                        title: "Error",
-                        description: "Failed to become a seller. Please try again.",
-                        variant: "destructive",
-                      });
-                    } finally {
-                      setIsProcessing(false);
-                    }
-                  }}
-                  disabled={isProcessing}
-                >
-                  {isProcessing ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Processing...
-                    </>
-                  ) : (
-                    "Make Me a Seller Instantly"
-                  )}
-                </Button>
-              </div>
               
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
