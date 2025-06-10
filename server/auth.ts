@@ -9,7 +9,6 @@ import { User } from "@shared/schema";
 
 declare global {
   namespace Express {
-    // Define the User interface in Express namespace without extending the imported User
     interface User {
       id: number;
       username: string;
@@ -55,7 +54,7 @@ export function setupAuth(app: Express) {
     saveUninitialized: true,
     store: storage.sessionStore,
     cookie: {
-      maxAge: 1000 * 60 * 60 * 24 * 7, // 1 week
+      maxAge: 1000 * 60 * 60 * 24 * 7,
       secure: process.env.NODE_ENV === "production",
       httpOnly: true,
     },
@@ -91,9 +90,20 @@ export function setupAuth(app: Express) {
     }
   });
 
+  async function loginAndSaveSession(req: Request, user: Express.User) {
+    await new Promise<void>((resolve, reject) => {
+      req.login(user, (err) => {
+        if (err) return reject(err);
+        req.session.save((saveErr) => {
+          if (saveErr) return reject(saveErr);
+          resolve();
+        });
+      });
+    });
+  }
+
   app.post("/api/register", async (req, res, next) => {
     try {
-      // Check if user already exists
       const existingUser = await storage.getUserByUsername(req.body.username);
       if (existingUser) {
         return res.status(400).json({ error: "Username already exists" });
@@ -107,14 +117,12 @@ export function setupAuth(app: Express) {
       const { address, city, state, zipCode, country, phone, ...userFields } =
         req.body;
 
-      // Create new user with hashed password
       const user = await storage.createUser({
         ...userFields,
         phone,
         password: await hashPassword(req.body.password),
       });
 
-      // Save initial address
       if (address && city && state && zipCode) {
         await storage.createAddress({
           userId: user.id,
@@ -129,24 +137,14 @@ export function setupAuth(app: Express) {
         });
       }
 
-      // Log user in after registration and wait for the session to be saved
-      await new Promise<void>((resolve, reject) => {
-        req.login(user, (err) => {
-          if (err) return reject(err);
-          req.session.save((saveErr) => {
-            if (saveErr) return reject(saveErr);
-            resolve();
-          });
-        });
-      });
+      await loginAndSaveSession(req, user);
 
-      // Return user without password
       const { password, ...userWithoutPassword } = user;
       res.status(201).json(userWithoutPassword);
     } catch (error: any) {
       if (
-        typeof error.message === "string" &&
-        error.message.includes("duplicate key")
+        (typeof error.message === "string" && error.message.includes("duplicate key")) ||
+        error?.code === "23505"
       ) {
         return res
           .status(400)
@@ -166,12 +164,13 @@ export function setupAuth(app: Express) {
             .status(401)
             .json({ error: "Invalid username or password" });
         }
-        req.login(user, (loginErr) => {
-          if (loginErr) return next(loginErr);
-          // Return user without password
-          const { password, ...userWithoutPassword } = user;
-          res.status(200).json(userWithoutPassword);
-        });
+
+        loginAndSaveSession(req, user)
+          .then(() => {
+            const { password, ...userWithoutPassword } = user;
+            res.status(200).json(userWithoutPassword);
+          })
+          .catch(next);
       },
     )(req, res, next);
   });
@@ -185,19 +184,15 @@ export function setupAuth(app: Express) {
 
   app.get("/api/user", (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
-    // Return user without password
     const { password, ...userWithoutPassword } = req.user;
     res.json(userWithoutPassword);
   });
 
-  // Temporary endpoint to make the current user a seller for testing
-  // Protected by admin check to prevent privilege escalation
   app.post("/api/make-seller", isAuthenticated, isAdmin, async (req, res) => {
     try {
       const user = req.user;
       console.log("Updating user to seller role:", user.id);
 
-      // Update the user in the database
       const updatedUser = await storage.updateUser(user.id, {
         role: "seller",
         isSeller: true,
@@ -208,16 +203,13 @@ export function setupAuth(app: Express) {
         return res.status(404).json({ message: "User not found" });
       }
 
-      // Simplify by just updating the user in the session directly
       req.user.role = "seller";
       req.user.isSeller = true;
       req.user.isApproved = true;
 
-      // Return user without password (using the updated session user)
       const { password, ...userWithoutPassword } = req.user;
       console.log("User updated to seller:", userWithoutPassword);
 
-      // Save the session to ensure changes persist
       req.session.save((err) => {
         if (err) {
           console.error("Session save error:", err);

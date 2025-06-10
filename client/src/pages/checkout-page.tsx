@@ -134,7 +134,9 @@ export default function CheckoutPage() {
       // Save or update shipping address
       try {
         if (selectedAddressId === "new") {
-          await apiRequest("POST", "/api/addresses", shippingInfo);
+          const createRes = await apiRequest("POST", "/api/addresses", shippingInfo);
+          const created = await createRes.json();
+          setSelectedAddressId(created.id);
         } else {
           await apiRequest(
             "PUT",
