@@ -4,7 +4,8 @@ import {
   orders, Order, InsertOrder,
   orderItems, OrderItem, InsertOrderItem,
   sellerApplications, SellerApplication, InsertSellerApplication,
-  carts, Cart, InsertCart
+  carts, Cart, InsertCart,
+  addresses, Address, InsertAddress
 } from "@shared/schema";
 import session from "express-session";
 import { db, pool } from "./db";
@@ -46,6 +47,13 @@ export interface IStorage {
   getSellerApplications(filter?: Partial<SellerApplication>): Promise<SellerApplication[]>;
   createSellerApplication(application: InsertSellerApplication): Promise<SellerApplication>;
   updateSellerApplication(id: number, application: Partial<SellerApplication>): Promise<SellerApplication | undefined>;
+
+  // Address methods
+  getAddresses(userId: number): Promise<Address[]>;
+  getAddress(id: number): Promise<Address | undefined>;
+  createAddress(address: InsertAddress): Promise<Address>;
+  updateAddress(id: number, address: Partial<Address>): Promise<Address | undefined>;
+  deleteAddress(id: number): Promise<boolean>;
   
   // Cart methods
   getCart(userId: number): Promise<Cart | undefined>;
@@ -299,6 +307,35 @@ export class DatabaseStorage implements IStorage {
       .where(eq(sellerApplications.id, id))
       .returning();
     return updatedApplication;
+  }
+
+  // Address methods
+  async getAddresses(userId: number): Promise<Address[]> {
+    return await db.select().from(addresses).where(eq(addresses.userId, userId));
+  }
+
+  async getAddress(id: number): Promise<Address | undefined> {
+    const [address] = await db.select().from(addresses).where(eq(addresses.id, id));
+    return address;
+  }
+
+  async createAddress(addressData: InsertAddress): Promise<Address> {
+    const [address] = await db.insert(addresses).values(addressData).returning();
+    return address;
+  }
+
+  async updateAddress(id: number, addressData: Partial<Address>): Promise<Address | undefined> {
+    const [address] = await db
+      .update(addresses)
+      .set(addressData)
+      .where(eq(addresses.id, id))
+      .returning();
+    return address;
+  }
+
+  async deleteAddress(id: number): Promise<boolean> {
+    const [address] = await db.delete(addresses).where(eq(addresses.id, id)).returning();
+    return !!address;
   }
 
   // Cart methods
