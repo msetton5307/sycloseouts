@@ -537,6 +537,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Payment method routes
+  app.get("/api/payment-methods", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user as Express.User;
+      const methods = await storage.getPaymentMethods(user.id);
+      res.json(methods);
+    } catch (error) {
+      handleApiError(res, error);
+    }
+  });
+
+  app.post("/api/payment-methods", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user as Express.User;
+      const method = await storage.createPaymentMethod({ ...req.body, userId: user.id });
+      res.status(201).json(method);
+    } catch (error) {
+      handleApiError(res, error);
+    }
+  });
+
+  app.put("/api/payment-methods/:id", isAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id, 10);
+      const existing = await storage.getPaymentMethod(id);
+      if (!existing || existing.userId !== (req.user as Express.User).id) {
+        return res.status(404).json({ message: "Payment method not found" });
+      }
+
+      const updated = await storage.updatePaymentMethod(id, req.body);
+      res.json(updated);
+    } catch (error) {
+      handleApiError(res, error);
+    }
+  });
+
+  app.delete("/api/payment-methods/:id", isAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id, 10);
+      const existing = await storage.getPaymentMethod(id);
+      if (!existing || existing.userId !== (req.user as Express.User).id) {
+        return res.status(404).json({ message: "Payment method not found" });
+      }
+      await storage.deletePaymentMethod(id);
+      res.sendStatus(204);
+    } catch (error) {
+      handleApiError(res, error);
+    }
+  });
+
   // Create the HTTP server
   const httpServer = createServer(app);
   return httpServer;
