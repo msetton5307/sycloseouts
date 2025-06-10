@@ -9,7 +9,6 @@ import { User } from "@shared/schema";
 
 declare global {
   namespace Express {
-    // Define the User interface in Express namespace without extending the imported User
     interface User {
       id: number;
       username: string;
@@ -55,10 +54,10 @@ export function setupAuth(app: Express) {
     saveUninitialized: true,
     store: storage.sessionStore,
     cookie: {
-      maxAge: 1000 * 60 * 60 * 24 * 7, // 1 week
+      maxAge: 1000 * 60 * 60 * 24 * 7,
       secure: process.env.NODE_ENV === "production",
-      httpOnly: true
-    }
+      httpOnly: true,
+    },
   };
 
   app.set("trust proxy", 1);
@@ -105,7 +104,6 @@ export function setupAuth(app: Express) {
 
   app.post("/api/register", async (req, res, next) => {
     try {
-      // Check if user already exists
       const existingUser = await storage.getUserByUsername(req.body.username);
       if (existingUser) {
         return res.status(400).json({ error: "Username already exists" });
@@ -119,14 +117,12 @@ export function setupAuth(app: Express) {
       const { address, city, state, zipCode, country, phone, ...userFields } =
         req.body;
 
-      // Create new user with hashed password
       const user = await storage.createUser({
         ...userFields,
         phone,
         password: await hashPassword(req.body.password),
       });
 
-      // Save initial address
       if (address && city && state && zipCode) {
         await storage.createAddress({
           userId: user.id,
@@ -141,10 +137,8 @@ export function setupAuth(app: Express) {
         });
       }
 
-      // Log user in after registration and wait for the session to be saved
       await loginAndSaveSession(req, user);
 
-      // Return user without password
       const { password, ...userWithoutPassword } = user;
       res.status(201).json(userWithoutPassword);
     } catch (error: any) {
@@ -170,6 +164,7 @@ export function setupAuth(app: Express) {
             .status(401)
             .json({ error: "Invalid username or password" });
         }
+
         loginAndSaveSession(req, user)
           .then(() => {
             const { password, ...userWithoutPassword } = user;
@@ -189,39 +184,32 @@ export function setupAuth(app: Express) {
 
   app.get("/api/user", (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
-    // Return user without password
     const { password, ...userWithoutPassword } = req.user;
     res.json(userWithoutPassword);
   });
 
-  // Temporary endpoint to make the current user a seller for testing
-  // Protected by admin check to prevent privilege escalation
   app.post("/api/make-seller", isAuthenticated, isAdmin, async (req, res) => {
     try {
       const user = req.user;
       console.log("Updating user to seller role:", user.id);
 
-      // Update the user in the database
       const updatedUser = await storage.updateUser(user.id, {
         role: "seller",
         isSeller: true,
-        isApproved: true
+        isApproved: true,
       });
 
       if (!updatedUser) {
         return res.status(404).json({ message: "User not found" });
       }
 
-      // Simplify by just updating the user in the session directly
       req.user.role = "seller";
       req.user.isSeller = true;
       req.user.isApproved = true;
 
-      // Return user without password (using the updated session user)
       const { password, ...userWithoutPassword } = req.user;
       console.log("User updated to seller:", userWithoutPassword);
 
-      // Save the session to ensure changes persist
       req.session.save((err) => {
         if (err) {
           console.error("Session save error:", err);
@@ -236,7 +224,11 @@ export function setupAuth(app: Express) {
   });
 }
 
-export function isAuthenticated(req: Request, res: Response, next: NextFunction) {
+export function isAuthenticated(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
   if (req.isAuthenticated()) {
     return next();
   }
