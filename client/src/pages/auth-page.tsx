@@ -75,6 +75,12 @@ export default function AuthPage() {
       firstName: "",
       lastName: "",
       company: "",
+      phone: "",
+      address: "",
+      city: "",
+      state: "",
+      zipCode: "",
+      country: "United States",
       role: defaultRole,
     },
   });
@@ -263,6 +269,90 @@ export default function AuthPage() {
                               <FormLabel>Company (Optional)</FormLabel>
                               <FormControl>
                                 <Input placeholder="Your company name" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={registerForm.control}
+                          name="phone"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Phone</FormLabel>
+                              <FormControl>
+                                <Input placeholder="555-123-4567" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={registerForm.control}
+                          name="address"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Street Address</FormLabel>
+                              <FormControl>
+                                <Input placeholder="123 Main St" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <div className="grid grid-cols-3 gap-4">
+                          <FormField
+                            control={registerForm.control}
+                            name="city"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>City</FormLabel>
+                                <FormControl>
+                                  <Input {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={registerForm.control}
+                            name="state"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>State</FormLabel>
+                                <FormControl>
+                                  <Input {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={registerForm.control}
+                            name="zipCode"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>ZIP</FormLabel>
+                                <FormControl>
+                                  <Input {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+
+                        <FormField
+                          control={registerForm.control}
+                          name="country"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Country</FormLabel>
+                              <FormControl>
+                                <Input {...field} />
                               </FormControl>
                               <FormMessage />
                             </FormItem>

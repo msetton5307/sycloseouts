@@ -104,11 +104,29 @@ export function setupAuth(app: Express) {
         return res.status(400).json({ error: "Email already exists" });
       }
 
+      const { address, city, state, zipCode, country, phone, ...userFields } = req.body;
+
       // Create new user with hashed password
       const user = await storage.createUser({
-        ...req.body,
+        ...userFields,
+        phone,
         password: await hashPassword(req.body.password),
       });
+
+      // Save initial address
+      if (address && city && state && zipCode) {
+        await storage.createAddress({
+          userId: user.id,
+          name: `${user.firstName} ${user.lastName}`,
+          company: user.company ?? undefined,
+          address,
+          city,
+          state,
+          zipCode,
+          country: country || "United States",
+          phone,
+        });
+      }
 
       // Log user in after registration
       req.login(user, (err) => {

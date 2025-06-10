@@ -27,6 +27,33 @@ export const usersRelations = relations(users, ({ many }) => ({
   carts: many(carts),
 }));
 
+// Addresses schema
+export const addresses = pgTable("addresses", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  name: text("name").notNull(),
+  company: text("company"),
+  address: text("address").notNull(),
+  city: text("city").notNull(),
+  state: text("state").notNull(),
+  zipCode: text("zip_code").notNull(),
+  country: text("country").notNull(),
+  phone: text("phone").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const addressesRelations = relations(addresses, ({ one }) => ({
+  user: one(users, {
+    fields: [addresses.userId],
+    references: [users.id],
+  }),
+}));
+
+export const insertAddressSchema = createInsertSchema(addresses).omit({
+  id: true,
+  createdAt: true,
+});
+
 export const insertUserSchema = createInsertSchema(users)
   .pick({
     username: true,
@@ -217,6 +244,9 @@ export type InsertSellerApplication = z.infer<typeof insertSellerApplicationSche
 
 export type Cart = typeof carts.$inferSelect;
 export type InsertCart = z.infer<typeof insertCartSchema>;
+
+export type Address = typeof addresses.$inferSelect;
+export type InsertAddress = z.infer<typeof insertAddressSchema>;
 
 // Cart item interface for the frontend
 export interface CartItem {
