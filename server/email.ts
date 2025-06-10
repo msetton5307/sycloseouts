@@ -175,3 +175,23 @@ export async function sendInvoiceEmail(
     console.error("Failed to send invoice email", err);
   }
 }
+
+export async function sendShippingUpdateEmail(to: string, order: Order) {
+  if (!transporter) {
+    console.warn("Email transport not configured; skipping shipping update email");
+    return;
+  }
+
+  const mailOptions = {
+    from: process.env.SMTP_FROM || user,
+    to,
+    subject: `Shipping update for Order #${order.id}`,
+    text: `Your order status is now: ${order.status}`,
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+  } catch (err) {
+    console.error("Failed to send shipping update email", err);
+  }
+}

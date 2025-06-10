@@ -9,7 +9,7 @@ import {
 } from "@shared/schema";
 import session from "express-session";
 import { db, pool } from "./db";
-import { eq, and, desc, SQL } from "drizzle-orm";
+import { eq, and, desc, SQL, ilike, lte } from "drizzle-orm";
 import connectPgSimple from "connect-pg-simple";
 
 const PgStore = connectPgSimple(session);
@@ -27,6 +27,7 @@ export interface IStorage {
   // Product methods
   getProduct(id: number): Promise<Product | undefined>;
   getProducts(filter?: Partial<Product>): Promise<Product[]>;
+  searchProducts(query: string, filter?: Partial<Product>): Promise<Product[]>;
   createProduct(product: InsertProduct): Promise<Product>;
   updateProduct(id: number, product: Partial<Product>): Promise<Product | undefined>;
   deleteProduct(id: number): Promise<boolean>;
@@ -54,6 +55,8 @@ export interface IStorage {
   createAddress(address: InsertAddress): Promise<Address>;
   updateAddress(id: number, address: Partial<Address>): Promise<Address | undefined>;
   deleteAddress(id: number): Promise<boolean>;
+
+  getLowStockProducts(userId: number, threshold: number): Promise<Product[]>;
   
   // Cart methods
   getCart(userId: number): Promise<Cart | undefined>;
@@ -150,6 +153,25 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(products.createdAt));
   }
 
+  async searchProducts(query: string, filter: Partial<Product> = {}): Promise<Product[]> {
+    const conditions: SQL<unknown>[] = [ilike(products.title, `%${query}%`)];
+
+    if (filter.category !== undefined) conditions.push(eq(products.category, filter.category));
+    if (filter.sellerId !== undefined) conditions.push(eq(products.sellerId, filter.sellerId));
+    if (filter.condition !== undefined) conditions.push(eq(products.condition, filter.condition));
+
+    let combinedCondition = conditions[0];
+    for (let i = 1; i < conditions.length; i++) {
+      combinedCondition = and(combinedCondition, conditions[i]);
+    }
+
+    return await db
+      .select()
+      .from(products)
+      .where(combinedCondition)
+      .orderBy(desc(products.createdAt));
+  }
+
   async createProduct(insertProduct: InsertProduct): Promise<Product> {
     const [product] = await db.insert(products).values(insertProduct).returning();
     return product;
@@ -170,6 +192,14 @@ export class DatabaseStorage implements IStorage {
       .where(eq(products.id, id))
       .returning();
     return !!deletedProduct;
+  }
+
+  async getLowStockProducts(userId: number, threshold: number): Promise<Product[]> {
+    return await db
+      .select()
+      .from(products)
+      .where(and(eq(products.sellerId, userId), lte(products.availableUnits, threshold)))
+      .orderBy(desc(products.createdAt));
   }
 
   // Order methods
