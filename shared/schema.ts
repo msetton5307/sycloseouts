@@ -54,6 +54,30 @@ export const insertAddressSchema = createInsertSchema(addresses).omit({
   createdAt: true,
 });
 
+// Payment methods schema
+export const paymentMethods = pgTable("payment_methods", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  cardLast4: text("card_last4").notNull(),
+  cardholderName: text("cardholder_name").notNull(),
+  expMonth: text("exp_month").notNull(),
+  expYear: text("exp_year").notNull(),
+  brand: text("brand").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const paymentMethodsRelations = relations(paymentMethods, ({ one }) => ({
+  user: one(users, {
+    fields: [paymentMethods.userId],
+    references: [users.id],
+  }),
+}));
+
+export const insertPaymentMethodSchema = createInsertSchema(paymentMethods).omit({
+  id: true,
+  createdAt: true,
+});
+
 export const insertUserSchema = createInsertSchema(users)
   .pick({
     username: true,
@@ -247,6 +271,9 @@ export type InsertCart = z.infer<typeof insertCartSchema>;
 
 export type Address = typeof addresses.$inferSelect;
 export type InsertAddress = z.infer<typeof insertAddressSchema>;
+
+export type PaymentMethod = typeof paymentMethods.$inferSelect;
+export type InsertPaymentMethod = z.infer<typeof insertPaymentMethodSchema>;
 
 // Cart item interface for the frontend
 export interface CartItem {
