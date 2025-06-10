@@ -18,6 +18,7 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
+import { ChangePasswordDialog } from "@/components/account/change-password-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { 
   CalendarIcon, 
@@ -356,7 +357,9 @@ export default function BuyerDashboard() {
                     <p className="text-gray-500 mb-4">{user?.email}</p>
                     
                     <Button className="w-full mb-2">Edit Profile</Button>
-                    <Button variant="outline" className="w-full">Change Password</Button>
+                    <ChangePasswordDialog>
+                      <Button variant="outline" className="w-full">Change Password</Button>
+                    </ChangePasswordDialog>
                   </div>
                 </CardContent>
               </Card>

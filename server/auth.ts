@@ -188,6 +188,21 @@ export function setupAuth(app: Express) {
     res.json(userWithoutPassword);
   });
 
+  app.post("/api/reset-password", isAuthenticated, async (req, res, next) => {
+    try {
+      const newPassword = req.body.password;
+      if (!newPassword || newPassword.length < 6) {
+        return res.status(400).json({ error: "Password must be at least 6 characters" });
+      }
+      const hashed = await hashPassword(newPassword);
+      const updated = await storage.updateUser(req.user.id, { password: hashed });
+      if (!updated) return res.status(404).json({ error: "User not found" });
+      res.sendStatus(200);
+    } catch (error) {
+      next(error);
+    }
+  });
+
   app.post("/api/make-seller", isAuthenticated, isAdmin, async (req, res) => {
     try {
       const user = req.user;

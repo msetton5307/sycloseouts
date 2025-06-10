@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated, isSeller, isAdmin } from "./auth";
-import { sendInvoiceEmail } from "./email";
+import { sendInvoiceEmail, sendShippingUpdateEmail } from "./email";
 import {
   insertProductSchema,
   insertOrderSchema,
@@ -35,7 +35,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Product routes
   app.get("/api/products", async (req, res) => {
     try {
-      const { category, sellerId } = req.query;
+      const { category, sellerId, q } = req.query as Record<string, string>;
       const filter: any = {};
 
       if (category) filter.category = category;
@@ -47,7 +47,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         filter.sellerId = sellerIdNum;
       }
 
+      if (q) {
+        const products = await storage.searchProducts(q, filter);
+        return res.json(products);
+      }
+
       const products = await storage.getProducts(filter);
+      res.json(products);
+    } catch (error) {
+      handleApiError(res, error);
+    }
+  });
+
+  app.get("/api/products/low-stock", isAuthenticated, isSeller, async (req, res) => {
+    try {
+      const threshold = parseInt(req.query.threshold as string, 10) || 5;
+      const user = req.user as Express.User;
+      const products = await storage.getLowStockProducts(user.id, threshold);
       res.json(products);
     } catch (error) {
       handleApiError(res, error);
@@ -261,6 +277,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.patch("/api/orders/:id/cancel", isAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id, 10);
+      if (Number.isNaN(id)) {
+        return res.status(400).json({ message: "Invalid order ID" });
+      }
+      const user = req.user as Express.User;
+      const order = await storage.getOrder(id);
+
+      if (!order) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+
+      if (order.buyerId !== user.id && user.role !== "admin") {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+
+      if (order.status !== "ordered") {
+        return res.status(400).json({ message: "Order cannot be cancelled" });
+      }
+
+      const updatedOrder = await storage.updateOrder(id, { status: "cancelled" });
+      res.json(updatedOrder);
+    } catch (error) {
+      handleApiError(res, error);
+    }
+  });
+
   app.put("/api/orders/:id", isAuthenticated, async (req, res) => {
     try {
       const id = parseInt(req.params.id, 10);
@@ -279,8 +323,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Forbidden" });
       }
 
+      const prevStatus = order.status;
       const updatedOrder = await storage.updateOrder(id, req.body);
       res.json(updatedOrder);
+
+      if (req.body.status && req.body.status !== prevStatus) {
+        const buyer = await storage.getUser(updatedOrder.buyerId);
+        if (buyer) {
+          sendShippingUpdateEmail(buyer.email, updatedOrder).catch(console.error);
+        }
+      }
     } catch (error) {
       handleApiError(res, error);
     }
