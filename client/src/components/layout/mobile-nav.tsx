@@ -22,15 +22,17 @@ export default function MobileNav() {
   return (
     <nav className="fixed bottom-0 inset-x-0 z-50 border-t bg-white shadow sm:hidden">
       <ul className="flex justify-around">
-        <li className="flex-1">
-          <Link
-            href="/"
-            className={`flex flex-col items-center py-2 text-xs ${isActive("/") ? "text-primary" : "text-gray-500"}`}
-          >
-            <Home className="h-5 w-5" />
-            Home
-          </Link>
-        </li>
+        {user?.role !== "seller" && (
+          <li className="flex-1">
+            <Link
+              href="/"
+              className={`flex flex-col items-center py-2 text-xs ${isActive("/") ? "text-primary" : "text-gray-500"}`}
+            >
+              <Home className="h-5 w-5" />
+              Home
+            </Link>
+          </li>
+        )}
         <li className="flex-1">
           <Link
             href="/products"
@@ -71,7 +73,7 @@ export default function MobileNav() {
             className={`flex flex-col items-center py-2 text-xs ${isActive(accountLink) ? "text-primary" : "text-gray-500"}`}
           >
             <User className="h-5 w-5" />
-            Account
+            {user?.role === "seller" ? "Dashboard" : "Account"}
           </Link>
         </li>
       </ul>

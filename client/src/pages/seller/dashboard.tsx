@@ -158,9 +158,8 @@ export default function SellerDashboard() {
     >
       <Header />
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <TabsList className="mb-6 grid grid-cols-2 md:flex md:w-auto">
+        <TabsList className="mb-6 grid grid-cols-1 md:flex md:w-auto">
           <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="orders">Orders</TabsTrigger>
         </TabsList>
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -396,7 +395,9 @@ export default function SellerDashboard() {
                     ))}
                     
                     <div className="flex justify-center">
-                      <Button variant="outline">View All Orders</Button>
+                      <Link href="/seller/orders">
+                        <Button variant="outline">View All Orders</Button>
+                      </Link>
                     </div>
                   </div>
                 ) : (
@@ -412,101 +413,6 @@ export default function SellerDashboard() {
             </Card>
           </TabsContent>
           
-          <TabsContent value="orders">
-            <Card>
-              <CardHeader>
-                <CardTitle>Order Management</CardTitle>
-                <CardDescription>View and process customer orders</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {isLoadingOrders ? (
-                  <div className="flex justify-center py-8">
-                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                  </div>
-                ) : orders.length > 0 ? (
-                  <div className="space-y-6">
-                    {orders.map((order) => (
-                      <div key={order.id} className="border rounded-lg p-4">
-                        <div className="flex flex-col sm:flex-row sm:justify-between mb-4 gap-2">
-                          <div>
-                            <h3 className="font-medium">Order #{order.id}</h3>
-                            <p className="text-sm text-gray-500 flex items-center">
-                              <CalendarIcon className="h-3 w-3 mr-1" />
-                              Placed on {formatDate(order.createdAt)}
-                            </p>
-                            <p className="text-sm text-gray-500">
-                              Customer: Buyer #{order.buyerId}
-                            </p>
-                          </div>
-                          <div className="text-left sm:text-right">
-                            <p className="font-medium">{formatCurrency(order.totalAmount)}</p>
-                            <span className={`text-xs px-2 py-1 rounded-full ${
-                              order.status === "delivered" 
-                                ? "bg-green-100 text-green-800" 
-                                : order.status === "shipped" || order.status === "out_for_delivery"
-                                ? "bg-blue-100 text-blue-800"
-                                : "bg-yellow-100 text-yellow-800"
-                            }`}>
-                              {order.status.charAt(0).toUpperCase() + order.status.slice(1).replace("_", " ")}
-                            </span>
-                          </div>
-                        </div>
-                        
-                        {/* Order Status Actions */}
-                        <div className="bg-gray-50 p-4 rounded-lg mb-4">
-                          <h4 className="font-medium mb-2">Order Status</h4>
-                          <div className="flex flex-wrap gap-2">
-                            <Button
-                              size="sm"
-                              variant={order.status === "ordered" ? "default" : "outline"}
-                              disabled={order.status !== "ordered"}
-                              onClick={() => handleMarkAsShipped(order.id)}
-                            >
-                              Mark as Shipped
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant={order.status === "shipped" ? "default" : "outline"}
-                              disabled={order.status !== "shipped"}
-                              onClick={() => handleMarkOutForDelivery(order.id)}
-                            >
-                              Mark as Out for Delivery
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant={order.status === "out_for_delivery" ? "default" : "outline"}
-                              disabled={order.status !== "out_for_delivery"}
-                              onClick={() => handleMarkDelivered(order.id)}
-                            >
-                              Mark as Delivered
-                            </Button>
-                          </div>
-                        </div>
-                        
-                        <div className="flex flex-wrap gap-2 justify-end">
-                          <Button variant="outline" size="sm">View Details</Button>
-                          <Button variant="outline" size="sm" onClick={() => handleCancelOrder(order.id)}>
-                            Cancel Order
-                          </Button>
-                          <Button variant="outline" size="sm" onClick={() => handleContactBuyer(order.id)}>
-                            Contact Buyer
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-8">
-                    <ListOrdered className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-1">No orders yet</h3>
-                    <p className="text-gray-500">
-                      When customers place orders for your products, they'll appear here
-                    </p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
           
           <TabsContent value="profile">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
