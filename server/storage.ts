@@ -136,6 +136,7 @@ export class DatabaseStorage implements IStorage {
     if (filter.sellerId !== undefined) conditions.push(eq(products.sellerId, filter.sellerId));
     if (filter.category !== undefined) conditions.push(eq(products.category, filter.category));
     if (filter.condition !== undefined) conditions.push(eq(products.condition, filter.condition));
+    if (filter.isBanner !== undefined) conditions.push(eq(products.isBanner, filter.isBanner));
 
     // If there are no conditions, return all products
     if (conditions.length === 0) {
@@ -168,6 +169,7 @@ export class DatabaseStorage implements IStorage {
     if (filter.category !== undefined) conditions.push(eq(products.category, filter.category));
     if (filter.sellerId !== undefined) conditions.push(eq(products.sellerId, filter.sellerId));
     if (filter.condition !== undefined) conditions.push(eq(products.condition, filter.condition));
+    if (filter.isBanner !== undefined) conditions.push(eq(products.isBanner, filter.isBanner));
 
     let combinedCondition = conditions[0];
     for (let i = 1; i < conditions.length; i++) {
