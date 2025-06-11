@@ -7,12 +7,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
@@ -29,11 +29,11 @@ export default function CheckoutPage() {
   const { user } = useAuth();
   const { items, cartTotal, clearCart } = useCart();
   const { toast } = useToast();
-  
+
   const [isProcessing, setIsProcessing] = useState(false);
   const [currentStep, setCurrentStep] = useState<"shipping" | "payment" | "confirmation">("shipping");
   const [order, setOrder] = useState<any | null>(null);
-  
+
   // Form states
   const [addresses, setAddresses] = useState<any[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<string | number>("new");
@@ -50,7 +50,7 @@ export default function CheckoutPage() {
     email: user?.email || "",
     notes: ""
   });
-  
+
   const [paymentInfo, setPaymentInfo] = useState({
     cardNumber: "",
     nameOnCard: user ? `${user.firstName} ${user.lastName}` : "",
@@ -147,29 +147,29 @@ export default function CheckoutPage() {
       }));
     }
   }, [contactOption, user]);
-  
+
   const handleShippingSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setCurrentStep("payment");
     window.scrollTo(0, 0);
   };
-  
+
   const handlePaymentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!user) {
       toast({
         title: "Authentication required",
         description: "Please sign in to complete your purchase",
         variant: "destructive"
       });
-      
+
       setLocation("/auth?redirect=/checkout");
       return;
     }
-    
+
     setIsProcessing(true);
-    
+
     try {
       if (items.length === 0) {
         throw new Error("Your cart is empty");
@@ -232,7 +232,7 @@ export default function CheckoutPage() {
       } catch (err) {
         console.error("Failed to save payment method", err);
       }
-      
+
       // Group items by seller
       const itemsBySeller: Record<number, any[]> = {};
       for (const item of items) {
@@ -246,14 +246,14 @@ export default function CheckoutPage() {
         }
         itemsBySeller[product.sellerId].push({ ...item, product });
       }
-      
+
       // Create orders per seller
       const orders = [];
       for (const [sellerId, sellerItems] of Object.entries(itemsBySeller)) {
         const estimatedDelivery = getEstimatedDeliveryDate();
         const trackingNumber = generateTrackingNumber();
         const sellerTotal = sellerItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
-        
+
         const last4 =
           selectedPaymentId === "new"
             ? paymentInfo.cardNumber.slice(-4)
@@ -272,7 +272,7 @@ export default function CheckoutPage() {
           estimatedDeliveryDate: estimatedDelivery,
           trackingNumber
         };
-        
+
         const orderRes = await apiRequest("POST", "/api/orders", {
           ...orderData,
           items: sellerItems.map(i => ({
@@ -285,11 +285,11 @@ export default function CheckoutPage() {
         if (!orderRes.ok) throw new Error("Failed to create order");
         orders.push(await orderRes.json());
       }
-      
+
       clearCart();
       setOrder(orders[0]);
       setCurrentStep("confirmation");
-      
+
     } catch (error) {
       console.error("Checkout error:", error);
       toast({
@@ -301,7 +301,7 @@ export default function CheckoutPage() {
       setIsProcessing(false);
     }
   };
-  
+
   const renderShippingForm = () => (
     <form onSubmit={handleShippingSubmit}>
       <div className="space-y-6">
@@ -522,7 +522,7 @@ export default function CheckoutPage() {
       </div>
     </form>
   );
-  
+
   const renderPaymentForm = () => (
     <form onSubmit={handlePaymentSubmit}>
       <div className="space-y-6">
@@ -553,7 +553,7 @@ export default function CheckoutPage() {
           <RadioGroup
             defaultValue="credit_card"
             value={paymentInfo.paymentMethod}
-            onValueChange={(value) => setPaymentInfo({...paymentInfo, paymentMethod: value})}
+            onValueChange={(value) => setPaymentInfo({ ...paymentInfo, paymentMethod: value })}
             className="grid grid-cols-2 gap-4 mt-2"
           >
             <div className="flex items-center space-x-2 border rounded-md p-4 cursor-pointer hover:bg-gray-50">
@@ -572,89 +572,89 @@ export default function CheckoutPage() {
             </div>
           </RadioGroup>
         </div>
-        
+
         {paymentInfo.paymentMethod === "credit_card" && selectedPaymentId === "new" && (
           <>
             <div>
               <Label htmlFor="cardNumber">Card Number</Label>
-              <Input 
-                id="cardNumber" 
-                placeholder="1234 5678 9012 3456" 
+              <Input
+                id="cardNumber"
+                placeholder="1234 5678 9012 3456"
                 value={paymentInfo.cardNumber}
-                onChange={(e) => setPaymentInfo({...paymentInfo, cardNumber: e.target.value})}
+                onChange={(e) => setPaymentInfo({ ...paymentInfo, cardNumber: e.target.value })}
                 required
               />
             </div>
-            
+
             <div>
               <Label htmlFor="nameOnCard">Name on Card</Label>
-              <Input 
-                id="nameOnCard" 
-                placeholder="John Doe" 
+              <Input
+                id="nameOnCard"
+                placeholder="John Doe"
                 value={paymentInfo.nameOnCard}
-                onChange={(e) => setPaymentInfo({...paymentInfo, nameOnCard: e.target.value})}
+                onChange={(e) => setPaymentInfo({ ...paymentInfo, nameOnCard: e.target.value })}
                 required
               />
             </div>
-            
+
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="expirationDate">Expiration Date</Label>
-                <Input 
-                  id="expirationDate" 
-                  placeholder="MM/YY" 
+                <Input
+                  id="expirationDate"
+                  placeholder="MM/YY"
                   value={paymentInfo.expirationDate}
-                  onChange={(e) => setPaymentInfo({...paymentInfo, expirationDate: e.target.value})}
+                  onChange={(e) => setPaymentInfo({ ...paymentInfo, expirationDate: e.target.value })}
                   required
                 />
               </div>
               <div>
                 <Label htmlFor="cvc">CVC</Label>
-                <Input 
-                  id="cvc" 
-                  placeholder="123" 
+                <Input
+                  id="cvc"
+                  placeholder="123"
                   value={paymentInfo.cvc}
-                  onChange={(e) => setPaymentInfo({...paymentInfo, cvc: e.target.value})}
+                  onChange={(e) => setPaymentInfo({ ...paymentInfo, cvc: e.target.value })}
                   required
                 />
               </div>
             </div>
           </>
         )}
-        
+
         {paymentInfo.paymentMethod === "bank_transfer" && (
           <div className="bg-blue-50 p-4 rounded-md">
             <p className="text-sm">
-              After placing your order, you will receive bank transfer information. 
+              After placing your order, you will receive bank transfer information.
               Your order will be processed once payment is received.
             </p>
           </div>
         )}
-        
+
         <div className="flex items-center space-x-2">
           <input
             type="checkbox"
             id="billingAddressSameAsShipping"
             checked={paymentInfo.billingAddressSameAsShipping}
-            onChange={(e) => setPaymentInfo({...paymentInfo, billingAddressSameAsShipping: e.target.checked})}
+            onChange={(e) => setPaymentInfo({ ...paymentInfo, billingAddressSameAsShipping: e.target.checked })}
             className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
           />
           <Label htmlFor="billingAddressSameAsShipping" className="text-sm">
             Billing address same as shipping address
           </Label>
         </div>
-        
+
         <div className="flex gap-4">
-          <Button 
-            type="button" 
-            variant="outline" 
+          <Button
+            type="button"
+            variant="outline"
             onClick={() => setCurrentStep("shipping")}
             className="flex-1"
           >
             Back to Shipping
           </Button>
-          <Button 
-            type="submit" 
+          <Button
+            type="submit"
             className="flex-1"
             disabled={isProcessing}
           >
@@ -671,7 +671,7 @@ export default function CheckoutPage() {
       </div>
     </form>
   );
-  
+
   const renderConfirmation = () => (
     <div className="text-center">
       <div className="mx-auto flex items-center justify-center h-20 w-20 rounded-full bg-green-100 mb-6">
@@ -681,7 +681,7 @@ export default function CheckoutPage() {
       <p className="text-gray-500 mb-6">
         Thank you for your purchase. Your order has been received.
       </p>
-      
+
       <div className="bg-gray-50 rounded-lg p-6 mb-6 text-left">
         <div className="flex justify-between mb-2">
           <span className="text-sm font-medium text-gray-600">Order Number:</span>
@@ -706,7 +706,7 @@ export default function CheckoutPage() {
           </div>
         )}
       </div>
-      
+
       <div className="flex flex-col sm:flex-row gap-4">
         <Button className="flex-1" asChild>
           <Link href="/buyer/orders">View Order</Link>
@@ -725,7 +725,7 @@ export default function CheckoutPage() {
         <h1 className="text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl mb-2">
           Checkout
         </h1>
-        
+
         {items.length === 0 && currentStep !== "confirmation" ? (
           <div className="text-center py-12 bg-gray-50 rounded-lg">
             <ShoppingCart className="h-12 w-12 mx-auto text-gray-400 mb-4" />
@@ -763,7 +763,7 @@ export default function CheckoutPage() {
                   </ul>
                 </div>
               </div>
-              
+
               <Card>
                 <CardHeader>
                   <CardTitle>
@@ -779,16 +779,16 @@ export default function CheckoutPage() {
                 </CardContent>
               </Card>
             </div>
-            
+
             <div className="lg:col-span-5 mt-8 lg:mt-0">
               <div className="bg-gray-50 rounded-lg p-6 sticky top-6">
                 <h2 className="text-lg font-medium text-gray-900 mb-4">Order Summary</h2>
-                
+
                 <ul className="divide-y divide-gray-200 mb-6">
                   {items.map((item) => (
                     <li key={item.productId} className="py-4 flex">
                       <div className="flex-shrink-0 w-16 h-16 border border-gray-200 rounded-md overflow-hidden">
-                        <img 
+                        <img
                           src={item.image}
                           alt={item.title}
                           className="w-full h-full object-center object-cover"
@@ -804,25 +804,25 @@ export default function CheckoutPage() {
                     </li>
                   ))}
                 </ul>
-                
+
                 <div className="space-y-4">
                   <div className="flex justify-between">
                     <div className="text-sm text-gray-600">Subtotal</div>
                     <div className="text-sm font-medium text-gray-900">{formatCurrency(cartTotal)}</div>
                   </div>
-                  
+
                   <div className="flex justify-between">
                     <div className="text-sm text-gray-600">Shipping</div>
                     <div className="text-sm text-gray-900">Calculated at next step</div>
                   </div>
-                  
+
                   <div className="flex justify-between">
                     <div className="text-sm text-gray-600">Taxes</div>
                     <div className="text-sm text-gray-900">Calculated at next step</div>
                   </div>
-                  
+
                   <Separator />
-                  
+
                   <div className="flex justify-between">
                     <div className="text-base font-medium text-gray-900">Order Total</div>
                     <div className="text-base font-medium text-gray-900">{formatCurrency(cartTotal)}</div>
