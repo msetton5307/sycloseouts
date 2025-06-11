@@ -53,6 +53,17 @@ export default function MobileNav() {
             </Link>
           </li>
         )}
+        {user?.role === "seller" && (
+          <li className="flex-1">
+            <Link
+              href="/seller/orders"
+              className={`flex flex-col items-center py-2 text-xs ${isActive("/seller/orders") ? "text-primary" : "text-gray-500"}`}
+            >
+              <ListOrdered className="h-5 w-5" />
+              Orders
+            </Link>
+          </li>
+        )}
         <li className="flex-1 relative">
           <button
             onClick={() => setIsCartOpen(true)}
