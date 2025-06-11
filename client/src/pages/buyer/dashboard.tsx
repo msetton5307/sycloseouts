@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { Order, Product, Address, PaymentMethod } from "@shared/schema";
 import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
@@ -35,6 +35,14 @@ import OrderStatus from "@/components/buyer/order-status";
 export default function BuyerDashboard() {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("overview");
+  const [location] = useLocation();
+
+  useEffect(() => {
+    const hash = window.location.hash.replace("#", "");
+    if (hash) {
+      setActiveTab(hash);
+    }
+  }, [location]);
 
   const { data: orders = [], isLoading: isLoadingOrders } = useQuery<Order[]>({
     queryKey: ["/api/orders"],
@@ -71,7 +79,7 @@ export default function BuyerDashboard() {
   return (
     <>
       <Tabs
-        defaultValue={activeTab}
+        value={activeTab}
         onValueChange={setActiveTab}
         className="space-y-6"
       >
@@ -79,16 +87,10 @@ export default function BuyerDashboard() {
           dashboardTabs={
             <TabsList className="flex space-x-8">
               <TabsTrigger
-                value="overview"
-                className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium data-[state=active]:border-primary data-[state=active]:text-gray-900"
-              >
-                Overview
-              </TabsTrigger>
-              <TabsTrigger
                 value="orders"
                 className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium data-[state=active]:border-primary data-[state=active]:text-gray-900"
               >
-                Orders
+                My Orders
               </TabsTrigger>
             </TabsList>
           }
