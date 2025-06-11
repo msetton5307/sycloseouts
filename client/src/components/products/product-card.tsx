@@ -40,6 +40,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         </p>
         <div className="text-xs text-gray-500 flex flex-wrap gap-x-2">
           <span>MOQ: {product.minOrderQuantity}</span>
+          <span>Order by {product.orderMultiple}</span>
           <span>{product.availableUnits} avail.</span>
           <span>{product.condition}</span>
         </div>

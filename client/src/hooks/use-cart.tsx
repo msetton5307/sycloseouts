@@ -30,7 +30,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
     const savedCart = localStorage.getItem(CART_STORAGE_KEY);
     if (savedCart) {
       try {
-        setItems(JSON.parse(savedCart));
+        const parsed: CartItem[] = JSON.parse(savedCart);
+        setItems(parsed.map(item => ({ ...item, orderMultiple: item.orderMultiple ?? 1 })));
       } catch (error) {
         console.error("Failed to parse cart from localStorage", error);
       }
@@ -44,12 +45,22 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const addToCart = (product: Product, quantity: number) => {
     if (quantity <= 0) return;
-    
+
     // Check if product meets MOQ
     if (quantity < product.minOrderQuantity) {
       toast({
         title: "Minimum order not met",
         description: `This product requires a minimum order of ${product.minOrderQuantity} units.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Check if quantity is a valid multiple
+    if (quantity % product.orderMultiple !== 0) {
+      toast({
+        title: "Invalid quantity",
+        description: `This product must be ordered in multiples of ${product.orderMultiple} units.`,
         variant: "destructive",
       });
       return;
@@ -98,6 +109,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
           quantity,
           image: product.images[0],
           minOrderQuantity: product.minOrderQuantity,
+          orderMultiple: product.orderMultiple,
           availableUnits: product.availableUnits
         }];
       }
@@ -138,7 +150,17 @@ export function CartProvider({ children }: { children: ReactNode }) {
             });
             return item;
           }
-          
+
+          // Check order multiple
+          if (quantity % item.orderMultiple !== 0) {
+            toast({
+              title: "Invalid quantity",
+              description: `This product must be ordered in multiples of ${item.orderMultiple} units.`,
+              variant: "destructive",
+            });
+            return item;
+          }
+
           // Check if we have enough inventory
           if (quantity > item.availableUnits) {
             toast({

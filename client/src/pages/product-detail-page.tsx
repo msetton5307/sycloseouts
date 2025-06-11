@@ -46,13 +46,13 @@ export default function ProductDetailPage() {
 
   const handleDecrease = () => {
     if (product && quantity > product.minOrderQuantity) {
-      setQuantity(quantity - 1);
+      setQuantity(quantity - product.orderMultiple);
     }
   };
 
   const handleIncrease = () => {
-    if (product && quantity < product.availableUnits) {
-      setQuantity(quantity + 1);
+    if (product && quantity + product.orderMultiple <= product.availableUnits) {
+      setQuantity(quantity + product.orderMultiple);
     }
   };
 
@@ -156,7 +156,7 @@ export default function ProductDetailPage() {
 
             <div className="text-3xl font-bold mb-2">{formatCurrency(product.price)} <span className="text-sm font-normal text-gray-500">/unit</span></div>
             <div className="text-sm text-gray-600 mb-1"><Package className="inline-block h-4 w-4 mr-1" />{product.availableUnits} units</div>
-            <div className="text-sm text-gray-600 mb-1"><Layers className="inline-block h-4 w-4 mr-1" />Minimum {product.minOrderQuantity}</div>
+            <div className="text-sm text-gray-600 mb-1"><Layers className="inline-block h-4 w-4 mr-1" />Minimum {product.minOrderQuantity} (by {product.orderMultiple})</div>
             {product.fobLocation && (
               <div className="text-sm text-gray-600 mb-4"><Truck className="inline-block h-4 w-4 mr-1" />Ships from {product.fobLocation}</div>
             )}
@@ -166,7 +166,7 @@ export default function ProductDetailPage() {
                 <Minus className="h-4 w-4" />
               </Button>
               <div className="w-10 text-center">{quantity}</div>
-              <Button variant="outline" size="icon" onClick={handleIncrease} disabled={quantity >= product.availableUnits}>
+              <Button variant="outline" size="icon" onClick={handleIncrease} disabled={quantity + product.orderMultiple > product.availableUnits}>
                 <Plus className="h-4 w-4" />
               </Button>
             </div>
