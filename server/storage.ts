@@ -41,6 +41,7 @@ export interface IStorage {
   
   // Order item methods
   getOrderItems(orderId: number): Promise<OrderItem[]>;
+  getOrderItemsWithProducts(orderId: number): Promise<(OrderItem & { productTitle: string; productImages: string[] })[]>;
   createOrderItem(orderItem: InsertOrderItem): Promise<OrderItem>;
   
   // Seller application methods
@@ -266,6 +267,23 @@ export class DatabaseStorage implements IStorage {
     return await db
       .select()
       .from(orderItems)
+      .where(eq(orderItems.orderId, orderId));
+  }
+
+  async getOrderItemsWithProducts(orderId: number): Promise<(OrderItem & { productTitle: string; productImages: string[] })[]> {
+    return await db
+      .select({
+        id: orderItems.id,
+        orderId: orderItems.orderId,
+        productId: orderItems.productId,
+        quantity: orderItems.quantity,
+        unitPrice: orderItems.unitPrice,
+        totalPrice: orderItems.totalPrice,
+        productTitle: products.title,
+        productImages: products.images,
+      })
+      .from(orderItems)
+      .innerJoin(products, eq(orderItems.productId, products.id))
       .where(eq(orderItems.orderId, orderId));
   }
 

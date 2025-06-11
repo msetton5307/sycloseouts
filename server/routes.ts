@@ -205,8 +205,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Forbidden" });
       }
 
-      // Get order items
-      const orderItems = await storage.getOrderItems(id);
+      // Get order items with product info
+      const orderItems = await storage.getOrderItemsWithProducts(id);
 
       res.json({ ...order, items: orderItems });
     } catch (error) {
