@@ -69,6 +69,7 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
       totalUnits: typeof product.totalUnits === 'number' && !isNaN(product.totalUnits) ? product.totalUnits : 0,
       availableUnits: typeof product.availableUnits === 'number' && !isNaN(product.availableUnits) ? product.availableUnits : 0,
       minOrderQuantity: typeof product.minOrderQuantity === 'number' && !isNaN(product.minOrderQuantity) ? product.minOrderQuantity : 1,
+      orderMultiple: typeof (product as any).orderMultiple === 'number' && !isNaN((product as any).orderMultiple) ? (product as any).orderMultiple : 1,
       fobLocation: product.fobLocation || '',
       retailComparisonUrl: product.retailComparisonUrl || '',
       upc: product.upc || '',
@@ -82,6 +83,7 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
       totalUnits: 0,
       availableUnits: 0,
       minOrderQuantity: 1,
+      orderMultiple: 1,
       images: [],
       fobLocation: "",
       retailComparisonUrl: "",
@@ -155,6 +157,7 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
       totalUnits: typeof data.totalUnits === 'string' ? parseInt(data.totalUnits) : data.totalUnits,
       availableUnits: typeof data.availableUnits === 'string' ? parseInt(data.availableUnits) : data.availableUnits,
       minOrderQuantity: typeof data.minOrderQuantity === 'string' ? parseInt(data.minOrderQuantity) : data.minOrderQuantity,
+      orderMultiple: typeof (data as any).orderMultiple === 'string' ? parseInt((data as any).orderMultiple) : (data as any).orderMultiple,
     };
     
     // Check for NaN values and replace with defaults
@@ -162,6 +165,7 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
     if (isNaN(formattedData.totalUnits)) formattedData.totalUnits = 0;
     if (isNaN(formattedData.availableUnits)) formattedData.availableUnits = 0;
     if (isNaN(formattedData.minOrderQuantity)) formattedData.minOrderQuantity = 1;
+    if (isNaN((formattedData as any).orderMultiple)) (formattedData as any).orderMultiple = 1;
     
     console.log("Formatted data for submission:", formattedData);
     try {
@@ -456,6 +460,32 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
                 </FormControl>
                 <FormDescription>
                   Minimum number of units per order.
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="orderMultiple"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Order By Quantity</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    min="1"
+                    placeholder="1"
+                    {...field}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      field.onChange(value === "" ? 0 : parseInt(value));
+                    }}
+                  />
+                </FormControl>
+                <FormDescription>
+                  Buyers must order in multiples of this amount.
                 </FormDescription>
                 <FormMessage />
               </FormItem>

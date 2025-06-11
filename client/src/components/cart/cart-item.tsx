@@ -16,12 +16,12 @@ export default function CartItem({ item }: CartItemProps) {
       // If reducing would go below MOQ, remove the item
       removeFromCart(item.productId);
     } else {
-      updateQuantity(item.productId, item.quantity - 1);
+      updateQuantity(item.productId, item.quantity - item.orderMultiple);
     }
   };
-  
+
   const handleIncrease = () => {
-    updateQuantity(item.productId, item.quantity + 1);
+    updateQuantity(item.productId, item.quantity + item.orderMultiple);
   };
   
   const itemTotal = item.price * item.quantity;
@@ -57,7 +57,7 @@ export default function CartItem({ item }: CartItemProps) {
               size="icon" 
               className="h-7 w-7"
               onClick={handleDecrease}
-              disabled={item.quantity <= 1}
+              disabled={item.quantity <= item.minOrderQuantity}
             >
               <Minus className="h-3 w-3" />
             </Button>
@@ -67,7 +67,7 @@ export default function CartItem({ item }: CartItemProps) {
               size="icon" 
               className="h-7 w-7"
               onClick={handleIncrease}
-              disabled={item.quantity >= item.availableUnits}
+              disabled={item.quantity + item.orderMultiple > item.availableUnits}
             >
               <Plus className="h-3 w-3" />
             </Button>

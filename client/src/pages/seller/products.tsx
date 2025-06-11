@@ -285,6 +285,7 @@ export default function SellerProducts() {
                       <TableHead>Category</TableHead>
                       <TableHead>Price</TableHead>
                       <TableHead>MOQ</TableHead>
+                      <TableHead>Order By</TableHead>
                       <TableHead>Available</TableHead>
                       <TableHead>Total Units</TableHead>
                       <TableHead>Actions</TableHead>
@@ -306,6 +307,7 @@ export default function SellerProducts() {
                         <TableCell>{product.category}</TableCell>
                         <TableCell>{formatCurrency(product.price)}</TableCell>
                         <TableCell>{product.minOrderQuantity}</TableCell>
+                        <TableCell>{product.orderMultiple}</TableCell>
                         <TableCell>
                           <div className="flex items-center">
                             {product.availableUnits > 0 ? (

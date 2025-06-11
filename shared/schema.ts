@@ -108,6 +108,7 @@ export const products = pgTable("products", {
   totalUnits: integer("total_units").notNull(),
   availableUnits: integer("available_units").notNull(),
   minOrderQuantity: integer("min_order_quantity").notNull(),
+  orderMultiple: integer("order_multiple").notNull().default(1),
   images: text("images").array().notNull(),
   fobLocation: text("fob_location"),
   retailComparisonUrl: text("retail_comparison_url"),
@@ -138,6 +139,7 @@ export const insertProductSchema = createInsertSchema(products, {
     // Images are optional for testing but an empty array will be stored
     images: z.array(z.string()).default([]),
     isBanner: z.boolean().optional(),
+    orderMultiple: z.coerce.number().int().positive().default(1)
   });
 
 // Order schema
@@ -285,5 +287,6 @@ export interface CartItem {
   quantity: number;
   image: string;
   minOrderQuantity: number;
+  orderMultiple: number;
   availableUnits: number;
 }
