@@ -22,10 +22,10 @@ export default function ProductCard({ product }: ProductCardProps) {
     <Card className="group relative bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-300">
       <div className="w-full min-h-80 aspect-w-1 aspect-h-1 rounded-t-lg overflow-hidden group-hover:opacity-90 lg:h-60 lg:aspect-none">
         <Link href={`/products/${product.id}`}>
-          <img 
-            src={product.images[0]} 
+          <img
+            src={product.images[0]}
             alt={product.title}
-            className="w-full h-full object-center object-cover lg:w-full lg:h-full cursor-pointer"
+            className="w-full h-full object-center object-contain lg:w-full lg:h-full cursor-pointer"
           />
         </Link>
       </div>
