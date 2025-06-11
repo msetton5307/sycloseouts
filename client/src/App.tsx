@@ -60,6 +60,8 @@ function Router() {
 
       <ProtectedRoute path="/orders/:id/messages" component={OrderMessagesPage} allowedRoles={["buyer", "seller", "admin"]} />
 
+      <ProtectedRoute path="/orders/:id/messages" component={OrderMessagesPage} allowedRoles={["buyer", "seller", "admin"]} />
+
       {/* Admin routes */}
       <ProtectedRoute path="/admin/dashboard" component={AdminDashboard} allowedRoles={["admin"]} />
       <ProtectedRoute path="/admin/users" component={AdminUsers} allowedRoles={["admin"]} />
