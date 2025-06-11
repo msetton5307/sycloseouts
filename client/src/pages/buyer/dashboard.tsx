@@ -87,16 +87,10 @@ export default function BuyerDashboard() {
           dashboardTabs={
             <TabsList className="flex space-x-8">
               <TabsTrigger
-                value="overview"
-                className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium data-[state=active]:border-primary data-[state=active]:text-gray-900"
-              >
-                Overview
-              </TabsTrigger>
-              <TabsTrigger
                 value="orders"
                 className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium data-[state=active]:border-primary data-[state=active]:text-gray-900"
               >
-                Orders
+                My Orders
               </TabsTrigger>
             </TabsList>
           }
