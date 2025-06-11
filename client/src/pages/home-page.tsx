@@ -26,7 +26,7 @@ export default function HomePage() {
       return <Redirect to="/seller/dashboard" />;
     }
     if (user.role === "buyer") {
-      return <Redirect to="/buyer/dashboard" />;
+      return <Redirect to="/buyer/home" />;
     }
     if (user.role === "admin") {
       return <Redirect to="/admin/dashboard" />;

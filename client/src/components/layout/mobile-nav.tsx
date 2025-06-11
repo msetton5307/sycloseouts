@@ -14,7 +14,7 @@ export default function MobileNav() {
       ? "/seller/dashboard"
       : user.role === "admin"
       ? "/admin/dashboard"
-      : "/buyer/dashboard"
+      : "/buyer/home"
     : "/auth";
 
   const isActive = (path: string) => location === path;

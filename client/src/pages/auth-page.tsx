@@ -50,7 +50,7 @@ export default function AuthPage() {
       } else if (user.role === "seller") {
         setLocation("/seller/dashboard");
       } else {
-        setLocation("/buyer/dashboard");
+        setLocation("/buyer/home");
       }
     }
   }, [user, setLocation]);

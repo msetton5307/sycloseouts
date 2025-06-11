@@ -14,8 +14,9 @@ import ProductDetailPage from "@/pages/product-detail-page";
 import AuthPage from "@/pages/auth-page";
 import CartPage from "@/pages/cart-page";
 import CheckoutPage from "@/pages/checkout-page";
-import BuyerDashboard from "@/pages/buyer/dashboard";
+import BuyerHomePage from "@/pages/buyer/home";
 import BuyerOrdersPage from "@/pages/buyer/orders";
+import BuyerProfilePage from "@/pages/buyer/profile";
 import SellerDashboard from "@/pages/seller/dashboard";
 import SellerProducts from "@/pages/seller/products";
 import SellerApply from "@/pages/seller/apply";
@@ -41,8 +42,9 @@ function Router() {
 
       {/* Buyer routes */}
       <ProtectedRoute path="/checkout" component={CheckoutPage} allowedRoles={["buyer", "seller", "admin"]} />
-      <ProtectedRoute path="/buyer/dashboard" component={BuyerDashboard} allowedRoles={["buyer", "admin"]} />
+      <ProtectedRoute path="/buyer/home" component={BuyerHomePage} allowedRoles={["buyer", "admin"]} />
       <ProtectedRoute path="/buyer/orders" component={BuyerOrdersPage} allowedRoles={["buyer", "admin"]} />
+      <ProtectedRoute path="/buyer/profile" component={BuyerProfilePage} allowedRoles={["buyer", "admin"]} />
 
       {/* Seller routes */}
       <ProtectedRoute path="/seller/dashboard" component={SellerDashboard} allowedRoles={["seller", "admin"]} />

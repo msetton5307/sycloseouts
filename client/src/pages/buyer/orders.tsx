@@ -55,10 +55,10 @@ export default function BuyerOrdersPage() {
       <Header />
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-6">
-          <Link href="/buyer/dashboard">
+          <Link href="/buyer/home">
             <a className="text-primary hover:underline flex items-center">
               <ArrowLeft className="h-4 w-4 mr-1" />
-              Back to Dashboard
+              Back to Home
             </a>
           </Link>
         </div>

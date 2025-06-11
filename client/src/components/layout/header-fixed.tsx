@@ -126,7 +126,7 @@ export default function Header() {
                           const path =
                             user.role === 'seller'
                               ? '/seller/dashboard#profile'
-                              : '/buyer/dashboard#profile';
+                              : '/buyer/profile';
                           window.location.href = path;
                         }}
                       >
@@ -251,7 +251,7 @@ export default function Header() {
                       const path =
                         user.role === 'seller'
                           ? '/seller/dashboard#profile'
-                          : '/buyer/dashboard#profile';
+                          : '/buyer/profile';
                       window.location.href = path;
                     }}
                   >
