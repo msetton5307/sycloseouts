@@ -36,14 +36,10 @@ export default function OrderMessagesPage() {
           {isLoading ? (
             <p>Loading...</p>
           ) : (
-            messages.map(m => (
-              <div key={m.id} className={m.senderId === user?.id ? "text-right" : "text-left"}>
-                <div className="inline-block bg-white px-3 py-1 rounded-md">
-                  {m.content}
-                </div>
-                <div className="text-xs text-gray-500">
-                  {format(new Date(m.createdAt), "PP p")}
-                </div>
+            messages.map((m) => (
+              <div key={m.id} className={m.senderId === user?.id ? "flex justify-end" : "flex justify-start"}>
+                <div className={`max-w-xs px-3 py-2 rounded-lg ${m.senderId === user?.id ? "bg-primary text-white" : "bg-white"}`}>{m.content}</div>
+                <div className="text-xs text-gray-500 self-end ml-2">{format(new Date(m.createdAt), "PP p")}</div>
               </div>
             ))
           )}

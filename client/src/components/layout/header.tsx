@@ -110,7 +110,7 @@ export default function Header({ dashboardTabs, onProfileClick }: HeaderProps) {
               </Button>
 
               {user && (
-                <Link href={user.role === "buyer" ? "/buyer/orders" : "/seller/messages"}>
+                <Link href={user.role === "buyer" ? "/buyer/messages" : "/seller/messages"}>
                   <Button variant="ghost" size="icon" className="text-gray-400 hover:text-gray-500 relative">
                     <Bell className="h-5 w-5" />
                     {unread > 0 && (
