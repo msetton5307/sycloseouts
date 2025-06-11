@@ -133,7 +133,7 @@ export default function ProductDetailPage() {
                       <img
                         src={image}
                         alt={`Image ${index + 1}`}
-                        className="rounded-lg w-full object-cover aspect-square"
+                        className="rounded-lg w-full object-contain aspect-square"
                       />
                     </CarouselItem>
                   ))}
@@ -145,7 +145,7 @@ export default function ProductDetailPage() {
               <img
                 src={product.images[0]}
                 alt={product.title}
-                className="rounded-lg w-full object-cover aspect-square"
+                className="rounded-lg w-full object-contain aspect-square"
               />
             )}
           </div>
