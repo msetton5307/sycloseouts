@@ -239,3 +239,23 @@ export async function sendOrderMessageEmail(
     console.error("Failed to send order message email", err);
   }
 }
+
+export async function sendProductQuestionEmail(to: string, productTitle: string, question: string) {
+  if (!transporter) {
+    console.warn("Email transport not configured; skipping product question email");
+    return;
+  }
+
+  const mailOptions = {
+    from: process.env.SMTP_FROM || user,
+    to,
+    subject: `Question about ${productTitle}`,
+    text: question,
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+  } catch (err) {
+    console.error("Failed to send product question email", err);
+  }
+}
