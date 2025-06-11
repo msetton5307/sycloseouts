@@ -274,6 +274,25 @@ export const messagesRelations = relations(messages, ({ one }) => ({
 export const insertMessageSchema = createInsertSchema(messages)
   .omit({ id: true, isRead: true, createdAt: true });
 
+// Questions that buyers can send about a product listing
+export const productQuestions = pgTable("product_questions", {
+  id: serial("id").primaryKey(),
+  productId: integer("product_id").notNull(),
+  buyerId: integer("buyer_id").notNull(),
+  sellerId: integer("seller_id").notNull(),
+  question: text("question").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const productQuestionsRelations = relations(productQuestions, ({ one }) => ({
+  product: one(products, { fields: [productQuestions.productId], references: [products.id] }),
+  buyer: one(users, { fields: [productQuestions.buyerId], references: [users.id] }),
+  seller: one(users, { fields: [productQuestions.sellerId], references: [users.id] }),
+}));
+
+export const insertProductQuestionSchema = createInsertSchema(productQuestions)
+  .omit({ id: true, createdAt: true });
+
 // Type definitions
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -301,6 +320,9 @@ export type InsertPaymentMethod = z.infer<typeof insertPaymentMethodSchema>;
 
 export type Message = typeof messages.$inferSelect;
 export type InsertMessage = z.infer<typeof insertMessageSchema>;
+
+export type ProductQuestion = typeof productQuestions.$inferSelect;
+export type InsertProductQuestion = z.infer<typeof insertProductQuestionSchema>;
 
 // Cart item interface for the frontend
 export interface CartItem {

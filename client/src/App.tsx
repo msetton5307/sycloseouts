@@ -21,6 +21,7 @@ import BuyerProfilePage from "@/pages/buyer/profile";
 import SellerDashboard from "@/pages/seller/dashboard";
 import SellerProducts from "@/pages/seller/products";
 import SellerOrdersPage from "@/pages/seller/orders";
+import SellerMessagesPage from "@/pages/seller/messages";
 import SellerApply from "@/pages/seller/apply";
 import OrderMessagesPage from "@/pages/order-messages";
 import AdminDashboard from "@/pages/admin/dashboard";
@@ -55,6 +56,9 @@ function Router() {
       <ProtectedRoute path="/seller/dashboard" component={SellerDashboard} allowedRoles={["seller", "admin"]} />
       <ProtectedRoute path="/seller/products" component={SellerProducts} allowedRoles={["seller", "admin"]} />
       <ProtectedRoute path="/seller/orders" component={SellerOrdersPage} allowedRoles={["seller", "admin"]} />
+      <ProtectedRoute path="/seller/messages" component={SellerMessagesPage} allowedRoles={["seller", "admin"]} />
+
+      <ProtectedRoute path="/orders/:id/messages" component={OrderMessagesPage} allowedRoles={["buyer", "seller", "admin"]} />
 
       <ProtectedRoute path="/orders/:id/messages" component={OrderMessagesPage} allowedRoles={["buyer", "seller", "admin"]} />
 

@@ -8,6 +8,7 @@ import {
   addresses, Address, InsertAddress,
   paymentMethods, PaymentMethod, InsertPaymentMethod,
   messages, Message, InsertMessage
+  , productQuestions, ProductQuestion, InsertProductQuestion
 } from "@shared/schema";
 import session from "express-session";
 import { db, pool } from "./db";
@@ -73,6 +74,10 @@ export interface IStorage {
   createMessage(message: InsertMessage): Promise<Message>;
   markMessagesAsRead(orderId: number, userId: number): Promise<void>;
   getUnreadMessageCount(userId: number): Promise<number>;
+
+  // Product question methods
+  createProductQuestion(question: InsertProductQuestion): Promise<ProductQuestion>;
+  getProductQuestionsForSeller(sellerId: number): Promise<ProductQuestion[]>;
 
   // Cart methods
   getCart(userId: number): Promise<Cart | undefined>;
@@ -459,6 +464,20 @@ export class DatabaseStorage implements IStorage {
       .from(messages)
       .where(and(eq(messages.receiverId, userId), eq(messages.isRead, false)));
     return res?.count ?? 0;
+  }
+
+  // Product question methods
+  async createProductQuestion(insertQuestion: InsertProductQuestion): Promise<ProductQuestion> {
+    const [q] = await db.insert(productQuestions).values(insertQuestion).returning();
+    return q;
+  }
+
+  async getProductQuestionsForSeller(sellerId: number): Promise<ProductQuestion[]> {
+    return await db
+      .select()
+      .from(productQuestions)
+      .where(eq(productQuestions.sellerId, sellerId))
+      .orderBy(desc(productQuestions.createdAt));
   }
 
   // Cart methods

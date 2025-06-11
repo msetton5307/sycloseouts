@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { Message } from "@shared/schema";
+import { Message, ProductQuestion } from "@shared/schema";
 
 export function useMessages(orderId: number) {
   const queryClient = useQueryClient();
@@ -29,4 +29,10 @@ export function useUnreadMessages() {
     queryKey: ["/api/messages/unread-count"],
   });
   return data?.count ?? 0;
+}
+
+export function useProductQuestions() {
+  return useQuery<ProductQuestion[]>({
+    queryKey: ["/api/seller/questions"],
+  });
 }

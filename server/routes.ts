@@ -7,6 +7,7 @@ import {
   sendShippingUpdateEmail,
   sendSellerApprovalEmail,
   sendOrderMessageEmail,
+  sendProductQuestionEmail,
 } from "./email";
 import {
   insertProductSchema,
@@ -99,6 +100,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       res.json(product);
+    } catch (error) {
+      handleApiError(res, error);
+    }
+  });
+
+  app.post("/api/products/:id/questions", isAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id, 10);
+      if (Number.isNaN(id)) {
+        return res.status(400).json({ message: "Invalid product ID" });
+      }
+      const user = req.user as Express.User;
+      const product = await storage.getProduct(id);
+      if (!product) {
+        return res.status(404).json({ message: "Product not found" });
+      }
+
+      const seller = await storage.getUser(product.sellerId);
+      if (!seller) {
+        return res.status(404).json({ message: "Seller not found" });
+      }
+
+      const question = await storage.createProductQuestion({
+        productId: id,
+        buyerId: user.id,
+        sellerId: product.sellerId,
+        question: req.body.question,
+      });
+
+      await sendProductQuestionEmail(seller.email, product.title, req.body.question);
+      res.status(201).json(question);
     } catch (error) {
       handleApiError(res, error);
     }
@@ -443,6 +475,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const user = req.user as Express.User;
       const count = await storage.getUnreadMessageCount(user.id);
       res.json({ count });
+    } catch (error) {
+      handleApiError(res, error);
+    }
+  });
+
+  app.get("/api/seller/questions", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user as Express.User;
+      if (user.role !== "seller" && user.role !== "admin") {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+      const sellerId = user.role === "seller" ? user.id : undefined;
+      const questions = await storage.getProductQuestionsForSeller(sellerId ?? user.id);
+      res.json(questions);
     } catch (error) {
       handleApiError(res, error);
     }

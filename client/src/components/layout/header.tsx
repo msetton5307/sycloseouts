@@ -66,7 +66,6 @@ export default function Header({ dashboardTabs, onProfileClick }: HeaderProps) {
                     label: "My Orders",
                     href: "/buyer/orders",
                   },
-                  user?.role === "seller" && { label: "Orders", href: "/seller/orders" },
                   {
                     label: user?.isSeller ? "Dashboard" : "Sell with Us",
                     href: user?.isSeller ? "/seller/dashboard" : "/seller/apply",
@@ -111,7 +110,7 @@ export default function Header({ dashboardTabs, onProfileClick }: HeaderProps) {
               </Button>
 
               {user && (
-                <Link href={user.role === "buyer" ? "/buyer/orders" : "/seller/orders"}>
+                <Link href={user.role === "buyer" ? "/buyer/orders" : "/seller/messages"}>
                   <Button variant="ghost" size="icon" className="text-gray-400 hover:text-gray-500 relative">
                     <Bell className="h-5 w-5" />
                     {unread > 0 && (

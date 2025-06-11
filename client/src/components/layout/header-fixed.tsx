@@ -100,7 +100,7 @@ export default function Header() {
               </Button>
               
               {user && (
-                <Link href={user.role === "buyer" ? "/buyer/orders" : "/seller/orders"}>
+                <Link href={user.role === "buyer" ? "/buyer/orders" : "/seller/messages"}>
                   <Button variant="ghost" size="icon" className="text-gray-400 hover:text-gray-500 relative">
                     <Bell className="h-5 w-5" />
                     {unread > 0 && (
@@ -221,7 +221,7 @@ export default function Header() {
                     <div className="text-sm font-medium text-gray-500">{user.email}</div>
                   </div>
                   <div className="ml-auto flex space-x-4">
-                    <Link href={user.role === "buyer" ? "/buyer/orders" : "/seller/orders"}>
+                    <Link href={user.role === "buyer" ? "/buyer/orders" : "/seller/messages"}>
                       <Button
                         variant="ghost"
                         size="icon"

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "wouter";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Product } from "@shared/schema";
 import {
   ShoppingCart,
@@ -26,6 +26,8 @@ import { Separator } from "@/components/ui/separator";
 import { formatCurrency, SERVICE_FEE_RATE } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
 import { useCart } from "@/hooks/use-cart";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
 
@@ -35,6 +37,15 @@ export default function ProductDetailPage() {
   const [quantity, setQuantity] = useState(0);
   const { addToCart } = useCart();
   const { user } = useAuth();
+  const { toast } = useToast();
+
+  const questionMutation = useMutation({
+    mutationFn: (q: string) =>
+      apiRequest("POST", `/api/products/${productId}/questions`, { question: q }),
+    onSuccess: () => toast({ title: "Question sent" }),
+    onError: (err: Error) =>
+      toast({ title: "Failed to send question", description: err.message, variant: "destructive" }),
+  });
 
   const { data: product, isLoading, error } = useQuery<Product>({
     queryKey: [`/api/products/${productId}`],
@@ -63,6 +74,12 @@ export default function ProductDetailPage() {
       addToCart(product, quantity);
     }
   };
+
+  function handleAskQuestion() {
+    const q = window.prompt("Enter your question for the seller");
+    if (!q) return;
+    questionMutation.mutate(q);
+  }
 
   const unitPrice =
     product && (!user || user.role === "buyer")
@@ -182,6 +199,11 @@ export default function ProductDetailPage() {
               <ShoppingCart className="mr-2 h-5 w-5" />
               Add to Cart
             </Button>
+            {user?.role === "buyer" && (
+              <Button variant="outline" className="w-full mb-4" onClick={handleAskQuestion}>
+                Ask Seller a Question
+              </Button>
+            )}
 
             {product.retailComparisonUrl && (
               <a href={product.retailComparisonUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center text-sm mb-2">
