@@ -20,6 +20,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/use-auth";
 import { useCart } from "@/hooks/use-cart";
+import { useUnreadMessages } from "@/hooks/use-messages";
 import CartDrawer from "@/components/cart/cart-drawer";
 import MobileNav from "@/components/layout/mobile-nav";
 import { ReactNode } from "react";
@@ -34,6 +35,7 @@ export default function Header({ dashboardTabs, onProfileClick }: HeaderProps) {
   const [location] = useLocation();
   const { user, logoutMutation } = useAuth();
   const { itemCount, setIsCartOpen } = useCart();
+  const unread = useUnreadMessages();
 
   const handleLogout = () => logoutMutation.mutate();
   const isActive = (path: string) => location === path;
@@ -109,12 +111,16 @@ export default function Header({ dashboardTabs, onProfileClick }: HeaderProps) {
               </Button>
 
               {user && (
-                <Button variant="ghost" size="icon" className="text-gray-400 hover:text-gray-500 relative">
-                  <Bell className="h-5 w-5" />
-                  <Badge className="absolute -top-2 -right-2 bg-primary text-white text-xs h-5 w-5 flex items-center justify-center p-0">
-                    2
-                  </Badge>
-                </Button>
+                <Link href={user.role === "buyer" ? "/buyer/orders" : "/seller/orders"}>
+                  <Button variant="ghost" size="icon" className="text-gray-400 hover:text-gray-500 relative">
+                    <Bell className="h-5 w-5" />
+                    {unread > 0 && (
+                      <Badge className="absolute -top-2 -right-2 bg-primary text-white text-xs h-5 w-5 flex items-center justify-center p-0">
+                        {unread}
+                      </Badge>
+                    )}
+                  </Button>
+                </Link>
               )}
 
               {user ? (

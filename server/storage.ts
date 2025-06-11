@@ -6,11 +6,12 @@ import {
   sellerApplications, SellerApplication, InsertSellerApplication,
   carts, Cart, InsertCart,
   addresses, Address, InsertAddress,
-  paymentMethods, PaymentMethod, InsertPaymentMethod
+  paymentMethods, PaymentMethod, InsertPaymentMethod,
+  messages, Message, InsertMessage
 } from "@shared/schema";
 import session from "express-session";
 import { db, pool } from "./db";
-import { eq, and, desc, SQL, ilike, lte } from "drizzle-orm";
+import { eq, and, desc, SQL, ilike, lte, sql } from "drizzle-orm";
 import connectPgSimple from "connect-pg-simple";
 
 const PgStore = connectPgSimple(session);
@@ -66,7 +67,13 @@ export interface IStorage {
   deletePaymentMethod(id: number): Promise<boolean>;
 
   getLowStockProducts(userId: number, threshold: number): Promise<Product[]>;
-  
+
+  // Message methods
+  getOrderMessages(orderId: number): Promise<Message[]>;
+  createMessage(message: InsertMessage): Promise<Message>;
+  markMessagesAsRead(orderId: number, userId: number): Promise<void>;
+  getUnreadMessageCount(userId: number): Promise<number>;
+
   // Cart methods
   getCart(userId: number): Promise<Cart | undefined>;
   createOrUpdateCart(cart: InsertCart): Promise<Cart>;
@@ -423,6 +430,35 @@ export class DatabaseStorage implements IStorage {
   async deletePaymentMethod(id: number): Promise<boolean> {
     const [method] = await db.delete(paymentMethods).where(eq(paymentMethods.id, id)).returning();
     return !!method;
+  }
+
+  // Message methods
+  async getOrderMessages(orderId: number): Promise<Message[]> {
+    return await db
+      .select()
+      .from(messages)
+      .where(eq(messages.orderId, orderId))
+      .orderBy(messages.createdAt);
+  }
+
+  async createMessage(insertMessage: InsertMessage): Promise<Message> {
+    const [msg] = await db.insert(messages).values(insertMessage).returning();
+    return msg;
+  }
+
+  async markMessagesAsRead(orderId: number, userId: number): Promise<void> {
+    await db
+      .update(messages)
+      .set({ isRead: true })
+      .where(and(eq(messages.orderId, orderId), eq(messages.receiverId, userId)));
+  }
+
+  async getUnreadMessageCount(userId: number): Promise<number> {
+    const [res] = await db
+      .select({ count: sql`count(*)`.mapWith(Number) })
+      .from(messages)
+      .where(and(eq(messages.receiverId, userId), eq(messages.isRead, false)));
+    return res?.count ?? 0;
   }
 
   // Cart methods

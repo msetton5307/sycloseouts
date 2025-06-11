@@ -254,6 +254,26 @@ export const insertCartSchema = createInsertSchema(carts)
     updatedAt: true,
   });
 
+// Messages between buyer and seller about an order
+export const messages = pgTable("messages", {
+  id: serial("id").primaryKey(),
+  orderId: integer("order_id").notNull(),
+  senderId: integer("sender_id").notNull(),
+  receiverId: integer("receiver_id").notNull(),
+  content: text("content").notNull(),
+  isRead: boolean("is_read").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const messagesRelations = relations(messages, ({ one }) => ({
+  order: one(orders, { fields: [messages.orderId], references: [orders.id] }),
+  sender: one(users, { fields: [messages.senderId], references: [users.id] }),
+  receiver: one(users, { fields: [messages.receiverId], references: [users.id] }),
+}));
+
+export const insertMessageSchema = createInsertSchema(messages)
+  .omit({ id: true, isRead: true, createdAt: true });
+
 // Type definitions
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -278,6 +298,9 @@ export type InsertAddress = z.infer<typeof insertAddressSchema>;
 
 export type PaymentMethod = typeof paymentMethods.$inferSelect;
 export type InsertPaymentMethod = z.infer<typeof insertPaymentMethodSchema>;
+
+export type Message = typeof messages.$inferSelect;
+export type InsertMessage = z.infer<typeof insertMessageSchema>;
 
 // Cart item interface for the frontend
 export interface CartItem {

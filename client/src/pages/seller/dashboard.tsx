@@ -94,7 +94,7 @@ export default function SellerDashboard() {
 
   const messageBuyer = useMutation({
     mutationFn: ({ id, message }: { id: number; message: string }) =>
-      apiRequest("POST", `/api/orders/${id}/message`, { message }),
+      apiRequest("POST", `/api/orders/${id}/messages`, { message }),
     onSuccess: () => toast({ title: "Message sent" }),
     onError: (err: Error) =>
       toast({ title: "Failed to send message", description: err.message, variant: "destructive" }),
@@ -387,6 +387,9 @@ export default function SellerDashboard() {
                           </Button>
                           <Button variant="outline" size="sm" onClick={() => handleContactBuyer(order.id)}>
                             Contact Buyer
+                          </Button>
+                          <Button variant="outline" size="sm" asChild>
+                            <Link href={`/orders/${order.id}/messages`}>Messages</Link>
                           </Button>
                         </div>
                       </div>

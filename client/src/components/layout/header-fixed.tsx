@@ -20,6 +20,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/use-auth";
 import { useCart } from "@/hooks/use-cart";
+import { useUnreadMessages } from "@/hooks/use-messages";
 import CartDrawer from "@/components/cart/cart-drawer";
 import MobileNav from "@/components/layout/mobile-nav";
 
@@ -27,6 +28,7 @@ export default function Header() {
   const [location] = useLocation();
   const { user, logoutMutation } = useAuth();
   const { itemCount, setIsCartOpen } = useCart();
+  const unread = useUnreadMessages();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const isActive = (path: string) => {
@@ -98,13 +100,17 @@ export default function Header() {
               </Button>
               
               {user && (
-                <Button variant="ghost" size="icon" className="text-gray-400 hover:text-gray-500 relative">
-                  <Bell className="h-5 w-5" />
-                  <Badge className="absolute -top-2 -right-2 bg-primary text-white text-xs h-5 w-5 flex items-center justify-center p-0">
-                    2
-                  </Badge>
-                  <span className="sr-only">Notifications</span>
-                </Button>
+                <Link href={user.role === "buyer" ? "/buyer/orders" : "/seller/orders"}>
+                  <Button variant="ghost" size="icon" className="text-gray-400 hover:text-gray-500 relative">
+                    <Bell className="h-5 w-5" />
+                    {unread > 0 && (
+                      <Badge className="absolute -top-2 -right-2 bg-primary text-white text-xs h-5 w-5 flex items-center justify-center p-0">
+                        {unread}
+                      </Badge>
+                    )}
+                    <span className="sr-only">Notifications</span>
+                  </Button>
+                </Link>
               )}
               
               {user ? (
@@ -215,16 +221,20 @@ export default function Header() {
                     <div className="text-sm font-medium text-gray-500">{user.email}</div>
                   </div>
                   <div className="ml-auto flex space-x-4">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="text-gray-400 hover:text-gray-500 relative"
-                    >
-                      <Bell className="h-5 w-5" />
-                      <Badge className="absolute -top-2 -right-2 bg-primary text-white text-xs h-5 w-5 flex items-center justify-center p-0">
-                        2
-                      </Badge>
-                    </Button>
+                    <Link href={user.role === "buyer" ? "/buyer/orders" : "/seller/orders"}>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-gray-400 hover:text-gray-500 relative"
+                      >
+                        <Bell className="h-5 w-5" />
+                        {unread > 0 && (
+                          <Badge className="absolute -top-2 -right-2 bg-primary text-white text-xs h-5 w-5 flex items-center justify-center p-0">
+                            {unread}
+                          </Badge>
+                        )}
+                      </Button>
+                    </Link>
                     <Button
                       variant="ghost"
                       size="icon"

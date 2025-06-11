@@ -157,6 +157,9 @@ export default function BuyerOrdersPage() {
                       <Button variant="outline" size="sm">
                         Download Invoice
                       </Button>
+                      <Button variant="outline" size="sm" asChild>
+                        <Link href={`/orders/${order.id}/messages`}>Message Seller</Link>
+                      </Button>
                     </div>
                   </div>
                 ))}
