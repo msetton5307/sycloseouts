@@ -11,12 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -41,14 +36,7 @@ import { formatCurrency, formatDate } from "@/lib/utils";
 export default function SellerDashboard() {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("overview");
-  const [location, setLocation] = useLocation();
-
-  useEffect(() => {
-    if (user?.role === "seller" && (!user.isSeller || !user.isApproved)) {
-      setLocation("/seller/apply");
-      return;
-    }
-  }, [user, setLocation]);
+  const [location] = useLocation();
 
   useEffect(() => {
     const hash = window.location.hash.replace("#", "");
@@ -165,9 +153,6 @@ export default function SellerDashboard() {
     >
       <Header />
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <TabsList className="mb-6 grid grid-cols-1 md:flex md:w-auto">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-        </TabsList>
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-3xl font-extrabold tracking-tight text-gray-900">
@@ -182,6 +167,12 @@ export default function SellerDashboard() {
               <Button variant="outline" className="flex items-center">
                 <Package className="mr-2 h-4 w-4" />
                 My Products
+              </Button>
+            </Link>
+            <Link href="/seller/orders">
+              <Button variant="outline" className="flex items-center">
+                <ListOrdered className="mr-2 h-4 w-4" />
+                Orders
               </Button>
             </Link>
             <Link href="/seller/products?action=new">

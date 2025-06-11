@@ -64,6 +64,7 @@ export default function Header({ dashboardTabs, onProfileClick }: HeaderProps) {
                     label: "My Orders",
                     href: "/buyer/orders",
                   },
+                  user?.role === "seller" && { label: "Orders", href: "/seller/orders" },
                   {
                     label: user?.isSeller ? "Dashboard" : "Sell with Us",
                     href: user?.isSeller ? "/seller/dashboard" : "/seller/apply",
