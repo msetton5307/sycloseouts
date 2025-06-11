@@ -83,9 +83,9 @@ export default function BuyerDashboard() {
         onValueChange={setActiveTab}
         className="space-y-6"
       >
-        <Header onProfileClick={() => setActiveTab("profile")}/> 
+        <Header onProfileClick={() => setActiveTab("profile")} />
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
             <div>
               <h1 className="text-3xl font-extrabold tracking-tight text-gray-900">
                 Buyer Dashboard
@@ -106,13 +106,15 @@ export default function BuyerDashboard() {
 
           <TabsContent value="overview" className="space-y-6">
             {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
               <Card>
-                <CardHeader className="pb-2">
+                <CardHeader className="pb-2 p-4 sm:p-6">
                   <CardDescription>Total Orders</CardDescription>
-                  <CardTitle className="text-3xl">{totalOrders}</CardTitle>
+                  <CardTitle className="text-2xl sm:text-3xl">
+                    {totalOrders}
+                  </CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="p-4 sm:p-6">
                   <div className="text-sm text-gray-500 flex items-center">
                     <ListOrdered className="h-4 w-4 mr-1 text-primary" />
                     All time purchases
@@ -121,11 +123,13 @@ export default function BuyerDashboard() {
               </Card>
 
               <Card>
-                <CardHeader className="pb-2">
+                <CardHeader className="pb-2 p-4 sm:p-6">
                   <CardDescription>Pending Orders</CardDescription>
-                  <CardTitle className="text-3xl">{pendingOrders}</CardTitle>
+                  <CardTitle className="text-2xl sm:text-3xl">
+                    {pendingOrders}
+                  </CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="p-4 sm:p-6">
                   <div className="text-sm text-gray-500 flex items-center">
                     <Package className="h-4 w-4 mr-1 text-yellow-500" />
                     Awaiting fulfillment
@@ -134,11 +138,13 @@ export default function BuyerDashboard() {
               </Card>
 
               <Card>
-                <CardHeader className="pb-2">
+                <CardHeader className="pb-2 p-4 sm:p-6">
                   <CardDescription>Delivered Orders</CardDescription>
-                  <CardTitle className="text-3xl">{deliveredOrders}</CardTitle>
+                  <CardTitle className="text-2xl sm:text-3xl">
+                    {deliveredOrders}
+                  </CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="p-4 sm:p-6">
                   <div className="text-sm text-gray-500 flex items-center">
                     <Home className="h-4 w-4 mr-1 text-green-500" />
                     Successfully delivered
@@ -147,13 +153,13 @@ export default function BuyerDashboard() {
               </Card>
 
               <Card>
-                <CardHeader className="pb-2">
+                <CardHeader className="pb-2 p-4 sm:p-6">
                   <CardDescription>Total Spent</CardDescription>
-                  <CardTitle className="text-3xl">
+                  <CardTitle className="text-2xl sm:text-3xl">
                     {formatCurrency(totalSpent)}
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="p-4 sm:p-6">
                   <div className="text-sm text-gray-500 flex items-center">
                     <BarChart4 className="h-4 w-4 mr-1 text-primary" />
                     All time purchases
@@ -164,11 +170,11 @@ export default function BuyerDashboard() {
 
             {/* Recent Orders */}
             <Card>
-              <CardHeader>
+              <CardHeader className="p-4 sm:p-6">
                 <CardTitle>Recent Orders</CardTitle>
                 <CardDescription>Your latest purchases</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-4 sm:p-6">
                 {isLoadingOrders ? (
                   <div className="animate-pulse space-y-4">
                     {[...Array(3)].map((_, i) => (
@@ -180,7 +186,7 @@ export default function BuyerDashboard() {
                     ))}
                   </div>
                 ) : orders.length > 0 ? (
-                  <div className="space-y-6">
+                  <div className="space-y-4 sm:space-y-6">
                     {orders.slice(0, 3).map((order) => (
                       <div key={order.id} className="border rounded-lg p-4">
                         <div className="flex justify-between mb-4">
@@ -213,7 +219,7 @@ export default function BuyerDashboard() {
 
                         <OrderStatus order={order} />
 
-                        <div className="mt-4 flex justify-end">
+                        <div className="mt-4 flex justify-center sm:justify-end">
                           <Link href={`/buyer/orders/${order.id}`}>
                             <Button variant="outline" size="sm">
                               View Details
@@ -254,9 +260,9 @@ export default function BuyerDashboard() {
                   Based on your purchase history
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-4 sm:p-6">
                 {isLoadingProducts ? (
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
                     {[...Array(3)].map((_, i) => (
                       <div key={i} className="animate-pulse">
                         <div className="h-40 bg-gray-200 rounded-lg mb-3"></div>
@@ -266,7 +272,7 @@ export default function BuyerDashboard() {
                     ))}
                   </div>
                 ) : recentProducts.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
                     {recentProducts.slice(0, 3).map((product) => (
                       <Link key={product.id} href={`/products/${product.id}`}>
                         <div className="border rounded-lg overflow-hidden hover:shadow-md transition-shadow cursor-pointer">
@@ -298,15 +304,14 @@ export default function BuyerDashboard() {
             </Card>
           </TabsContent>
 
-
           <TabsContent value="profile">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
               <Card className="md:col-span-1">
-                <CardHeader>
+                <CardHeader className="p-4 sm:p-6">
                   <CardTitle>Profile</CardTitle>
                   <CardDescription>Your account information</CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="p-4 sm:p-6">
                   <div className="flex flex-col items-center">
                     <Avatar className="h-24 w-24 mb-4">
                       <AvatarImage
@@ -335,10 +340,10 @@ export default function BuyerDashboard() {
               </Card>
 
               <Card className="md:col-span-2">
-                <CardHeader>
+                <CardHeader className="p-4 sm:p-6">
                   <CardTitle>Account Details</CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="p-4 sm:p-6">
                   <div className="space-y-4">
                     <div>
                       <h4 className="text-sm font-medium text-gray-500">
@@ -381,48 +386,72 @@ export default function BuyerDashboard() {
               </Card>
 
               <Card className="md:col-span-3">
-                <CardHeader>
+                <CardHeader className="p-4 sm:p-6">
                   <CardTitle>Saved Addresses</CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="p-4 sm:p-6">
                   {addresses.length === 0 ? (
                     <p className="text-sm text-gray-500">No saved addresses</p>
                   ) : (
                     <RadioGroup className="space-y-4">
                       {addresses.map((addr) => (
-                        <div key={addr.id} className="flex items-start space-x-2 border rounded-md p-4">
-                          <RadioGroupItem value={String(addr.id)} id={`addr-${addr.id}`} />
-                          <label htmlFor={`addr-${addr.id}`} className="text-sm leading-none cursor-pointer">
+                        <div
+                          key={addr.id}
+                          className="flex items-start space-x-2 border rounded-md p-4"
+                        >
+                          <RadioGroupItem
+                            value={String(addr.id)}
+                            id={`addr-${addr.id}`}
+                          />
+                          <label
+                            htmlFor={`addr-${addr.id}`}
+                            className="text-sm leading-none cursor-pointer"
+                          >
                             {addr.name} - {addr.address}, {addr.city}
                           </label>
                         </div>
                       ))}
                     </RadioGroup>
                   )}
-                  <Button variant="outline" className="mt-4">Add New Address</Button>
+                  <Button variant="outline" className="mt-4">
+                    Add New Address
+                  </Button>
                 </CardContent>
               </Card>
 
               <Card className="md:col-span-3">
-                <CardHeader>
+                <CardHeader className="p-4 sm:p-6">
                   <CardTitle>Saved Payment Methods</CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="p-4 sm:p-6">
                   {paymentMethods.length === 0 ? (
-                    <p className="text-sm text-gray-500">No saved payment methods</p>
+                    <p className="text-sm text-gray-500">
+                      No saved payment methods
+                    </p>
                   ) : (
                     <RadioGroup className="space-y-4">
                       {paymentMethods.map((pm) => (
-                        <div key={pm.id} className="flex items-start space-x-2 border rounded-md p-4">
-                          <RadioGroupItem value={String(pm.id)} id={`pm-${pm.id}`} />
-                          <label htmlFor={`pm-${pm.id}`} className="text-sm leading-none cursor-pointer">
+                        <div
+                          key={pm.id}
+                          className="flex items-start space-x-2 border rounded-md p-4"
+                        >
+                          <RadioGroupItem
+                            value={String(pm.id)}
+                            id={`pm-${pm.id}`}
+                          />
+                          <label
+                            htmlFor={`pm-${pm.id}`}
+                            className="text-sm leading-none cursor-pointer"
+                          >
                             {pm.brand} ending in {pm.cardLast4}
                           </label>
                         </div>
                       ))}
                     </RadioGroup>
                   )}
-                  <Button variant="outline" className="mt-4">Add New Payment Method</Button>
+                  <Button variant="outline" className="mt-4">
+                    Add New Payment Method
+                  </Button>
                 </CardContent>
               </Card>
             </div>
