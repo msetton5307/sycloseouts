@@ -2,7 +2,12 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated, isSeller, isAdmin } from "./auth";
-import { sendInvoiceEmail, sendShippingUpdateEmail, sendSellerApprovalEmail } from "./email";
+import {
+  sendInvoiceEmail,
+  sendShippingUpdateEmail,
+  sendSellerApprovalEmail,
+  sendOrderMessageEmail,
+} from "./email";
 import {
   insertProductSchema,
   insertOrderSchema,
@@ -290,7 +295,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Order not found" });
       }
 
-      if (order.buyerId !== user.id && user.role !== "admin") {
+      if (
+        order.buyerId !== user.id &&
+        order.sellerId !== user.id &&
+        user.role !== "admin"
+      ) {
         return res.status(403).json({ message: "Forbidden" });
       }
 
@@ -333,6 +342,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
           sendShippingUpdateEmail(buyer.email, updatedOrder).catch(console.error);
         }
       }
+    } catch (error) {
+      handleApiError(res, error);
+    }
+  });
+
+  app.post("/api/orders/:id/message", isAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id, 10);
+      if (Number.isNaN(id)) {
+        return res.status(400).json({ message: "Invalid order ID" });
+      }
+      const user = req.user as Express.User;
+      const order = await storage.getOrder(id);
+
+      if (!order) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+
+      if (order.sellerId !== user.id && user.role !== "admin") {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+
+      const buyer = await storage.getUser(order.buyerId);
+      if (!buyer) {
+        return res.status(404).json({ message: "Buyer not found" });
+      }
+
+      await sendOrderMessageEmail(buyer.email, order.id, req.body.message);
+      res.sendStatus(204);
     } catch (error) {
       handleApiError(res, error);
     }
