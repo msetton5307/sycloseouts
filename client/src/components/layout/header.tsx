@@ -59,24 +59,30 @@ export default function Header({ dashboardTabs, onProfileClick }: HeaderProps) {
                 {[
                   { label: "Home", href: "/" },
                   { label: "Products", href: "/products" },
+                  user?.role === "buyer" && {
+                    label: "My Orders",
+                    href: "/buyer/orders",
+                  },
                   {
                     label: user?.isSeller ? "Seller Dashboard" : "Sell with Us",
                     href: user?.isSeller ? "/seller/dashboard" : "/seller/apply",
                   },
                   { label: "About", href: "/about" },
-                ].map(({ label, href }) => (
-                  <Link
-                    key={href}
-                    href={href}
-                    className={`${
-                      isActive(href)
-                        ? "border-primary text-gray-900"
-                        : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
-                    } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
-                  >
-                    {label}
-                  </Link>
-                ))}
+                ]
+                  .filter(Boolean)
+                  .map(({ label, href }) => (
+                    <Link
+                      key={href}
+                      href={href}
+                      className={`${
+                        isActive(href)
+                          ? "border-primary text-gray-900"
+                          : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
+                      } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
+                    >
+                      {label}
+                    </Link>
+                  ))}
                 {dashboardTabs && <div className="ml-8">{dashboardTabs}</div>}
               </nav>
             </div>
@@ -124,8 +130,7 @@ export default function Header({ dashboardTabs, onProfileClick }: HeaderProps) {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem
-                      onSelect={(e) => {
-                        e.preventDefault();
+                      onSelect={() => {
                         onProfileClick?.();
                       }}
                       asChild={!onProfileClick}
