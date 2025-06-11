@@ -7,6 +7,7 @@ import {
   sendShippingUpdateEmail,
   sendSellerApprovalEmail,
   sendOrderMessageEmail,
+  sendProductQuestionEmail,
 } from "./email";
 import {
   insertProductSchema,
@@ -99,6 +100,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       res.json(product);
+    } catch (error) {
+      handleApiError(res, error);
+    }
+  });
+
+  app.post("/api/products/:id/questions", isAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id, 10);
+      if (Number.isNaN(id)) {
+        return res.status(400).json({ message: "Invalid product ID" });
+      }
+      const user = req.user as Express.User;
+      const product = await storage.getProduct(id);
+      if (!product) {
+        return res.status(404).json({ message: "Product not found" });
+      }
+
+      const seller = await storage.getUser(product.sellerId);
+      if (!seller) {
+        return res.status(404).json({ message: "Seller not found" });
+      }
+
+      const question = await storage.createProductQuestion({
+        productId: id,
+        buyerId: user.id,
+        sellerId: product.sellerId,
+        question: req.body.question,
+      });
+
+      await sendProductQuestionEmail(seller.email, product.title, req.body.question);
+      res.status(201).json(question);
     } catch (error) {
       handleApiError(res, error);
     }
@@ -358,7 +390,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/orders/:id/message", isAuthenticated, async (req, res) => {
+  app.post("/api/orders/:id/messages", isAuthenticated, async (req, res) => {
     try {
       const id = parseInt(req.params.id, 10);
       if (Number.isNaN(id)) {
@@ -371,17 +403,92 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Order not found" });
       }
 
-      if (order.sellerId !== user.id && user.role !== "admin") {
+      if (order.buyerId !== user.id && order.sellerId !== user.id && user.role !== "admin") {
         return res.status(403).json({ message: "Forbidden" });
       }
 
-      const buyer = await storage.getUser(order.buyerId);
-      if (!buyer) {
-        return res.status(404).json({ message: "Buyer not found" });
+      const receiverId = user.id === order.buyerId ? order.sellerId : order.buyerId;
+      const receiver = await storage.getUser(receiverId);
+      if (!receiver) {
+        return res.status(404).json({ message: "Receiver not found" });
       }
 
-      await sendOrderMessageEmail(buyer.email, order.id, req.body.message);
+      const message = await storage.createMessage({
+        orderId: order.id,
+        senderId: user.id,
+        receiverId,
+        content: req.body.message,
+      });
+
+      await sendOrderMessageEmail(receiver.email, order.id, req.body.message);
+      res.status(201).json(message);
+    } catch (error) {
+      handleApiError(res, error);
+    }
+  });
+
+  app.get("/api/orders/:id/messages", isAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id, 10);
+      if (Number.isNaN(id)) {
+        return res.status(400).json({ message: "Invalid order ID" });
+      }
+      const user = req.user as Express.User;
+      const order = await storage.getOrder(id);
+      if (!order) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+      if (order.buyerId !== user.id && order.sellerId !== user.id && user.role !== "admin") {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+      const msgs = await storage.getOrderMessages(id);
+      res.json(msgs);
+    } catch (error) {
+      handleApiError(res, error);
+    }
+  });
+
+  app.post("/api/orders/:id/messages/read", isAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id, 10);
+      if (Number.isNaN(id)) {
+        return res.status(400).json({ message: "Invalid order ID" });
+      }
+      const user = req.user as Express.User;
+      const order = await storage.getOrder(id);
+      if (!order) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+      if (order.buyerId !== user.id && order.sellerId !== user.id && user.role !== "admin") {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+
+      await storage.markMessagesAsRead(id, user.id);
       res.sendStatus(204);
+    } catch (error) {
+      handleApiError(res, error);
+    }
+  });
+
+  app.get("/api/messages/unread-count", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user as Express.User;
+      const count = await storage.getUnreadMessageCount(user.id);
+      res.json({ count });
+    } catch (error) {
+      handleApiError(res, error);
+    }
+  });
+
+  app.get("/api/seller/questions", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user as Express.User;
+      if (user.role !== "seller" && user.role !== "admin") {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+      const sellerId = user.role === "seller" ? user.id : undefined;
+      const questions = await storage.getProductQuestionsForSeller(sellerId ?? user.id);
+      res.json(questions);
     } catch (error) {
       handleApiError(res, error);
     }
