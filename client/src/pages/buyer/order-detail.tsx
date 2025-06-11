@@ -1,6 +1,11 @@
 import { Link, useParams } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Order, OrderItem } from "@shared/schema";
+
+interface OrderItemWithProduct extends OrderItem {
+  productTitle: string;
+  productImages: string[];
+}
 import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
 import {
@@ -18,7 +23,7 @@ export default function BuyerOrderDetailPage() {
   const { id } = useParams();
   const orderId = parseInt(id);
 
-  const { data: order, isLoading } = useQuery<Order & { items: OrderItem[] }>({
+  const { data: order, isLoading } = useQuery<Order & { items: OrderItemWithProduct[] }>({
     queryKey: ["/api/orders/" + orderId],
     enabled: !Number.isNaN(orderId),
   });
@@ -80,10 +85,17 @@ export default function BuyerOrderDetailPage() {
               <h3 className="font-medium mb-2">Items</h3>
               <ul className="space-y-2">
                 {order.items.map(item => (
-                  <li key={item.id} className="flex justify-between">
-                    <span>
-                      {item.quantity} x Product #{item.productId}
-                    </span>
+                  <li key={item.id} className="flex justify-between items-center">
+                    <div className="flex items-center gap-2">
+                      <img
+                        src={item.productImages[0]}
+                        alt={item.productTitle}
+                        className="h-10 w-10 object-cover rounded"
+                      />
+                      <span>
+                        {item.quantity} x {item.productTitle}
+                      </span>
+                    </div>
                     <span>{formatCurrency(item.totalPrice)}</span>
                   </li>
                 ))}
