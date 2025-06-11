@@ -14,7 +14,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Upload } from "lucide-react";
+import { Upload, Download } from "lucide-react";
 
 function parseCsv(text: string): Omit<InsertProduct, "sellerId">[] {
   const lines = text.trim().split(/\r?\n/);
@@ -42,6 +42,7 @@ export default function BulkUpload() {
   const fileRef = useRef<HTMLInputElement | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const templateUrl = "/product-template.csv";
 
   const { mutateAsync, isPending } = useMutation({
     mutationFn: async (products: Omit<InsertProduct, "sellerId">[]) => {
@@ -94,13 +95,26 @@ export default function BulkUpload() {
         <DialogHeader>
           <DialogTitle>Bulk Upload Products</DialogTitle>
           <DialogDescription>
-            Select a CSV file to import products. Columns should match the product fields.
+            Download the
+            {" "}
+            <a href={templateUrl} download className="text-primary underline">
+              CSV template
+            </a>{" "}
+            and fill it with your products, then re-upload the file.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-2">
           <Input type="file" accept=".csv" ref={fileRef} />
           <DialogFooter className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setOpen(false)}>
+              Cancel
+            </Button>
+            <a href={templateUrl} download>
+              <Button variant="secondary" type="button">
+                <Download className="mr-2 h-4 w-4" />
+                Template
+              </Button>
+            </a>
             <Button onClick={handleUpload} disabled={isPending}>
               {isPending ? "Uploading..." : "Upload"}
             </Button>
