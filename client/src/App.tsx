@@ -22,6 +22,7 @@ import SellerDashboard from "@/pages/seller/dashboard";
 import SellerProducts from "@/pages/seller/products";
 import SellerApply from "@/pages/seller/apply";
 import AdminDashboard from "@/pages/admin/dashboard";
+import FeaturedProductsPage from "@/pages/admin/featured-products";
 import AdminUsers from "@/pages/admin/users";
 import AdminApplications from "@/pages/admin/applications";
 import AboutPage from "@/pages/about-page";
@@ -56,6 +57,7 @@ function Router() {
       <ProtectedRoute path="/admin/dashboard" component={AdminDashboard} allowedRoles={["admin"]} />
       <ProtectedRoute path="/admin/users" component={AdminUsers} allowedRoles={["admin"]} />
       <ProtectedRoute path="/admin/applications" component={AdminApplications} allowedRoles={["admin"]} />
+      <ProtectedRoute path="/admin/featured" component={FeaturedProductsPage} allowedRoles={["admin"]} />
 
       {/* Fallback to 404 */}
       <Route component={NotFound} />

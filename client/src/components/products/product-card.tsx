@@ -3,8 +3,9 @@ import { Link } from "wouter";
 import { ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, SERVICE_FEE_RATE } from "@/lib/utils";
 import { useCart } from "@/hooks/use-cart";
+import { useAuth } from "@/hooks/use-auth";
 
 interface ProductCardProps {
   product: Product;
@@ -12,6 +13,11 @@ interface ProductCardProps {
 
 export default function ProductCard({ product }: ProductCardProps) {
   const { addToCart } = useCart();
+  const { user } = useAuth();
+  const displayPrice =
+    user?.role === "buyer"
+      ? product.price * (1 + SERVICE_FEE_RATE)
+      : product.price;
   
   const handleAddToCart = () => {
     addToCart(product, product.minOrderQuantity);
@@ -46,7 +52,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         </div>
         <div className="mt-auto">
           <p className="text-lg font-bold text-gray-900">
-            {formatCurrency(product.price)}{' '}
+            {formatCurrency(displayPrice)}{' '}
             <span className="text-sm font-normal text-gray-600">/unit</span>
           </p>
           <Button
