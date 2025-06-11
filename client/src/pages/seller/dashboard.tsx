@@ -41,7 +41,14 @@ import { formatCurrency, formatDate } from "@/lib/utils";
 export default function SellerDashboard() {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("overview");
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
+
+  useEffect(() => {
+    if (user?.role === "seller" && (!user.isSeller || !user.isApproved)) {
+      setLocation("/seller/apply");
+      return;
+    }
+  }, [user, setLocation]);
 
   useEffect(() => {
     const hash = window.location.hash.replace("#", "");

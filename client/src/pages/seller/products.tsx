@@ -53,6 +53,12 @@ import { useAuth } from "@/hooks/use-auth";
 export default function SellerProducts() {
   const [, setLocation] = useLocation();
   const { user } = useAuth();
+
+  useEffect(() => {
+    if (user?.role === "seller" && (!user.isSeller || !user.isApproved)) {
+      setLocation("/seller/apply");
+    }
+  }, [user, setLocation]);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
