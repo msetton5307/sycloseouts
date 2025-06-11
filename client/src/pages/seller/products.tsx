@@ -43,7 +43,8 @@ import {
   Trash2,
   XCircle,
   Loader2,
-  ShoppingBag
+  ShoppingBag,
+  Star
 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
@@ -58,6 +59,17 @@ export default function SellerProducts() {
   const [showNewProductForm, setShowNewProductForm] = useState(false);
   const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false);
   const [productToDelete, setProductToDelete] = useState<Product | null>(null);
+
+  const { mutate: toggleBanner } = useMutation({
+    mutationFn: async (data: { id: number; isBanner: boolean }) => {
+      const res = await apiRequest("PUT", `/api/products/${data.id}`, { isBanner: data.isBanner });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/banner-products"] });
+    }
+  });
   
   const { data: products = [], isLoading } = useQuery<Product[]>({
     queryKey: ["/api/products"],
@@ -65,7 +77,7 @@ export default function SellerProducts() {
   });
   
   // Filter products for the current seller
-  const sellerProducts = products.filter(product => product.sellerId === user?.id);
+  const sellerProducts = user?.role === "admin" ? products : products.filter(product => product.sellerId === user?.id);
   
   // Filter by search term if any
   const filteredProducts = sellerProducts.filter(product => {
@@ -129,6 +141,10 @@ export default function SellerProducts() {
     if (productToDelete) {
       deleteProduct(productToDelete.id);
     }
+  };
+
+  const handleToggleBanner = (product: Product) => {
+    toggleBanner({ id: product.id, isBanner: !product.isBanner });
   };
   
   const handleFormSuccess = () => {
@@ -302,20 +318,31 @@ export default function SellerProducts() {
                         <TableCell>{product.totalUnits}</TableCell>
                         <TableCell>
                           <div className="flex space-x-2">
-                            <Button 
-                              size="sm" 
-                              variant="outline" 
-                              onClick={() => handleEditProduct(product)}
-                              className="h-8 w-8 p-0"
-                            >
-                              <Edit className="h-4 w-4" />
-                              <span className="sr-only">Edit</span>
-                            </Button>
-                            <Button 
-                              size="sm" 
-                              variant="outline" 
-                              onClick={() => handleDeleteProduct(product)}
-                              className="h-8 w-8 p-0 hover:bg-red-50 hover:text-red-600 hover:border-red-200"
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleEditProduct(product)}
+                                className="h-8 w-8 p-0"
+                              >
+                                <Edit className="h-4 w-4" />
+                                <span className="sr-only">Edit</span>
+                              </Button>
+                              {user?.role === "admin" && (
+                                <Button
+                                  size="sm"
+                                  variant={product.isBanner ? "default" : "outline"}
+                                  onClick={() => handleToggleBanner(product)}
+                                  className="h-8 w-8 p-0"
+                                >
+                                  <Star className="h-4 w-4" fill={product.isBanner ? "currentColor" : "none"} />
+                                  <span className="sr-only">Banner</span>
+                                </Button>
+                              )}
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleDeleteProduct(product)}
+                                className="h-8 w-8 p-0 hover:bg-red-50 hover:text-red-600 hover:border-red-200"
                             >
                               <Trash2 className="h-4 w-4" />
                               <span className="sr-only">Delete</span>
