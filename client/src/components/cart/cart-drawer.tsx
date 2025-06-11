@@ -70,13 +70,16 @@ export default function CartDrawer() {
               <SheetFooter>
                 <SheetClose asChild>
                   <Link href="/checkout">
-                    <Button className="w-full">
+                    <Button className="w-full sm:w-auto">
                       Checkout
                     </Button>
                   </Link>
                 </SheetClose>
                 <SheetClose asChild>
-                  <Button variant="outline" className="w-full mt-2 flex items-center justify-center">
+                  <Button
+                    variant="outline"
+                    className="w-full sm:w-auto mt-2 sm:mt-0 flex items-center justify-center"
+                  >
                     Continue Shopping
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
