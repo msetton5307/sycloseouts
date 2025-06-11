@@ -215,3 +215,27 @@ export async function sendSellerApprovalEmail(to: string) {
     console.error("Failed to send seller approval email", err);
   }
 }
+
+export async function sendOrderMessageEmail(
+  to: string,
+  orderId: number,
+  message: string,
+) {
+  if (!transporter) {
+    console.warn("Email transport not configured; skipping order message email");
+    return;
+  }
+
+  const mailOptions = {
+    from: process.env.SMTP_FROM || user,
+    to,
+    subject: `Message regarding Order #${orderId}`,
+    text: message,
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+  } catch (err) {
+    console.error("Failed to send order message email", err);
+  }
+}
