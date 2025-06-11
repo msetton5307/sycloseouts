@@ -112,6 +112,7 @@ export const products = pgTable("products", {
   fobLocation: text("fob_location"),
   retailComparisonUrl: text("retail_comparison_url"),
   upc: text("upc"),
+  isBanner: boolean("is_banner").default(false),
   condition: text("condition").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -136,6 +137,7 @@ export const insertProductSchema = createInsertSchema(products, {
   .extend({
     // Images are optional for testing but an empty array will be stored
     images: z.array(z.string()).default([]),
+    isBanner: z.boolean().optional(),
   });
 
 // Order schema

@@ -40,7 +40,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Product routes
   app.get("/api/products", async (req, res) => {
     try {
-      const { category, sellerId, q } = req.query as Record<string, string>;
+      const { category, sellerId, q, isBanner } = req.query as Record<string, string>;
       const filter: any = {};
 
       if (category) filter.category = category;
@@ -52,6 +52,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         filter.sellerId = sellerIdNum;
       }
 
+      if (isBanner !== undefined) filter.isBanner = isBanner === 'true';
+
       if (q) {
         const products = await storage.searchProducts(q, filter);
         return res.json(products);
@@ -59,6 +61,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const products = await storage.getProducts(filter);
       res.json(products);
+    } catch (error) {
+      handleApiError(res, error);
+    }
+  });
+
+  app.get("/api/banner-products", async (_req, res) => {
+    try {
+      const products = await storage.getProducts({ isBanner: true });
+      res.json(products.slice(0, 5));
     } catch (error) {
       handleApiError(res, error);
     }

@@ -25,6 +25,8 @@ import { toast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Loader2, Plus, X, Upload, ImagePlus } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { useAuth } from "@/hooks/use-auth";
 
 interface ProductFormProps {
   product?: Product;
@@ -33,6 +35,7 @@ interface ProductFormProps {
 
 export default function ProductForm({ product, onSuccess }: ProductFormProps) {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   const [imageUrls, setImageUrls] = useState<string[]>(product?.images || []);
   const [newImageUrl, setNewImageUrl] = useState("");
   const [uploading, setUploading] = useState(false);
@@ -69,6 +72,7 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
       fobLocation: product.fobLocation || '',
       retailComparisonUrl: product.retailComparisonUrl || '',
       upc: product.upc || '',
+      isBanner: product.isBanner ?? false,
     } : {
       sellerId: 0, // Will be set by the server
       title: "",
@@ -82,7 +86,8 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
       fobLocation: "",
       retailComparisonUrl: "",
       upc: "",
-      condition: "New"
+      condition: "New",
+      isBanner: false
     },
   });
   
@@ -339,6 +344,23 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
               </FormItem>
             )}
           />
+        {user?.role === "admin" && (
+          <FormField
+            control={form.control}
+            name="isBanner"
+            render={({ field }) => (
+              <FormItem className="flex items-center space-x-2 pt-2">
+                <FormControl>
+                  <Checkbox
+                    checked={field.value ?? false}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+                <FormLabel className="mb-0">Show in Home Banner</FormLabel>
+              </FormItem>
+            )}
+          />
+        )}
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
