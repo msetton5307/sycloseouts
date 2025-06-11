@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { Order, Product, Address, PaymentMethod } from "@shared/schema";
 import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
@@ -35,6 +35,14 @@ import OrderStatus from "@/components/buyer/order-status";
 export default function BuyerDashboard() {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("overview");
+  const [location] = useLocation();
+
+  useEffect(() => {
+    const hash = window.location.hash.replace("#", "");
+    if (hash) {
+      setActiveTab(hash);
+    }
+  }, [location]);
 
   const { data: orders = [], isLoading: isLoadingOrders } = useQuery<Order[]>({
     queryKey: ["/api/orders"],
