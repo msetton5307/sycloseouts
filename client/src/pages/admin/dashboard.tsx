@@ -28,7 +28,8 @@ import {
   User as UserIcon,
   Users,
   LayoutDashboard,
-  Package
+  Package,
+  Star
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { formatCurrency } from "@/lib/utils";
@@ -143,6 +144,12 @@ export default function AdminDashboard() {
                     {pendingApplications}
                   </span>
                 )}
+              </Button>
+            </Link>
+            <Link href="/admin/featured">
+              <Button variant="outline" className="flex items-center">
+                <Star className="mr-2 h-4 w-4" />
+                Featured Products
               </Button>
             </Link>
           </div>
