@@ -1,7 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 
 import { Product } from "@shared/schema";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, SERVICE_FEE_RATE } from "@/lib/utils";
+import { useAuth } from "@/hooks/use-auth";
 import {
   Carousel,
   CarouselContent,
@@ -15,6 +16,7 @@ import { Link } from "wouter";
 import Autoplay from "embla-carousel-autoplay";
 
 export default function BannerCarousel() {
+  const { user } = useAuth();
   const { data: products, isLoading } = useQuery<Product[]>({
     queryKey: ["/api/banner-products"],
   });
@@ -52,7 +54,11 @@ export default function BannerCarousel() {
                     {product.title}
                   </h3>
                   <p className="text-lg md:text-xl text-primary-foreground drop-shadow">
-                    {formatCurrency(product.price)}/unit
+                    {formatCurrency(
+                      !user || user.role === "buyer"
+                        ? product.price * (1 + SERVICE_FEE_RATE)
+                        : product.price
+                    )}/unit
                   </p>
                   <Button asChild size="sm" variant="secondary" className="self-end">
                     <Link href={`/products/${product.id}`}>View Details</Link>
