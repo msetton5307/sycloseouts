@@ -21,6 +21,7 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/use-auth";
 import { useCart } from "@/hooks/use-cart";
 import CartDrawer from "@/components/cart/cart-drawer";
+import MobileNav from "@/components/layout/mobile-nav";
 import { ReactNode } from "react";
 
 interface HeaderProps {
@@ -179,6 +180,7 @@ export default function Header({ dashboardTabs, onProfileClick }: HeaderProps) {
       </header>
 
       <CartDrawer />
+      <MobileNav />
     </>
   );
 }
