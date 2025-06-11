@@ -23,7 +23,8 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 import { Separator } from "@/components/ui/separator";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, SERVICE_FEE_RATE } from "@/lib/utils";
+import { useAuth } from "@/hooks/use-auth";
 import { useCart } from "@/hooks/use-cart";
 import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
@@ -33,6 +34,7 @@ export default function ProductDetailPage() {
   const productId = parseInt(id);
   const [quantity, setQuantity] = useState(0);
   const { addToCart } = useCart();
+  const { user } = useAuth();
 
   const { data: product, isLoading, error } = useQuery<Product>({
     queryKey: [`/api/products/${productId}`],
@@ -62,7 +64,11 @@ export default function ProductDetailPage() {
     }
   };
 
-  const totalCost = product ? product.price * quantity : 0;
+  const unitPrice =
+    product && user?.role === "buyer"
+      ? product.price * (1 + SERVICE_FEE_RATE)
+      : product?.price ?? 0;
+  const totalCost = product ? unitPrice * quantity : 0;
 
   if (isLoading) {
     return (
@@ -154,7 +160,7 @@ export default function ProductDetailPage() {
               </Badge>
             </div>
 
-            <div className="text-3xl font-bold mb-2">{formatCurrency(product.price)} <span className="text-sm font-normal text-gray-500">/unit</span></div>
+            <div className="text-3xl font-bold mb-2">{formatCurrency(unitPrice)} <span className="text-sm font-normal text-gray-500">/unit</span></div>
             <div className="text-sm text-gray-600 mb-1"><Package className="inline-block h-4 w-4 mr-1" />{product.availableUnits} units</div>
             <div className="text-sm text-gray-600 mb-1"><Layers className="inline-block h-4 w-4 mr-1" />Minimum {product.minOrderQuantity} (by {product.orderMultiple})</div>
             {product.fobLocation && (

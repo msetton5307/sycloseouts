@@ -2,6 +2,7 @@ import { createContext, ReactNode, useContext, useState, useEffect } from "react
 import { CartItem, Product } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
+import { SERVICE_FEE_RATE } from "@/lib/utils";
 
 interface CartContextType {
   items: CartItem[];
@@ -31,7 +32,16 @@ export function CartProvider({ children }: { children: ReactNode }) {
     if (savedCart) {
       try {
         const parsed: CartItem[] = JSON.parse(savedCart);
-        setItems(parsed.map(item => ({ ...item, orderMultiple: item.orderMultiple ?? 1 })));
+        setItems(
+          parsed.map(item => ({
+            ...item,
+            orderMultiple: item.orderMultiple ?? 1,
+            price:
+              user?.role === "buyer"
+                ? parseFloat((item.price * (1 + SERVICE_FEE_RATE)).toFixed(2))
+                : item.price,
+          }))
+        );
       } catch (error) {
         console.error("Failed to parse cart from localStorage", error);
       }
@@ -76,6 +86,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    const priceWithFee =
+      user?.role === "buyer"
+        ? parseFloat((product.price * (1 + SERVICE_FEE_RATE)).toFixed(2))
+        : product.price;
+
     setItems(prevItems => {
       const existingItemIndex = prevItems.findIndex(item => item.productId === product.id);
       
@@ -105,7 +120,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         return [...prevItems, {
           productId: product.id,
           title: product.title,
-          price: product.price,
+          price: priceWithFee,
           quantity,
           image: product.images[0],
           minOrderQuantity: product.minOrderQuantity,
