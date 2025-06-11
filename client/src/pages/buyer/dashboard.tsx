@@ -79,7 +79,7 @@ export default function BuyerDashboard() {
   return (
     <>
       <Tabs
-        defaultValue={activeTab}
+        value={activeTab}
         onValueChange={setActiveTab}
         className="space-y-6"
       >
