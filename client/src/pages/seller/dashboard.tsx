@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Order, Product, Address, PaymentMethod } from "@shared/schema";
 import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
@@ -18,6 +18,8 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 import { ChangePasswordDialog } from "@/components/account/change-password-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -67,6 +69,67 @@ export default function SellerDashboard() {
     queryKey: ["/api/payment-methods"],
     enabled: !!user,
   });
+
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  const updateOrder = useMutation({
+    mutationFn: ({ id, update }: { id: number; update: Partial<Order> }) =>
+      apiRequest("PUT", `/api/orders/${id}`, update).then((r) => r.json()),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+      toast({ title: "Order updated" });
+    },
+    onError: (err: Error) => {
+      toast({ title: "Update failed", description: err.message, variant: "destructive" });
+    },
+  });
+
+  const cancelOrder = useMutation({
+    mutationFn: (id: number) =>
+      apiRequest("PATCH", `/api/orders/${id}/cancel`).then((r) => r.json()),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+      toast({ title: "Order cancelled" });
+    },
+    onError: (err: Error) => {
+      toast({ title: "Cancel failed", description: err.message, variant: "destructive" });
+    },
+  });
+
+  const messageBuyer = useMutation({
+    mutationFn: ({ id, message }: { id: number; message: string }) =>
+      apiRequest("POST", `/api/orders/${id}/message`, { message }),
+    onSuccess: () => toast({ title: "Message sent" }),
+    onError: (err: Error) =>
+      toast({ title: "Failed to send message", description: err.message, variant: "destructive" }),
+  });
+
+  function handleMarkAsShipped(id: number) {
+    const tracking = window.prompt("Enter tracking number");
+    if (!tracking) return;
+    updateOrder.mutate({ id, update: { status: "shipped", trackingNumber: tracking } });
+  }
+
+  function handleMarkOutForDelivery(id: number) {
+    updateOrder.mutate({ id, update: { status: "out_for_delivery" } });
+  }
+
+  function handleMarkDelivered(id: number) {
+    updateOrder.mutate({ id, update: { status: "delivered" } });
+  }
+
+  function handleCancelOrder(id: number) {
+    if (window.confirm("Cancel this order?")) {
+      cancelOrder.mutate(id);
+    }
+  }
+
+  function handleContactBuyer(id: number) {
+    const msg = window.prompt("Message to buyer");
+    if (!msg) return;
+    messageBuyer.mutate({ id, message: msg });
+  }
   
   // Filter products for the current seller
   const sellerProducts = products.filter(product => product.sellerId === user?.id);
@@ -316,10 +379,18 @@ export default function SellerDashboard() {
                         
                         <div className="flex flex-wrap gap-2 justify-end">
                           <Button variant="outline" size="sm">View Details</Button>
-                          
+
                           {order.status === "ordered" && (
-                            <Button size="sm">Process Order</Button>
+                            <Button size="sm" onClick={() => handleMarkAsShipped(order.id)}>
+                              Process Order
+                            </Button>
                           )}
+                          <Button variant="outline" size="sm" onClick={() => handleCancelOrder(order.id)}>
+                            Cancel
+                          </Button>
+                          <Button variant="outline" size="sm" onClick={() => handleContactBuyer(order.id)}>
+                            Contact Buyer
+                          </Button>
                         </div>
                       </div>
                     ))}
@@ -385,24 +456,27 @@ export default function SellerDashboard() {
                         <div className="bg-gray-50 p-4 rounded-lg mb-4">
                           <h4 className="font-medium mb-2">Order Status</h4>
                           <div className="flex flex-wrap gap-2">
-                            <Button 
-                              size="sm" 
+                            <Button
+                              size="sm"
                               variant={order.status === "ordered" ? "default" : "outline"}
                               disabled={order.status !== "ordered"}
+                              onClick={() => handleMarkAsShipped(order.id)}
                             >
                               Mark as Shipped
                             </Button>
-                            <Button 
-                              size="sm" 
+                            <Button
+                              size="sm"
                               variant={order.status === "shipped" ? "default" : "outline"}
                               disabled={order.status !== "shipped"}
+                              onClick={() => handleMarkOutForDelivery(order.id)}
                             >
                               Mark as Out for Delivery
                             </Button>
-                            <Button 
-                              size="sm" 
+                            <Button
+                              size="sm"
                               variant={order.status === "out_for_delivery" ? "default" : "outline"}
                               disabled={order.status !== "out_for_delivery"}
+                              onClick={() => handleMarkDelivered(order.id)}
                             >
                               Mark as Delivered
                             </Button>
@@ -411,8 +485,12 @@ export default function SellerDashboard() {
                         
                         <div className="flex flex-wrap gap-2 justify-end">
                           <Button variant="outline" size="sm">View Details</Button>
-                          <Button variant="outline" size="sm">Generate Invoice</Button>
-                          <Button variant="outline" size="sm">Contact Buyer</Button>
+                          <Button variant="outline" size="sm" onClick={() => handleCancelOrder(order.id)}>
+                            Cancel Order
+                          </Button>
+                          <Button variant="outline" size="sm" onClick={() => handleContactBuyer(order.id)}>
+                            Contact Buyer
+                          </Button>
                         </div>
                       </div>
                     ))}
