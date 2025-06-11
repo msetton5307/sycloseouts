@@ -54,19 +54,14 @@ export default function ProductCard({ product }: ProductCardProps) {
             MOQ: {product.minOrderQuantity}
           </Badge>
         </div>
-        <div className="mt-3 flex gap-2">
-          <Button 
-            size="sm" 
+        <div className="mt-3">
+          <Button
+            size="sm"
             className="flex items-center"
             onClick={handleAddToCart}
           >
             <ShoppingCart className="mr-1 h-4 w-4" /> Add to Cart
           </Button>
-          <Link href={`/products/${product.id}`}>
-            <Button size="sm" variant="outline">
-              Details
-            </Button>
-          </Link>
         </div>
       </CardContent>
     </Card>
