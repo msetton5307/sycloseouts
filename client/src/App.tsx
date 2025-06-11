@@ -20,6 +20,7 @@ import BuyerOrderDetailPage from "@/pages/buyer/order-detail";
 import BuyerProfilePage from "@/pages/buyer/profile";
 import SellerDashboard from "@/pages/seller/dashboard";
 import SellerProducts from "@/pages/seller/products";
+import SellerOrdersPage from "@/pages/seller/orders";
 import SellerApply from "@/pages/seller/apply";
 import AdminDashboard from "@/pages/admin/dashboard";
 import FeaturedProductsPage from "@/pages/admin/featured-products";
@@ -52,6 +53,7 @@ function Router() {
       {/* Seller routes */}
       <ProtectedRoute path="/seller/dashboard" component={SellerDashboard} allowedRoles={["seller", "admin"]} />
       <ProtectedRoute path="/seller/products" component={SellerProducts} allowedRoles={["seller", "admin"]} />
+      <ProtectedRoute path="/seller/orders" component={SellerOrdersPage} allowedRoles={["seller", "admin"]} />
 
       {/* Admin routes */}
       <ProtectedRoute path="/admin/dashboard" component={AdminDashboard} allowedRoles={["admin"]} />

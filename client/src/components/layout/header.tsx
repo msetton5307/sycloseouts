@@ -58,14 +58,15 @@ export default function Header({ dashboardTabs, onProfileClick }: HeaderProps) {
               </div>
               <nav className="hidden sm:ml-6 sm:flex sm:space-x-8 items-center">
                 {[
-                  { label: "Home", href: "/" },
+                  !(user && user.role === "seller") && { label: "Home", href: "/" },
                   { label: "Products", href: "/products" },
                   user?.role === "buyer" && {
                     label: "My Orders",
                     href: "/buyer/orders",
                   },
+                  user?.role === "seller" && { label: "Orders", href: "/seller/orders" },
                   {
-                    label: user?.isSeller ? "Seller Dashboard" : "Sell with Us",
+                    label: user?.isSeller ? "Dashboard" : "Sell with Us",
                     href: user?.isSeller ? "/seller/dashboard" : "/seller/apply",
                   },
                   { label: "About", href: "/about" },
