@@ -6,6 +6,7 @@ import { apiRequest } from "@/lib/queryClient";
 import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
 import ProductForm from "@/components/seller/product-form";
+import BulkUpload from "@/components/seller/bulk-upload";
 import {
   Card,
   CardContent,
@@ -170,13 +171,16 @@ export default function SellerProducts() {
           <h1 className="text-3xl font-extrabold tracking-tight text-gray-900">
             My Products
           </h1>
-          <Button 
-            onClick={() => setShowNewProductForm(true)} 
-            className="flex items-center"
-          >
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Add New Product
-          </Button>
+          <div className="flex space-x-2">
+            <BulkUpload />
+            <Button
+              onClick={() => setShowNewProductForm(true)}
+              className="flex items-center"
+            >
+              <PlusCircle className="mr-2 h-4 w-4" />
+              Add New Product
+            </Button>
+          </div>
         </div>
         
         {/* Product Form Dialog */}
