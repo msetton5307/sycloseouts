@@ -111,12 +111,12 @@ export default function SellerApply() {
                 Return Home
               </Button>
               {user && (
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   className="flex-1"
-                  onClick={() => setLocation("/buyer/dashboard")}
+                  onClick={() => setLocation("/buyer/home")}
                 >
-                  Go to Dashboard
+                  Go to Buyer Home
                 </Button>
               )}
             </div>

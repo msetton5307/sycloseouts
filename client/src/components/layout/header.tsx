@@ -41,7 +41,7 @@ export default function Header({ dashboardTabs, onProfileClick }: HeaderProps) {
   const profileLink =
     user?.role === "seller"
       ? "/seller/dashboard#profile"
-      : "/buyer/dashboard#profile";
+      : "/buyer/profile";
 
   return (
     <>
