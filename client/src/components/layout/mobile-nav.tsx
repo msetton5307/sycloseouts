@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Home, ShoppingBag, ShoppingCart, User } from "lucide-react";
+import { Home, ShoppingBag, ShoppingCart, User, ListOrdered } from "lucide-react";
 import { useCart } from "@/hooks/use-cart";
 import { useAuth } from "@/hooks/use-auth";
 import { Badge } from "@/components/ui/badge";
@@ -40,6 +40,17 @@ export default function MobileNav() {
             Shop
           </Link>
         </li>
+        {user?.role === "buyer" && (
+          <li className="flex-1">
+            <Link
+              href="/buyer/orders"
+              className={`flex flex-col items-center py-2 text-xs ${isActive("/buyer/orders") ? "text-primary" : "text-gray-500"}`}
+            >
+              <ListOrdered className="h-5 w-5" />
+              Orders
+            </Link>
+          </li>
+        )}
         <li className="flex-1 relative">
           <button
             onClick={() => setIsCartOpen(true)}
