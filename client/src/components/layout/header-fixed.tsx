@@ -21,6 +21,7 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/use-auth";
 import { useCart } from "@/hooks/use-cart";
 import CartDrawer from "@/components/cart/cart-drawer";
+import MobileNav from "@/components/layout/mobile-nav";
 
 export default function Header() {
   const [location] = useLocation();
@@ -286,6 +287,7 @@ export default function Header() {
       </header>
       
       <CartDrawer />
+      <MobileNav />
     </>
   );
 }
