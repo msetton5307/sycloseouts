@@ -15,7 +15,7 @@ export default function ProductCard({ product }: ProductCardProps) {
   const { addToCart } = useCart();
   const { user } = useAuth();
   const displayPrice =
-    user?.role === "buyer"
+    !user || user.role === "buyer"
       ? product.price * (1 + SERVICE_FEE_RATE)
       : product.price;
   

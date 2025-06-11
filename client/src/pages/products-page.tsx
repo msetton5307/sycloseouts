@@ -7,8 +7,11 @@ import ProductCard from "@/components/products/product-card";
 import ProductFilter from "@/components/products/product-filter";
 import { Button } from "@/components/ui/button";
 import { Loader2, Grid3X3, List, ShoppingCart } from "lucide-react";
+import { formatCurrency, SERVICE_FEE_RATE } from "@/lib/utils";
+import { useAuth } from "@/hooks/use-auth";
 
 export default function ProductsPage() {
+  const { user } = useAuth();
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [filters, setFilters] = useState({
     search: "",
@@ -148,8 +151,8 @@ export default function ProductsPage() {
               ) : (
                 <div key={product.id} className="flex border rounded-lg overflow-hidden bg-white shadow-sm hover:shadow-md transition-shadow duration-300">
                   <div className="w-1/3 flex-shrink-0">
-                    <img 
-                      src={product.images[0]} 
+                    <img
+                      src={product.images[0]}
                       alt={product.title}
                       className="w-full h-full object-cover object-center"
                     />
@@ -157,7 +160,7 @@ export default function ProductsPage() {
                   <div className="p-4 flex-1">
                     <div className="flex justify-between mb-2">
                       <h3 className="text-lg font-medium text-gray-900">{product.title}</h3>
-                      <p className="text-lg font-medium text-green-600">${product.price.toFixed(2)}/unit</p>
+                      <p className="text-lg font-medium text-green-600">{formatCurrency((!user || user.role === 'buyer') ? product.price * (1 + SERVICE_FEE_RATE) : product.price)}/unit</p>
                     </div>
                     <p className="text-gray-500 mb-3">{product.description.slice(0, 150)}...</p>
                     <div className="flex flex-wrap gap-2 mb-3">

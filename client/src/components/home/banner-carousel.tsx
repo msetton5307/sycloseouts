@@ -55,7 +55,7 @@ export default function BannerCarousel() {
                   </h3>
                   <p className="text-lg md:text-xl text-primary-foreground drop-shadow">
                     {formatCurrency(
-                      user?.role === "buyer"
+                      !user || user.role === "buyer"
                         ? product.price * (1 + SERVICE_FEE_RATE)
                         : product.price
                     )}/unit

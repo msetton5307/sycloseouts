@@ -37,7 +37,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
             ...item,
             orderMultiple: item.orderMultiple ?? 1,
             price:
-              user?.role === "buyer"
+              !user || user.role === "buyer"
                 ? parseFloat((item.price * (1 + SERVICE_FEE_RATE)).toFixed(2))
                 : item.price,
           }))
@@ -87,7 +87,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
 
     const priceWithFee =
-      user?.role === "buyer"
+      !user || user.role === "buyer"
         ? parseFloat((product.price * (1 + SERVICE_FEE_RATE)).toFixed(2))
         : product.price;
 

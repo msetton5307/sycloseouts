@@ -65,7 +65,7 @@ export default function ProductDetailPage() {
   };
 
   const unitPrice =
-    product && user?.role === "buyer"
+    product && (!user || user.role === "buyer")
       ? product.price * (1 + SERVICE_FEE_RATE)
       : product?.price ?? 0;
   const totalCost = product ? unitPrice * quantity : 0;
