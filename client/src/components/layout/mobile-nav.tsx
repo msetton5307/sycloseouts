@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Home, ShoppingBag, ShoppingCart, User, ListOrdered } from "lucide-react";
+import { Home, ShoppingBag, ShoppingCart, User, ListOrdered, MessageCircle } from "lucide-react";
 import { useCart } from "@/hooks/use-cart";
 import { useAuth } from "@/hooks/use-auth";
 import { Badge } from "@/components/ui/badge";
@@ -61,6 +61,17 @@ export default function MobileNav() {
             >
               <ListOrdered className="h-5 w-5" />
               Orders
+            </Link>
+          </li>
+        )}
+        {user && (
+          <li className="flex-1">
+            <Link
+              href={user.role === "buyer" ? "/buyer/messages" : "/seller/messages"}
+              className={`flex flex-col items-center py-2 text-xs ${isActive(user.role === "buyer" ? "/buyer/messages" : "/seller/messages") ? "text-primary" : "text-gray-500"}`}
+            >
+              <MessageCircle className="h-5 w-5" />
+              Messages
             </Link>
           </li>
         )}

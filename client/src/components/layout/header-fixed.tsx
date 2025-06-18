@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { 
-  Search, 
-  ShoppingCart, 
-  Bell, 
-  Menu, 
+  Search,
+  ShoppingCart,
+  MessageCircle,
+  Menu,
   X,
   User as UserIcon,
   LogOut
@@ -102,13 +102,13 @@ export default function Header() {
               {user && (
                 <Link href={user.role === "buyer" ? "/buyer/messages" : "/seller/messages"}>
                   <Button variant="ghost" size="icon" className="text-gray-400 hover:text-gray-500 relative">
-                    <Bell className="h-5 w-5" />
+                    <MessageCircle className="h-5 w-5" />
                     {unread > 0 && (
                       <Badge className="absolute -top-2 -right-2 bg-primary text-white text-xs h-5 w-5 flex items-center justify-center p-0">
                         {unread}
                       </Badge>
                     )}
-                    <span className="sr-only">Notifications</span>
+                    <span className="sr-only">Messages</span>
                   </Button>
                 </Link>
               )}
@@ -227,12 +227,13 @@ export default function Header() {
                         size="icon"
                         className="text-gray-400 hover:text-gray-500 relative"
                       >
-                        <Bell className="h-5 w-5" />
+                        <MessageCircle className="h-5 w-5" />
                         {unread > 0 && (
                           <Badge className="absolute -top-2 -right-2 bg-primary text-white text-xs h-5 w-5 flex items-center justify-center p-0">
                             {unread}
                           </Badge>
                         )}
+                        <span className="sr-only">Messages</span>
                       </Button>
                     </Link>
                     <Button

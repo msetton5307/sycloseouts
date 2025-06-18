@@ -1,11 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
-import { Button } from "@/components/ui/button";
-import { useProductQuestions, useUnreadMessages } from "@/hooks/use-messages";
+import { useProductQuestions } from "@/hooks/use-messages";
 import { useAuth } from "@/hooks/use-auth";
-import { Link } from "wouter";
 import { Order } from "@shared/schema";
+import ConversationPreview from "@/components/messages/conversation-preview";
 
 export default function SellerMessagesPage() {
   const { user } = useAuth();
@@ -42,14 +41,9 @@ export default function SellerMessagesPage() {
         <section>
           <h2 className="text-xl font-semibold mb-2">Conversations</h2>
           {buyers.length > 0 ? (
-            <div className="space-y-4">
+            <div className="border rounded divide-y bg-white shadow">
               {buyers.map((bid) => (
-                <div key={bid} className="border rounded p-4 flex justify-between items-center bg-white shadow">
-                  <span>Buyer #{bid}</span>
-                  <Link href={`/conversations/${bid}`}>
-                    <Button variant="outline" size="sm">View Messages</Button>
-                  </Link>
-                </div>
+                <ConversationPreview key={bid} otherId={bid} />
               ))}
             </div>
           ) : (
