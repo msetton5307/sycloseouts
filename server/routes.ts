@@ -10,6 +10,7 @@ import {
   sendProductQuestionEmail,
   sendAdminAlertEmail,
 } from "./email";
+import { generateInvoicePdf } from "./pdf";
 import {
   insertProductSchema,
   insertOrderSchema,
@@ -285,6 +286,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const orderItems = await storage.getOrderItemsWithProducts(id);
 
       res.json({ ...order, items: orderItems });
+    } catch (error) {
+      handleApiError(res, error);
+    }
+  });
+
+  app.get("/api/orders/:id/invoice.pdf", isAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id, 10);
+      if (Number.isNaN(id)) {
+        return res.status(400).json({ message: "Invalid order ID" });
+      }
+      const user = req.user as Express.User;
+      const order = await storage.getOrder(id);
+
+      if (!order) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+
+      if (
+        user.role !== "admin" &&
+        order.buyerId !== user.id &&
+        order.sellerId !== user.id
+      ) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+
+      const items = await storage.getOrderItemsWithProducts(id);
+      const invoiceItems = items.map((i) => ({
+        title: i.productTitle,
+        quantity: i.quantity,
+        unitPrice: i.unitPrice,
+        totalPrice: i.totalPrice,
+      }));
+
+      const pdf = generateInvoicePdf(order, invoiceItems);
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename=invoice-${order.id}.pdf`
+      );
+      res.send(pdf);
     } catch (error) {
       handleApiError(res, error);
     }
