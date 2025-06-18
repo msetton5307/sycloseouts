@@ -10,7 +10,7 @@ export function containsContactInfo(text: string): boolean {
   const digits = lower.replace(/[^0-9]/g, "");
   if (digits.length >= 7) return true;
 
-  // Detect spelled-out numbers
+  // Detect spelled-out numbers in English or Spanish
   const numberWords = [
     "zero",
     "one",
@@ -22,6 +22,17 @@ export function containsContactInfo(text: string): boolean {
     "seven",
     "eight",
     "nine",
+    // Spanish equivalents
+    "cero",
+    "uno",
+    "dos",
+    "tres",
+    "cuatro",
+    "cinco",
+    "seis",
+    "siete",
+    "ocho",
+    "nueve",
   ];
   const words = lower.split(/[^a-z]/).filter(Boolean);
   let spelledCount = 0;
