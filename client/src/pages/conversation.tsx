@@ -1,24 +1,24 @@
 import { useParams } from "wouter";
 import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
-import { useMessages } from "@/hooks/use-messages";
+import { useConversation } from "@/hooks/use-messages";
 import { useAuth } from "@/hooks/use-auth";
 import { useEffect, useRef } from "react";
 import ChatMessage from "@/components/messages/chat-message";
 
-export default function OrderMessagesPage() {
+export default function ConversationPage() {
   const { id } = useParams();
-  const orderId = parseInt(id);
+  const otherId = parseInt(id);
   const { user } = useAuth();
-  const { data: messages = [], isLoading, sendMessage, markRead } = useMessages(orderId);
+  const { data: messages = [], isLoading, sendMessage, markRead } = useConversation(otherId);
   const inputRef = useRef<HTMLInputElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (orderId) {
+    if (otherId) {
       markRead.mutate();
     }
-  }, [orderId]);
+  }, [otherId]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -36,7 +36,7 @@ export default function OrderMessagesPage() {
     <>
       <Header />
       <main className="max-w-2xl mx-auto px-4 py-4 flex flex-col h-[calc(100vh-8rem)]">
-        <h1 className="text-xl font-semibold mb-2">Order Messages</h1>
+        <h1 className="text-xl font-semibold mb-2">Conversation</h1>
         <div className="flex-1 overflow-y-auto space-y-2 bg-gray-50 border rounded p-4">
           {isLoading ? (
             <p>Loading...</p>
@@ -65,3 +65,4 @@ export default function OrderMessagesPage() {
     </>
   );
 }
+

@@ -12,7 +12,7 @@ import {
 } from "@shared/schema";
 import session from "express-session";
 import { db, pool } from "./db";
-import { eq, and, desc, SQL, ilike, lte, sql } from "drizzle-orm";
+import { eq, and, or, desc, SQL, ilike, lte, sql } from "drizzle-orm";
 import connectPgSimple from "connect-pg-simple";
 
 const PgStore = connectPgSimple(session);
@@ -73,6 +73,9 @@ export interface IStorage {
   getOrderMessages(orderId: number): Promise<Message[]>;
   createMessage(message: InsertMessage): Promise<Message>;
   markMessagesAsRead(orderId: number, userId: number): Promise<void>;
+  getConversationMessages(userA: number, userB: number): Promise<Message[]>;
+  markConversationAsRead(receiverId: number, senderId: number): Promise<void>;
+  getLatestOrderBetweenUsers(buyerId: number, sellerId: number): Promise<Order | undefined>;
   getUnreadMessageCount(userId: number): Promise<number>;
 
   // Product question methods
@@ -456,6 +459,31 @@ export class DatabaseStorage implements IStorage {
       .update(messages)
       .set({ isRead: true })
       .where(and(eq(messages.orderId, orderId), eq(messages.receiverId, userId)));
+  }
+
+  async getConversationMessages(userA: number, userB: number): Promise<Message[]> {
+    return await db
+      .select()
+      .from(messages)
+      .where(
+        or(
+          and(eq(messages.senderId, userA), eq(messages.receiverId, userB)),
+          and(eq(messages.senderId, userB), eq(messages.receiverId, userA))
+        )
+      )
+      .orderBy(messages.createdAt);
+  }
+
+  async markConversationAsRead(receiverId: number, senderId: number): Promise<void> {
+    await db
+      .update(messages)
+      .set({ isRead: true })
+      .where(and(eq(messages.receiverId, receiverId), eq(messages.senderId, senderId)));
+  }
+
+  async getLatestOrderBetweenUsers(buyerId: number, sellerId: number): Promise<Order | undefined> {
+    const ordersBetween = await this.getOrders({ buyerId, sellerId });
+    return ordersBetween[0];
   }
 
   async getUnreadMessageCount(userId: number): Promise<number> {
