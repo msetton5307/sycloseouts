@@ -57,8 +57,8 @@ export default function SellerOrdersPage() {
   });
 
   const messageBuyer = useMutation({
-    mutationFn: ({ id, message }: { id: number; message: string }) =>
-      apiRequest("POST", `/api/orders/${id}/messages`, { message }),
+    mutationFn: ({ buyerId, message }: { buyerId: number; message: string }) =>
+      apiRequest("POST", `/api/conversations/${buyerId}/messages`, { message }),
     onSuccess: () => toast({ title: "Message sent" }),
     onError: (err: Error) =>
       toast({ title: "Failed to send message", description: err.message, variant: "destructive" }),
@@ -84,10 +84,10 @@ export default function SellerOrdersPage() {
     }
   }
 
-  function handleContactBuyer(id: number) {
+  function handleContactBuyer(buyerId: number) {
     const msg = window.prompt("Message to buyer");
     if (!msg) return;
-    messageBuyer.mutate({ id, message: msg });
+    messageBuyer.mutate({ buyerId, message: msg });
   }
 
   return (
@@ -175,11 +175,11 @@ export default function SellerOrdersPage() {
                       <Button variant="outline" size="sm" onClick={() => handleCancelOrder(order.id)}>
                         Cancel Order
                       </Button>
-                      <Button variant="outline" size="sm" onClick={() => handleContactBuyer(order.id)}>
+                      <Button variant="outline" size="sm" onClick={() => handleContactBuyer(order.buyerId)}>
                         Contact Buyer
                       </Button>
                       <Button variant="outline" size="sm" asChild>
-                        <Link href={`/orders/${order.id}/messages`}>Messages</Link>
+                        <Link href={`/conversations/${order.buyerId}`}>Messages</Link>
                       </Button>
                     </div>
                   </div>

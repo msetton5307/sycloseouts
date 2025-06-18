@@ -427,6 +427,69 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/conversations/:userId/messages", isAuthenticated, async (req, res) => {
+    try {
+      const otherId = parseInt(req.params.userId, 10);
+      if (Number.isNaN(otherId)) {
+        return res.status(400).json({ message: "Invalid user ID" });
+      }
+      const user = req.user as Express.User;
+      const msgs = await storage.getConversationMessages(user.id, otherId);
+      res.json(msgs);
+    } catch (error) {
+      handleApiError(res, error);
+    }
+  });
+
+  app.post("/api/conversations/:userId/messages", isAuthenticated, async (req, res) => {
+    try {
+      const otherId = parseInt(req.params.userId, 10);
+      if (Number.isNaN(otherId)) {
+        return res.status(400).json({ message: "Invalid user ID" });
+      }
+
+      const user = req.user as Express.User;
+      const buyerId = user.role === "seller" ? otherId : user.id;
+      const sellerId = user.role === "seller" ? user.id : otherId;
+      const order = await storage.getLatestOrderBetweenUsers(buyerId, sellerId);
+
+      if (!order) {
+        return res.status(400).json({ message: "No order between users" });
+      }
+
+      const receiver = await storage.getUser(otherId);
+      if (!receiver) {
+        return res.status(404).json({ message: "Receiver not found" });
+      }
+
+      const message = await storage.createMessage({
+        orderId: order.id,
+        senderId: user.id,
+        receiverId: otherId,
+        content: req.body.message,
+      });
+
+      await sendOrderMessageEmail(receiver.email, order.id, req.body.message);
+      res.status(201).json(message);
+    } catch (error) {
+      handleApiError(res, error);
+    }
+  });
+
+  app.post("/api/conversations/:userId/messages/read", isAuthenticated, async (req, res) => {
+    try {
+      const otherId = parseInt(req.params.userId, 10);
+      if (Number.isNaN(otherId)) {
+        return res.status(400).json({ message: "Invalid user ID" });
+      }
+      const user = req.user as Express.User;
+      await storage.markConversationAsRead(user.id, otherId);
+      res.sendStatus(204);
+    } catch (error) {
+      handleApiError(res, error);
+    }
+  });
+
   app.get("/api/orders/:id/messages", isAuthenticated, async (req, res) => {
     try {
       const id = parseInt(req.params.id, 10);

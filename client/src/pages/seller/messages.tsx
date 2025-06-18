@@ -14,6 +14,7 @@ export default function SellerMessagesPage() {
     queryKey: ["/api/orders"],
     enabled: !!user,
   });
+  const buyers = Array.from(new Set(orders.map(o => o.buyerId)));
 
   return (
     <>
@@ -39,13 +40,13 @@ export default function SellerMessagesPage() {
           )}
         </section>
         <section>
-          <h2 className="text-xl font-semibold mb-2">Order Conversations</h2>
-          {orders.length > 0 ? (
+          <h2 className="text-xl font-semibold mb-2">Conversations</h2>
+          {buyers.length > 0 ? (
             <div className="space-y-4">
-              {orders.map((o) => (
-                <div key={o.id} className="border rounded p-4 flex justify-between items-center bg-white shadow">
-                  <span>Order #{o.id}</span>
-                  <Link href={`/orders/${o.id}/messages`}>
+              {buyers.map((bid) => (
+                <div key={bid} className="border rounded p-4 flex justify-between items-center bg-white shadow">
+                  <span>Buyer #{bid}</span>
+                  <Link href={`/conversations/${bid}`}>
                     <Button variant="outline" size="sm">View Messages</Button>
                   </Link>
                 </div>

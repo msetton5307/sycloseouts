@@ -24,6 +24,29 @@ export function useMessages(orderId: number) {
   return { ...messagesQuery, sendMessage, markRead };
 }
 
+export function useConversation(otherId: number) {
+  const queryClient = useQueryClient();
+
+  const messagesQuery = useQuery<Message[]>({
+    queryKey: ["/api/conversations/" + otherId + "/messages"],
+    enabled: !!otherId,
+  });
+
+  const sendMessage = useMutation({
+    mutationFn: (content: string) =>
+      apiRequest("POST", `/api/conversations/${otherId}/messages`, { message: content }).then(r => r.json()),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ["/api/conversations/" + otherId + "/messages"] }),
+  });
+
+  const markRead = useMutation({
+    mutationFn: () => apiRequest("POST", `/api/conversations/${otherId}/messages/read`),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/messages/unread-count"] }),
+  });
+
+  return { ...messagesQuery, sendMessage, markRead };
+}
+
 export function useUnreadMessages() {
   const { data } = useQuery<{ count: number }>({
     queryKey: ["/api/messages/unread-count"],

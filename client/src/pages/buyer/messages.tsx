@@ -13,6 +13,8 @@ export default function BuyerMessagesPage() {
     enabled: !!user,
   });
 
+  const sellers = Array.from(new Set(orders.map(o => o.sellerId)));
+
   return (
     <>
       <Header />
@@ -20,18 +22,16 @@ export default function BuyerMessagesPage() {
         <h1 className="text-3xl font-bold">Messages</h1>
         {isLoading ? (
           <p>Loading...</p>
-        ) : orders.length > 0 ? (
+        ) : sellers.length > 0 ? (
           <div className="space-y-4">
-            {orders.map((o) => (
+            {sellers.map((sid) => (
               <div
-                key={o.id}
+                key={sid}
                 className="border rounded p-4 flex justify-between items-center bg-white shadow"
               >
-                <span>Order #{o.id}</span>
-                <Link href={`/orders/${o.id}/messages`}>
-                  <Button variant="outline" size="sm">
-                    View Messages
-                  </Button>
+                <span>Seller #{sid}</span>
+                <Link href={`/conversations/${sid}`}>
+                  <Button variant="outline" size="sm">View Messages</Button>
                 </Link>
               </div>
             ))}
