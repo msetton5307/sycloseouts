@@ -8,6 +8,7 @@ import {
   sendSellerApprovalEmail,
   sendOrderMessageEmail,
   sendProductQuestionEmail,
+  sendAdminAlertEmail,
 } from "./email";
 import {
   insertProductSchema,
@@ -21,6 +22,7 @@ import {
 import { db } from "./db";
 import { eq } from "drizzle-orm";
 import { ZodError } from "zod";
+import { containsContactInfo } from "./contactFilter";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Set up authentication routes
@@ -120,6 +122,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const seller = await storage.getUser(product.sellerId);
       if (!seller) {
         return res.status(404).json({ message: "Seller not found" });
+      }
+
+      if (containsContactInfo(req.body.question)) {
+        await sendAdminAlertEmail(
+          "Blocked contact info in product question",
+          `User #${user.id} attempted to share contact info in a question for product #${id}.\n\n${req.body.question}`
+        );
+        return res.status(400).json({ message: "Sharing contact information is not allowed" });
       }
 
       const question = await storage.createProductQuestion({
@@ -413,6 +423,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Receiver not found" });
       }
 
+      if (containsContactInfo(req.body.message)) {
+        await sendAdminAlertEmail(
+          "Blocked contact info in order message",
+          `User #${user.id} attempted to share contact info with user #${receiverId} in order #${order.id}.\n\n${req.body.message}`
+        );
+        return res.status(400).json({ message: "Sharing contact information is not allowed" });
+      }
+
       const message = await storage.createMessage({
         orderId: order.id,
         senderId: user.id,
@@ -460,6 +478,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const receiver = await storage.getUser(otherId);
       if (!receiver) {
         return res.status(404).json({ message: "Receiver not found" });
+      }
+
+      if (containsContactInfo(req.body.message)) {
+        await sendAdminAlertEmail(
+          "Blocked contact info in conversation",
+          `User #${user.id} attempted to share contact info with user #${otherId} in a conversation.\n\n${req.body.message}`
+        );
+        return res.status(400).json({ message: "Sharing contact information is not allowed" });
       }
 
       const message = await storage.createMessage({

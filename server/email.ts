@@ -259,3 +259,27 @@ export async function sendProductQuestionEmail(to: string, productTitle: string,
     console.error("Failed to send product question email", err);
   }
 }
+export async function sendAdminAlertEmail(subject: string, body: string) {
+  if (!transporter) {
+    console.warn("Email transport not configured; skipping admin alert email");
+    return;
+  }
+  const admin = process.env.ADMIN_EMAIL;
+  if (!admin) {
+    console.warn("ADMIN_EMAIL not configured; skipping admin alert email");
+    return;
+  }
+
+  const mailOptions = {
+    from: process.env.SMTP_FROM || user,
+    to: admin,
+    subject,
+    text: body,
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+  } catch (err) {
+    console.error("Failed to send admin alert email", err);
+  }
+}
