@@ -24,6 +24,29 @@ import { eq } from "drizzle-orm";
 import { ZodError } from "zod";
 import { containsContactInfo } from "./contactFilter";
 
+async function fetchTrackingStatus(trackingNumber: string): Promise<string | undefined> {
+  try {
+    const apiKey = process.env.TRACKTRY_API_KEY;
+    const res = await fetch("https://api.tracktry.com/v1/trackings/realtime", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(apiKey ? { "Tracktry-Api-Key": apiKey } : {}),
+      },
+      body: JSON.stringify({ tracking_number: trackingNumber }),
+    });
+    if (!res.ok) {
+      console.error("Tracking API error", await res.text());
+      return undefined;
+    }
+    const data = await res.json();
+    return data.data?.items?.[0]?.status as string | undefined;
+  } catch (err) {
+    console.error("Tracking API request failed", err);
+    return undefined;
+  }
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Set up authentication routes
   setupAuth(app);
@@ -386,10 +409,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const prevStatus = order.status;
-      const updatedOrder = await storage.updateOrder(id, req.body);
+      const updateData: any = { ...req.body };
+
+      if (req.body.trackingNumber) {
+        const trackingStatus = await fetchTrackingStatus(req.body.trackingNumber);
+        if (trackingStatus) {
+          const statusLower = trackingStatus.toLowerCase();
+          if (statusLower.includes("delivered")) {
+            updateData.status = "delivered";
+          } else if (statusLower.includes("out")) {
+            updateData.status = "out_for_delivery";
+          } else {
+            updateData.status = "shipped";
+          }
+        }
+      }
+
+      const updatedOrder = await storage.updateOrder(id, updateData);
       res.json(updatedOrder);
 
-      if (req.body.status && req.body.status !== prevStatus) {
+      if (updateData.status && updateData.status !== prevStatus) {
         const buyer = await storage.getUser(updatedOrder.buyerId);
         if (buyer) {
           sendShippingUpdateEmail(buyer.email, updatedOrder).catch(console.error);
