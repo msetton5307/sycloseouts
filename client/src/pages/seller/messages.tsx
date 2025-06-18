@@ -27,7 +27,7 @@ export default function SellerMessagesPage() {
           ) : questions.length > 0 ? (
             <div className="space-y-4">
               {questions.map((q) => (
-                <div key={q.id} className="border rounded p-4">
+                <div key={q.id} className="border rounded p-4 bg-white shadow">
                   <p className="font-medium">Product #{q.productId}</p>
                   <p className="text-gray-700 mb-1">{q.question}</p>
                   <p className="text-xs text-gray-500">Buyer #{q.buyerId}</p>
@@ -43,7 +43,7 @@ export default function SellerMessagesPage() {
           {orders.length > 0 ? (
             <div className="space-y-4">
               {orders.map((o) => (
-                <div key={o.id} className="border rounded p-4 flex justify-between items-center">
+                <div key={o.id} className="border rounded p-4 flex justify-between items-center bg-white shadow">
                   <span>Order #{o.id}</span>
                   <Link href={`/orders/${o.id}/messages`}>
                     <Button variant="outline" size="sm">View Messages</Button>
