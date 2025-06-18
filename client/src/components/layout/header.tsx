@@ -3,7 +3,7 @@ import { Link, useLocation } from "wouter";
 import {
   Search,
   ShoppingCart,
-  Bell,
+  MessageCircle,
   Menu,
   X,
   User as UserIcon,
@@ -112,12 +112,13 @@ export default function Header({ dashboardTabs, onProfileClick }: HeaderProps) {
               {user && (
                 <Link href={user.role === "buyer" ? "/buyer/messages" : "/seller/messages"}>
                   <Button variant="ghost" size="icon" className="text-gray-400 hover:text-gray-500 relative">
-                    <Bell className="h-5 w-5" />
+                    <MessageCircle className="h-5 w-5" />
                     {unread > 0 && (
                       <Badge className="absolute -top-2 -right-2 bg-primary text-white text-xs h-5 w-5 flex items-center justify-center p-0">
                         {unread}
                       </Badge>
                     )}
+                    <span className="sr-only">Messages</span>
                   </Button>
                 </Link>
               )}

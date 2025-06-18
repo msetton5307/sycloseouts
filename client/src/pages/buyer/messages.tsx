@@ -1,10 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
-import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
-import { Link } from "wouter";
 import { Order } from "@shared/schema";
+import ConversationPreview from "@/components/messages/conversation-preview";
 
 export default function BuyerMessagesPage() {
   const { user } = useAuth();
@@ -23,17 +22,9 @@ export default function BuyerMessagesPage() {
         {isLoading ? (
           <p>Loading...</p>
         ) : sellers.length > 0 ? (
-          <div className="space-y-4">
+          <div className="border rounded divide-y bg-white shadow">
             {sellers.map((sid) => (
-              <div
-                key={sid}
-                className="border rounded p-4 flex justify-between items-center bg-white shadow"
-              >
-                <span>Seller #{sid}</span>
-                <Link href={`/conversations/${sid}`}>
-                  <Button variant="outline" size="sm">View Messages</Button>
-                </Link>
-              </div>
+              <ConversationPreview key={sid} otherId={sid} />
             ))}
           </div>
         ) : (
