@@ -16,6 +16,16 @@ import { Button } from "@/components/ui/button";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { ChangePasswordDialog } from "@/components/account/change-password-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { 
@@ -100,10 +110,19 @@ export default function SellerDashboard() {
       toast({ title: "Failed to send message", description: err.message, variant: "destructive" }),
   });
 
+  const [trackingOrderId, setTrackingOrderId] = useState<number | null>(null);
+  const [trackingNum, setTrackingNum] = useState("");
+
+  function handleConfirmTracking() {
+    if (trackingOrderId && trackingNum) {
+      updateOrder.mutate({ id: trackingOrderId, update: { trackingNumber: trackingNum } });
+    }
+    setTrackingOrderId(null);
+  }
+
   function handleMarkAsShipped(id: number) {
-    const tracking = window.prompt("Enter tracking number");
-    if (!tracking) return;
-    updateOrder.mutate({ id, update: { status: "shipped", trackingNumber: tracking } });
+    setTrackingOrderId(id);
+    setTrackingNum("");
   }
 
   function handleMarkOutForDelivery(id: number) {
@@ -545,6 +564,21 @@ export default function SellerDashboard() {
         </main>
         </Tabs>
         <Footer />
+        <Dialog open={trackingOrderId !== null} onOpenChange={() => setTrackingOrderId(null)}>
+          <DialogContent className="sm:max-w-[400px]">
+            <DialogHeader>
+              <DialogTitle>Enter Tracking Number</DialogTitle>
+              <DialogDescription>Provide the shipment tracking number.</DialogDescription>
+            </DialogHeader>
+            <Input value={trackingNum} onChange={(e) => setTrackingNum(e.target.value)} placeholder="Tracking number" />
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button variant="outline">Cancel</Button>
+              </DialogClose>
+              <Button onClick={handleConfirmTracking} disabled={!trackingNum}>Confirm</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </>
   );
 }

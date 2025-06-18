@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "wouter";
+import { useState } from "react";
 import { Order } from "@shared/schema";
 import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
@@ -11,6 +12,16 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { apiRequest } from "@/lib/queryClient";
@@ -64,10 +75,19 @@ export default function SellerOrdersPage() {
       toast({ title: "Failed to send message", description: err.message, variant: "destructive" }),
   });
 
+  const [trackingOrderId, setTrackingOrderId] = useState<number | null>(null);
+  const [trackingNum, setTrackingNum] = useState("");
+
+  function handleConfirmTracking() {
+    if (trackingOrderId && trackingNum) {
+      updateOrder.mutate({ id: trackingOrderId, update: { trackingNumber: trackingNum } });
+    }
+    setTrackingOrderId(null);
+  }
+
   function handleMarkAsShipped(id: number) {
-    const tracking = window.prompt("Enter tracking number");
-    if (!tracking) return;
-    updateOrder.mutate({ id, update: { status: "shipped", trackingNumber: tracking } });
+    setTrackingOrderId(id);
+    setTrackingNum("");
   }
 
   function handleMarkOutForDelivery(id: number) {
@@ -198,6 +218,21 @@ export default function SellerOrdersPage() {
         </Card>
       </main>
       <Footer />
+      <Dialog open={trackingOrderId !== null} onOpenChange={() => setTrackingOrderId(null)}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle>Enter Tracking Number</DialogTitle>
+            <DialogDescription>Provide the shipment tracking number.</DialogDescription>
+          </DialogHeader>
+          <Input value={trackingNum} onChange={(e) => setTrackingNum(e.target.value)} placeholder="Tracking number" />
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="outline">Cancel</Button>
+            </DialogClose>
+            <Button onClick={handleConfirmTracking} disabled={!trackingNum}>Confirm</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
