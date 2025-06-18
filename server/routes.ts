@@ -26,16 +26,21 @@ import { containsContactInfo } from "./contactFilter";
 
 async function fetchTrackingStatus(trackingNumber: string): Promise<string | undefined> {
   try {
-    const apiKey = process.env.TRACKING_API_KEY;
-    const res = await fetch(`https://api.tracking.com/v1/track/${trackingNumber}`, {
-      headers: apiKey ? { Authorization: `Bearer ${apiKey}` } : undefined,
+    const apiKey = process.env.TRACKTRY_API_KEY;
+    const res = await fetch("https://api.tracktry.com/v1/trackings/realtime", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(apiKey ? { "Tracktry-Api-Key": apiKey } : {}),
+      },
+      body: JSON.stringify({ tracking_number: trackingNumber }),
     });
     if (!res.ok) {
       console.error("Tracking API error", await res.text());
       return undefined;
     }
     const data = await res.json();
-    return data.status as string | undefined;
+    return data.data?.items?.[0]?.status as string | undefined;
   } catch (err) {
     console.error("Tracking API request failed", err);
     return undefined;

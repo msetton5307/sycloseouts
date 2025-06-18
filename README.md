@@ -17,3 +17,6 @@ If the specified port is already in use, the server logs an error message.
 The buyer and seller dashboards show your saved addresses and credit cards using radio buttons.
 Selecting a saved option during checkout automatically fills the form, or you can choose **Add New Address** or **Add New Payment Method** to provide new details.
 Any new address or card entered during checkout is saved to your profile automatically for next time.
+
+## Shipment Tracking
+To automatically update order statuses from tracking numbers, set the `TRACKTRY_API_KEY` environment variable with your Tracktry.com API key.
