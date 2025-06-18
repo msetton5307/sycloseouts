@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useLocation, Link } from "wouter";
 import { useCart } from "@/hooks/use-cart";
 import { useAuth } from "@/hooks/use-auth";
-import { formatCurrency, getEstimatedDeliveryDate, generateTrackingNumber } from "@/lib/utils";
+import { formatCurrency, getEstimatedDeliveryDate } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -251,7 +251,6 @@ export default function CheckoutPage() {
       const orders = [];
       for (const [sellerId, sellerItems] of Object.entries(itemsBySeller)) {
         const estimatedDelivery = getEstimatedDeliveryDate();
-        const trackingNumber = generateTrackingNumber();
         const sellerTotal = sellerItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
 
         const last4 =
@@ -269,8 +268,7 @@ export default function CheckoutPage() {
             method: paymentInfo.paymentMethod,
             last4,
           },
-          estimatedDeliveryDate: estimatedDelivery,
-          trackingNumber
+          estimatedDeliveryDate: estimatedDelivery
         };
 
         const orderRes = await apiRequest("POST", "/api/orders", {
