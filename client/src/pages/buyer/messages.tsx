@@ -25,7 +25,7 @@ export default function BuyerMessagesPage() {
             {orders.map((o) => (
               <div
                 key={o.id}
-                className="border rounded p-4 flex justify-between items-center"
+                className="border rounded p-4 flex justify-between items-center bg-white shadow"
               >
                 <span>Order #{o.id}</span>
                 <Link href={`/orders/${o.id}/messages`}>
