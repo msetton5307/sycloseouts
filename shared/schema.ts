@@ -105,11 +105,13 @@ export const products = pgTable("products", {
   description: text("description").notNull(),
   category: text("category").notNull(),
   price: doublePrecision("price").notNull(),
+  retailMsrp: doublePrecision("retail_msrp"),
   totalUnits: integer("total_units").notNull(),
   availableUnits: integer("available_units").notNull(),
   minOrderQuantity: integer("min_order_quantity").notNull(),
   orderMultiple: integer("order_multiple").notNull().default(1),
   images: text("images").array().notNull(),
+  variations: jsonb("variations"),
   fobLocation: text("fob_location"),
   retailComparisonUrl: text("retail_comparison_url"),
   upc: text("upc"),
@@ -129,7 +131,9 @@ export const productsRelations = relations(products, ({ one, many }) => ({
 export const insertProductSchema = createInsertSchema(products, {
   fobLocation: z.string().optional().nullable(),
   retailComparisonUrl: z.string().optional().nullable(),
-  upc: z.string().optional().nullable()
+  upc: z.string().optional().nullable(),
+  retailMsrp: z.coerce.number().optional().nullable(),
+  variations: z.record(z.array(z.string())).optional().nullable()
 })
   .omit({
     id: true,
