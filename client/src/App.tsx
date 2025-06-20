@@ -33,6 +33,8 @@ import AdminApplications from "@/pages/admin/applications";
 import HelpPage from "@/pages/help-page";
 import AdminTicketsPage from "@/pages/admin/tickets";
 import AboutPage from "@/pages/about-page";
+import SellerAgreementPage from "@/pages/seller-agreement";
+import BuyerAgreementPage from "@/pages/buyer-agreement";
 import NotificationsPage from "@/pages/notifications-page";
 import NotFound from "@/pages/not-found";
 
@@ -46,6 +48,8 @@ function Router() {
       <Route path="/auth" component={AuthPage} />
       <Route path="/cart" component={CartPage} />
       <Route path="/about" component={AboutPage} />
+      <Route path="/seller-agreement" component={SellerAgreementPage} />
+      <Route path="/buyer-agreement" component={BuyerAgreementPage} />
       <Route path="/help" component={HelpPage} />
       <ProtectedRoute path="/notifications" component={NotificationsPage} allowedRoles={["buyer", "seller", "admin"]} />
       
