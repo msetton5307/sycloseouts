@@ -28,9 +28,6 @@ export default function HomePage() {
     if (user.role === "buyer") {
       return <Redirect to="/buyer/home" />;
     }
-    if (user.role === "admin") {
-      return <Redirect to="/admin/dashboard" />;
-    }
   }
 
   return (

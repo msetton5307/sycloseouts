@@ -69,9 +69,16 @@ export default function Header({ dashboardTabs, onProfileClick }: HeaderProps) {
                     label: "My Orders",
                     href: "/buyer/orders",
                   },
-                  {
-                    label: user?.isSeller ? "Dashboard" : "Sell with Us",
-                    href: user?.isSeller ? "/seller/dashboard" : "/seller/apply",
+                  user?.role === "seller"
+                    ? { label: "Dashboard", href: "/seller/dashboard" }
+                    : user?.role === "admin"
+                    ? { label: "Admin", href: "/admin/dashboard" }
+                    : !user || user.role === "buyer"
+                    ? { label: "Sell with Us", href: "/seller/apply" }
+                    : null,
+                  user?.role === "admin" && {
+                    label: "Tickets",
+                    href: "/admin/tickets",
                   },
                   { label: "About", href: "/about" },
                 ]
