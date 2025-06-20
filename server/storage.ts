@@ -7,8 +7,9 @@ import {
   carts, Cart, InsertCart,
   addresses, Address, InsertAddress,
   paymentMethods, PaymentMethod, InsertPaymentMethod,
-  messages, Message, InsertMessage
-  , productQuestions, ProductQuestion, InsertProductQuestion
+  messages, Message, InsertMessage,
+  productQuestions, ProductQuestion, InsertProductQuestion,
+  supportTickets, SupportTicket, InsertSupportTicket
 } from "@shared/schema";
 import session from "express-session";
 import { db, pool } from "./db";
@@ -81,6 +82,12 @@ export interface IStorage {
   // Product question methods
   createProductQuestion(question: InsertProductQuestion): Promise<ProductQuestion>;
   getProductQuestionsForSeller(sellerId: number): Promise<ProductQuestion[]>;
+
+  // Support ticket methods
+  getSupportTickets(filter?: { userId?: number; status?: string }): Promise<SupportTicket[]>;
+  getSupportTicket(id: number): Promise<SupportTicket | undefined>;
+  createSupportTicket(ticket: InsertSupportTicket): Promise<SupportTicket>;
+  respondToSupportTicket(id: number, response: string): Promise<SupportTicket | undefined>;
 
   // Cart methods
   getCart(userId: number): Promise<Cart | undefined>;
@@ -506,6 +513,37 @@ export class DatabaseStorage implements IStorage {
       .from(productQuestions)
       .where(eq(productQuestions.sellerId, sellerId))
       .orderBy(desc(productQuestions.createdAt));
+  }
+
+  // Support ticket methods
+  async getSupportTickets(filter?: { userId?: number; status?: string }): Promise<SupportTicket[]> {
+    const conditions: SQL<unknown>[] = [];
+    if (filter?.userId !== undefined) conditions.push(eq(supportTickets.userId, filter.userId));
+    if (filter?.status !== undefined) conditions.push(eq(supportTickets.status, filter.status));
+
+    if (conditions.length > 0) {
+      return await db.select().from(supportTickets).where(and(...conditions)).orderBy(desc(supportTickets.createdAt));
+    }
+    return await db.select().from(supportTickets).orderBy(desc(supportTickets.createdAt));
+  }
+
+  async getSupportTicket(id: number): Promise<SupportTicket | undefined> {
+    const [t] = await db.select().from(supportTickets).where(eq(supportTickets.id, id));
+    return t;
+  }
+
+  async createSupportTicket(ticket: InsertSupportTicket): Promise<SupportTicket> {
+    const [t] = await db.insert(supportTickets).values(ticket).returning();
+    return t;
+  }
+
+  async respondToSupportTicket(id: number, response: string): Promise<SupportTicket | undefined> {
+    const [t] = await db
+      .update(supportTickets)
+      .set({ response, status: 'closed', respondedAt: new Date() })
+      .where(eq(supportTickets.id, id))
+      .returning();
+    return t;
   }
 
   // Cart methods
