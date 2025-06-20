@@ -61,10 +61,10 @@ function Router() {
       <ProtectedRoute path="/buyer/profile" component={BuyerProfilePage} allowedRoles={["buyer", "admin"]} />
 
       {/* Seller routes */}
-      <ProtectedRoute path="/seller/dashboard" component={SellerDashboard} allowedRoles={["seller", "admin"]} />
-      <ProtectedRoute path="/seller/products" component={SellerProducts} allowedRoles={["seller", "admin"]} />
-      <ProtectedRoute path="/seller/orders" component={SellerOrdersPage} allowedRoles={["seller", "admin"]} />
-      <ProtectedRoute path="/seller/messages" component={SellerMessagesPage} allowedRoles={["seller", "admin"]} />
+      <ProtectedRoute path="/seller/dashboard" component={SellerDashboard} allowedRoles={["seller"]} />
+      <ProtectedRoute path="/seller/products" component={SellerProducts} allowedRoles={["seller"]} />
+      <ProtectedRoute path="/seller/orders" component={SellerOrdersPage} allowedRoles={["seller"]} />
+      <ProtectedRoute path="/seller/messages" component={SellerMessagesPage} allowedRoles={["seller"]} />
 
       <ProtectedRoute path="/orders/:id/messages" component={OrderMessagesPage} allowedRoles={["buyer", "seller", "admin"]} />
       <ProtectedRoute path="/conversations/:id" component={ConversationPage} allowedRoles={["buyer", "seller", "admin"]} />
