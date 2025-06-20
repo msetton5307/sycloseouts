@@ -33,44 +33,72 @@ export default function BannerCarousel() {
   if (!products || products.length === 0) return null;
 
   return (
-    <section className="py-6">
-      <Carousel
-        opts={{ loop: true }}
-        plugins={[Autoplay({ delay: 5000 })]}
-        className="relative"
-      >
-        <CarouselContent>
-          {products.map((product) => (
-            <CarouselItem key={product.id} className="basis-full">
-              <div className="relative flex h-72 md:h-96 w-full overflow-hidden rounded-lg shadow-lg">
-                <img
-                  src={product.images[0]}
-                  alt={product.title}
-                  className="absolute inset-0 m-auto h-full w-full object-contain p-6"
-                />
-                <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-black/20 to-black/60" />
-                <div className="relative z-10 ml-auto mr-8 flex max-w-md flex-col justify-center space-y-3 text-right">
-                  <h3 className="text-2xl md:text-3xl font-bold text-white drop-shadow">
-                    {product.title}
-                  </h3>
-                  <p className="text-lg md:text-xl text-primary-foreground drop-shadow">
-                    {formatCurrency(
-                      !user || user.role === "buyer"
-                        ? product.price * (1 + SERVICE_FEE_RATE)
-                        : product.price
-                    )}/unit
-                  </p>
-                  <Button asChild size="sm" variant="secondary" className="self-end">
-                    <Link href={`/products/${product.id}`}>View Details</Link>
-                  </Button>
-                </div>
-              </div>
-            </CarouselItem>
-          ))}
-        </CarouselContent>
-        <CarouselPrevious className="bg-white/80 text-gray-700 hover:bg-white" />
-        <CarouselNext className="bg-white/80 text-gray-700 hover:bg-white" />
-      </Carousel>
+    <section className="py-8 px-4">
+      <div className="relative group">
+        <Carousel
+          opts={{ loop: true }}
+          plugins={[Autoplay({ delay: 5000 })]}
+          className="relative h-80 md:h-[32rem] w-full overflow-hidden rounded-2xl shadow-2xl"
+        >
+          <CarouselContent className="h-full">
+            {products.map((product) => {
+              const price =
+                !user || user.role === "buyer"
+                  ? product.price * (1 + SERVICE_FEE_RATE)
+                  : product.price;
+              return (
+                <CarouselItem key={product.id} className="basis-full h-full">
+                  <div className="relative w-full h-full">
+                    <img
+                      src={product.images[0]}
+                      alt={product.title}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/10 md:bg-gradient-to-r" />
+                    <div className="absolute inset-0 flex flex-col justify-center p-8 md:p-16 text-white">
+                      <div className="max-w-lg ml-auto text-right">
+                        <span className="inline-block px-3 py-1 mb-2 text-xs font-semibold tracking-wider text-white bg-blue-500 rounded-full">
+                          NEW ARRIVAL
+                        </span>
+                        <h3 className="text-3xl md:text-5xl font-bold mb-3 drop-shadow-lg">
+                          {product.title}
+                        </h3>
+                        <p className="text-sm md:text-base mb-6 drop-shadow-md">
+                          {product.description}
+                        </p>
+                        <div className="inline-block px-4 py-2 mb-6 rounded-full bg-white/20 backdrop-blur-sm">
+                          <span className="text-xl md:text-2xl font-bold">
+                            {formatCurrency(price)}
+                          </span>
+                          <span className="text-sm opacity-80">/unit</span>
+                        </div>
+                        <div className="flex justify-end space-x-4">
+                          <Button
+                            asChild
+                            className="bg-white text-gray-800 font-medium hover:bg-gray-100"
+                            variant="secondary"
+                          >
+                            <Link href={`/products/${product.id}`}>Shop Now</Link>
+                          </Button>
+                          <Button
+                            asChild
+                            variant="ghost"
+                            className="border border-white text-white hover:bg-white/10"
+                          >
+                            <Link href={`/products/${product.id}`}>Learn More</Link>
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </CarouselItem>
+              );
+            })}
+          </CarouselContent>
+          <CarouselPrevious className="!left-4 !top-1/2 !-translate-y-1/2 z-20 w-10 h-10 md:w-12 md:h-12 bg-white/80 hover:bg-white text-gray-800 shadow-lg transition-all opacity-0 group-hover:opacity-100" />
+          <CarouselNext className="!right-4 !top-1/2 !-translate-y-1/2 z-20 w-10 h-10 md:w-12 md:h-12 bg-white/80 hover:bg-white text-gray-800 shadow-lg transition-all opacity-0 group-hover:opacity-100" />
+        </Carousel>
+      </div>
     </section>
   );
 }
