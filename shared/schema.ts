@@ -297,6 +297,7 @@ export const insertProductQuestionSchema = createInsertSchema(productQuestions)
 export const supportTickets = pgTable("support_tickets", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull(),
+  topic: text("topic").notNull(),
   subject: text("subject").notNull(),
   message: text("message").notNull(),
   response: text("response"),
