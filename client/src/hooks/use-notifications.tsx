@@ -16,7 +16,15 @@ export function useNotifications() {
     },
   });
 
-  return { ...query, markRead };
+  const clearNotification = useMutation({
+    mutationFn: (id: number) => apiRequest("DELETE", `/api/notifications/${id}`),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/notifications"] });
+      qc.invalidateQueries({ queryKey: ["/api/notifications/unread-count"] });
+    },
+  });
+
+  return { ...query, markRead, clearNotification };
 }
 
 export function useUnreadNotifications() {
