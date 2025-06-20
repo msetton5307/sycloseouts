@@ -95,6 +95,13 @@ export default function BuyerOrderDetailPage() {
                       <span>
                         {item.quantity} x {item.productTitle}
                       </span>
+                      {item.selectedVariations && (
+                        <span className="text-xs text-gray-500 ml-2">
+                          {Object.entries(item.selectedVariations)
+                            .map(([k, v]) => `${k}: ${v}`)
+                            .join(', ')}
+                        </span>
+                      )}
                     </div>
                     <span>{formatCurrency(item.totalPrice)}</span>
                   </li>
