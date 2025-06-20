@@ -98,22 +98,20 @@ export function CartProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    const variationKey = JSON.stringify(variations);
+    const varKey = JSON.stringify(variations);
     const basePrice =
-      product.variationPrices && product.variationPrices[variationKey] !== undefined
-        ? product.variationPrices[variationKey]
+      product.variationPrices && product.variationPrices[varKey] !== undefined
+        ? product.variationPrices[varKey]
         : product.price;
     const priceWithFee =
       !user || user.role === "buyer"
         ? parseFloat((basePrice * (1 + SERVICE_FEE_RATE)).toFixed(2))
         : basePrice;
 
-    const variationKey = JSON.stringify(variations);
-
-    setItems(prevItems => {
-      const existingItemIndex = prevItems.findIndex(
-        item => item.productId === product.id && item.variationKey === variationKey
-      );
+      setItems(prevItems => {
+        const existingItemIndex = prevItems.findIndex(
+          item => item.productId === product.id && item.variationKey === varKey
+        );
       
       if (existingItemIndex >= 0) {
         // Update existing item
@@ -150,7 +148,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
             orderMultiple: product.orderMultiple,
             availableUnits: product.availableUnits,
             selectedVariations: variations,
-            variationKey
+            variationKey: varKey
           }
         ];
       }

@@ -98,10 +98,10 @@ export default function ProductDetailPage() {
     questionMutation.mutate(q);
   }
 
-  const variationKey = JSON.stringify(selectedVariations);
+  const varKey = JSON.stringify(selectedVariations);
   const basePrice =
-    product?.variationPrices && product.variationPrices[variationKey] !== undefined
-      ? product.variationPrices[variationKey]
+    product?.variationPrices && product.variationPrices[varKey] !== undefined
+      ? product.variationPrices[varKey]
       : product?.price ?? 0;
   const unitPrice =
     product && (!user || user.role === "buyer")
