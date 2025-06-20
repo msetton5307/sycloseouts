@@ -12,6 +12,7 @@ import HomePage from "@/pages/home-page";
 import ProductsPage from "@/pages/products-page";
 import ProductDetailPage from "@/pages/product-detail-page";
 import AuthPage from "@/pages/auth-page";
+import ForgotPasswordPage from "@/pages/forgot-password";
 import CartPage from "@/pages/cart-page";
 import CheckoutPage from "@/pages/checkout-page";
 import BuyerHomePage from "@/pages/buyer/home";
@@ -48,6 +49,7 @@ function Router() {
       <Route path="/products" component={ProductsPage} />
       <Route path="/products/:id" component={ProductDetailPage} />
       <Route path="/auth" component={AuthPage} />
+      <Route path="/forgot-password" component={ForgotPasswordPage} />
       <Route path="/cart" component={CartPage} />
       <Route path="/about" component={AboutPage} />
       <Route path="/seller-agreement" component={SellerAgreementPage} />

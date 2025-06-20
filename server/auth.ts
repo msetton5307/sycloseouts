@@ -5,6 +5,7 @@ import session from "express-session";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
+import { sendPasswordResetEmail } from "./email";
 import { User } from "@shared/schema";
 
 declare global {
@@ -41,6 +42,8 @@ async function comparePasswords(supplied: string, stored: string) {
   const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
   return timingSafeEqual(hashedBuf, suppliedBuf);
 }
+
+const passwordResetCodes = new Map<string, { code: string; expires: number }>();
 
 export function setupAuth(app: Express) {
   if (!process.env.SESSION_SECRET) {
@@ -186,6 +189,66 @@ export function setupAuth(app: Express) {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     const { password, ...userWithoutPassword } = req.user;
     res.json(userWithoutPassword);
+  });
+
+  app.post("/api/forgot-password", async (req, res, next) => {
+    try {
+      const email = req.body.email as string;
+      if (!email) {
+        return res.status(400).json({ error: "Email is required" });
+      }
+      const user = await storage.getUserByEmail(email);
+      if (user) {
+        const code = Math.floor(100000 + Math.random() * 900000).toString();
+        passwordResetCodes.set(email, {
+          code,
+          expires: Date.now() + 15 * 60 * 1000,
+        });
+        sendPasswordResetEmail(email, code).catch(console.error);
+      }
+      // Always respond success to avoid leaking which emails exist
+      res.sendStatus(200);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.post("/api/forgot-password/verify", async (req, res, next) => {
+    try {
+      const { email, code, password } = req.body as {
+        email?: string;
+        code?: string;
+        password?: string;
+      };
+      if (!email || !code || !password) {
+        return res
+          .status(400)
+          .json({ error: "Email, code and password required" });
+      }
+
+      const entry = passwordResetCodes.get(email);
+      if (!entry || entry.expires < Date.now() || entry.code !== code) {
+        return res.status(400).json({ error: "Invalid or expired code" });
+      }
+
+      if (password.length < 6) {
+        return res
+          .status(400)
+          .json({ error: "Password must be at least 6 characters" });
+      }
+
+      const user = await storage.getUserByEmail(email);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      const hashed = await hashPassword(password);
+      await storage.updateUser(user.id, { password: hashed });
+      passwordResetCodes.delete(email);
+      res.sendStatus(200);
+    } catch (error) {
+      next(error);
+    }
   });
 
   app.post("/api/reset-password", isAuthenticated, async (req, res, next) => {
