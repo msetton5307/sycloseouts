@@ -166,9 +166,9 @@ export default function AuthPage() {
                             </FormItem>
                           )}
                         />
-                        <Button 
-                          type="submit" 
-                          className="w-full" 
+                        <Button
+                          type="submit"
+                          className="w-full"
                           disabled={loginMutation.isPending}
                         >
                           {loginMutation.isPending ? (
@@ -180,6 +180,11 @@ export default function AuthPage() {
                             "Login"
                           )}
                         </Button>
+                        <div className="text-sm text-right">
+                          <Link href="/forgot-password" className="text-primary hover:underline">
+                            Forgot password?
+                          </Link>
+                        </div>
                       </form>
                     </Form>
                   </CardContent>
