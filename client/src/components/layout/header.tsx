@@ -4,6 +4,7 @@ import {
   Search,
   ShoppingCart,
   MessageCircle,
+  Bell,
   Menu,
   X,
   User as UserIcon,
@@ -21,6 +22,7 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/use-auth";
 import { useCart } from "@/hooks/use-cart";
 import { useUnreadMessages } from "@/hooks/use-messages";
+import { useUnreadNotifications } from "@/hooks/use-notifications";
 import CartDrawer from "@/components/cart/cart-drawer";
 import MobileNav from "@/components/layout/mobile-nav";
 import { ReactNode } from "react";
@@ -36,6 +38,7 @@ export default function Header({ dashboardTabs, onProfileClick }: HeaderProps) {
   const { user, logoutMutation } = useAuth();
   const { itemCount, setIsCartOpen } = useCart();
   const unread = useUnreadMessages();
+  const unreadNotifs = useUnreadNotifications();
 
   const handleLogout = () => logoutMutation.mutate();
   const isActive = (path: string) => location === path;
@@ -119,6 +122,20 @@ export default function Header({ dashboardTabs, onProfileClick }: HeaderProps) {
                       </Badge>
                     )}
                     <span className="sr-only">Messages</span>
+                  </Button>
+                </Link>
+              )}
+
+              {user && (
+                <Link href="/notifications">
+                  <Button variant="ghost" size="icon" className="text-gray-400 hover:text-gray-500 relative">
+                    <Bell className="h-5 w-5" />
+                    {unreadNotifs > 0 && (
+                      <Badge className="absolute -top-2 -right-2 bg-primary text-white text-xs h-5 w-5 flex items-center justify-center p-0">
+                        {unreadNotifs}
+                      </Badge>
+                    )}
+                    <span className="sr-only">Notifications</span>
                   </Button>
                 </Link>
               )}
