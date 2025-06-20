@@ -78,27 +78,33 @@ export default function SellerOrderDetailPage() {
 
             <div>
               <h3 className="font-medium mb-2">Items</h3>
-              <ul className="space-y-2">
+              <ul className="space-y-4">
                 {order.items.map((item) => (
-                  <li key={item.id} className="flex justify-between items-center">
-                    <div className="flex items-center gap-2">
+                  <li key={item.id} className="flex justify-between items-start">
+                    <div className="flex items-center gap-4">
                       <img
                         src={item.productImages[0]}
                         alt={item.productTitle}
-                        className="h-10 w-10 object-cover rounded"
+                        className="h-14 w-14 object-cover rounded"
                       />
-                      <span>
-                        {item.quantity} x {item.productTitle}
-                      </span>
-                      {item.selectedVariations && (
-                        <span className="text-xs text-gray-500 ml-2">
-                          {Object.entries(item.selectedVariations)
-                            .map(([k, v]) => `${k}: ${v}`)
-                            .join(', ')}
-                        </span>
-                      )}
+                      <div>
+                        <p className="font-medium">{item.productTitle}</p>
+                        {item.selectedVariations && (
+                          <p className="text-xs text-gray-500">
+                            {Object.entries(item.selectedVariations)
+                              .map(([k, v]) => `${k}: ${v}`)
+                              .join(', ')}
+                          </p>
+                        )}
+                      </div>
                     </div>
-                    <span>{formatCurrency(item.totalPrice)}</span>
+                    <div className="text-right text-sm space-y-1">
+                      <p>Qty: {item.quantity}</p>
+                      <p>{formatCurrency(item.unitPrice)} each</p>
+                      <p className="font-medium">
+                        {formatCurrency(item.totalPrice)}
+                      </p>
+                    </div>
                   </li>
                 ))}
               </ul>
@@ -116,16 +122,20 @@ export default function SellerOrderDetailPage() {
             <CardHeader>
               <CardTitle>Shipping Information</CardTitle>
             </CardHeader>
-            <CardContent>
-              <p>{order.shippingDetails.name}</p>
+            <CardContent className="space-y-1">
+              <p className="font-medium">{order.shippingDetails.name}</p>
               <p>{order.shippingDetails.address}</p>
               <p>
                 {order.shippingDetails.city}, {order.shippingDetails.state}{" "}
                 {order.shippingDetails.zipCode}
               </p>
               <p>{order.shippingDetails.country}</p>
-              {order.shippingDetails.phone && <p>{order.shippingDetails.phone}</p>}
-              {order.shippingDetails.email && <p>{order.shippingDetails.email}</p>}
+              {order.shippingDetails.phone && (
+                <p>Phone: {order.shippingDetails.phone}</p>
+              )}
+              {order.shippingDetails.email && (
+                <p>Email: {order.shippingDetails.email}</p>
+              )}
             </CardContent>
           </Card>
         )}
