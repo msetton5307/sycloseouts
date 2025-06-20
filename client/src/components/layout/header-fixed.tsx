@@ -50,31 +50,34 @@ export default function Header() {
                   <span className="text-primary font-bold text-2xl cursor-pointer">SY Closeouts</span>
                 </Link>
               </div>
-              <nav className="hidden sm:ml-6 sm:flex sm:space-x-8">
-                <Link 
-                  href="/" 
-                  className={`${isActive('/') ? 'border-primary text-gray-900' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
-                >
-                  Home
-                </Link>
-                <Link 
-                  href="/products" 
-                  className={`${isActive('/products') ? 'border-primary text-gray-900' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
-                >
-                  Products
-                </Link>
-                <Link 
-                  href="/seller/apply" 
-                  className={`${isActive('/seller/apply') ? 'border-primary text-gray-900' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
-                >
-                  Sell with Us
-                </Link>
-                <Link 
-                  href="/about" 
-                  className={`${isActive('/about') ? 'border-primary text-gray-900' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
-                >
-                  About
-                </Link>
+              <nav className="hidden sm:ml-6 sm:flex sm:space-x-8 items-center">
+                {[
+                  !(user && user.role === 'seller') && { label: 'Home', href: '/' },
+                  { label: 'Products', href: '/products' },
+                  user?.role === 'admin' && { label: 'Admin', href: '/admin/dashboard' },
+                  user?.role === 'admin' && { label: 'Tickets', href: '/admin/tickets' },
+                  user?.role === 'buyer' && { label: 'My Orders', href: '/buyer/orders' },
+                  user?.role === 'seller'
+                    ? { label: 'Dashboard', href: '/seller/dashboard' }
+                    : !user || user.role === 'buyer'
+                    ? { label: 'Sell with Us', href: '/seller/apply' }
+                    : null,
+                  { label: 'About', href: '/about' },
+                ]
+                  .filter(Boolean)
+                  .map(({ label, href }) => (
+                    <Link
+                      key={href}
+                      href={href}
+                      className={`${
+                        isActive(href)
+                          ? 'border-primary text-gray-900'
+                          : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                      } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
+                    >
+                      {label}
+                    </Link>
+                  ))}
               </nav>
             </div>
             

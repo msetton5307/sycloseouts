@@ -71,9 +71,15 @@ export default function Header({ dashboardTabs, onProfileClick }: HeaderProps) {
                   },
                   user?.role === "seller"
                     ? { label: "Dashboard", href: "/seller/dashboard" }
+                    : user?.role === "admin"
+                    ? { label: "Admin", href: "/admin/dashboard" }
                     : !user || user.role === "buyer"
                     ? { label: "Sell with Us", href: "/seller/apply" }
                     : null,
+                  user?.role === "admin" && {
+                    label: "Tickets",
+                    href: "/admin/tickets",
+                  },
                   { label: "About", href: "/about" },
                 ]
                   .filter(Boolean)
