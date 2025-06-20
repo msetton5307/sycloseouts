@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { User } from "@shared/schema";
 import { getQueryFn } from "@/lib/queryClient";
 import ChatMessage from "@/components/messages/chat-message";
-import { useAdminConversation } from "@/hooks/use-messages";
+import { useAdminUserMessages } from "@/hooks/use-messages";
 
 export default function AdminMessagesPage() {
   const { data: users = [] } = useQuery<User[]>({
@@ -13,10 +13,16 @@ export default function AdminMessagesPage() {
     queryFn: getQueryFn({ on401: "throw" }),
   });
 
-  const [userA, setUserA] = useState<number>();
-  const [userB, setUserB] = useState<number>();
+  const [search, setSearch] = useState("");
+  const [selectedUser, setSelectedUser] = useState<number>();
 
-  const { data: messages = [], isLoading } = useAdminConversation(userA ?? 0, userB ?? 0);
+  const filteredUsers = users.filter(u =>
+    `${u.firstName} ${u.lastName} ${u.username} ${u.email}`
+      .toLowerCase()
+      .includes(search.toLowerCase())
+  );
+
+  const { data: messages = [], isLoading } = useAdminUserMessages(selectedUser ?? 0);
 
   return (
     <>
@@ -24,25 +30,19 @@ export default function AdminMessagesPage() {
       <main className="max-w-5xl mx-auto px-4 py-8 space-y-4">
         <h1 className="text-2xl font-bold">Message Supervision</h1>
         <div className="flex gap-4">
+          <input
+            className="border rounded p-2 flex-1"
+            placeholder="Search users"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+          />
           <select
             className="border rounded p-2"
-            value={userA ?? ""}
-            onChange={e => setUserA(Number(e.target.value) || undefined)}
+            value={selectedUser ?? ""}
+            onChange={e => setSelectedUser(Number(e.target.value) || undefined)}
           >
-            <option value="">Select User A</option>
-            {users.map(u => (
-              <option key={u.id} value={u.id}>
-                {u.username}
-              </option>
-            ))}
-          </select>
-          <select
-            className="border rounded p-2"
-            value={userB ?? ""}
-            onChange={e => setUserB(Number(e.target.value) || undefined)}
-          >
-            <option value="">Select User B</option>
-            {users.map(u => (
+            <option value="">Select User</option>
+            {filteredUsers.map(u => (
               <option key={u.id} value={u.id}>
                 {u.username}
               </option>
@@ -54,7 +54,7 @@ export default function AdminMessagesPage() {
             <p>Loading...</p>
           ) : (
             messages.map(m => (
-              <ChatMessage key={m.id} message={m} isOwn={m.senderId === userA} />
+              <ChatMessage key={m.id} message={m} isOwn={m.senderId === selectedUser} />
             ))
           )}
         </div>
