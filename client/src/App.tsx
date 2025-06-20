@@ -33,6 +33,7 @@ import AdminApplications from "@/pages/admin/applications";
 import HelpPage from "@/pages/help-page";
 import AdminTicketsPage from "@/pages/admin/tickets";
 import AboutPage from "@/pages/about-page";
+import NotificationsPage from "@/pages/notifications-page";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -46,6 +47,7 @@ function Router() {
       <Route path="/cart" component={CartPage} />
       <Route path="/about" component={AboutPage} />
       <Route path="/help" component={HelpPage} />
+      <ProtectedRoute path="/notifications" component={NotificationsPage} allowedRoles={["buyer", "seller", "admin"]} />
       
       {/* Protected seller application route */}
       <ProtectedRoute path="/seller/apply" component={SellerApply} allowedRoles={["buyer", "seller", "admin"]} />

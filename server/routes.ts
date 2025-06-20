@@ -428,6 +428,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const updatedOrder = await storage.updateOrder(id, { status: "cancelled" });
       res.json(updatedOrder);
+
+      await storage.createNotification({
+        userId: updatedOrder.buyerId,
+        type: 'order',
+        content: `Order #${updatedOrder.id} was cancelled`,
+        link: `/buyer/orders/${updatedOrder.id}`,
+      });
+      await storage.createNotification({
+        userId: updatedOrder.sellerId,
+        type: 'order',
+        content: `Order #${updatedOrder.id} was cancelled`,
+        link: `/seller/orders`,
+      });
     } catch (error) {
       handleApiError(res, error);
     }
@@ -476,6 +489,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (buyer) {
           sendShippingUpdateEmail(buyer.email, updatedOrder).catch(console.error);
         }
+        await storage.createNotification({
+          userId: updatedOrder.buyerId,
+          type: 'order',
+          content: `Order #${updatedOrder.id} status updated to ${updateData.status}`,
+          link: `/buyer/orders/${updatedOrder.id}`,
+        });
+        await storage.createNotification({
+          userId: updatedOrder.sellerId,
+          type: 'order',
+          content: `Order #${updatedOrder.id} status updated to ${updateData.status}`,
+          link: `/seller/orders`,
+        });
       }
     } catch (error) {
       handleApiError(res, error);
@@ -518,6 +543,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         senderId: user.id,
         receiverId,
         content: req.body.message,
+      });
+
+      await storage.createNotification({
+        userId: receiverId,
+        type: 'message',
+        content: `New message about order #${order.id}`,
+        link: `/orders/${order.id}/messages`,
       });
 
       await sendOrderMessageEmail(receiver.email, order.id, req.body.message);
@@ -575,6 +607,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         senderId: user.id,
         receiverId: otherId,
         content: req.body.message,
+      });
+
+      await storage.createNotification({
+        userId: otherId,
+        type: 'message',
+        content: `New message about order #${order.id}`,
+        link: `/conversations/${user.id}`,
       });
 
       await sendOrderMessageEmail(receiver.email, order.id, req.body.message);
@@ -645,6 +684,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const user = req.user as Express.User;
       const count = await storage.getUnreadMessageCount(user.id);
+      res.json({ count });
+    } catch (error) {
+      handleApiError(res, error);
+    }
+  });
+
+  app.get("/api/notifications", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user as Express.User;
+      const notes = await storage.getNotifications(user.id);
+      res.json(notes);
+    } catch (error) {
+      handleApiError(res, error);
+    }
+  });
+
+  app.post("/api/notifications/read", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user as Express.User;
+      await storage.markNotificationsAsRead(user.id);
+      res.sendStatus(204);
+    } catch (error) {
+      handleApiError(res, error);
+    }
+  });
+
+  app.get("/api/notifications/unread-count", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user as Express.User;
+      const count = await storage.getUnreadNotificationCount(user.id);
       res.json({ count });
     } catch (error) {
       handleApiError(res, error);
@@ -978,6 +1047,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (Number.isNaN(id)) return res.status(400).json({ message: "Invalid ticket ID" });
       const ticket = await storage.respondToSupportTicket(id, req.body.response);
       if (!ticket) return res.status(404).json({ message: "Ticket not found" });
+      await storage.createNotification({
+        userId: ticket.userId,
+        type: 'support',
+        content: `Support ticket #${ticket.id} has a new response`,
+        link: '/help',
+      });
       res.json(ticket);
     } catch (error) {
       handleApiError(res, error);

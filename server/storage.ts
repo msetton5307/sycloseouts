@@ -9,7 +9,8 @@ import {
   paymentMethods, PaymentMethod, InsertPaymentMethod,
   messages, Message, InsertMessage,
   productQuestions, ProductQuestion, InsertProductQuestion,
-  supportTickets, SupportTicket, InsertSupportTicket
+  supportTickets, SupportTicket, InsertSupportTicket,
+  notifications, Notification, InsertNotification
 } from "@shared/schema";
 import session from "express-session";
 import { db, pool } from "./db";
@@ -78,6 +79,12 @@ export interface IStorage {
   markConversationAsRead(receiverId: number, senderId: number): Promise<void>;
   getLatestOrderBetweenUsers(buyerId: number, sellerId: number): Promise<Order | undefined>;
   getUnreadMessageCount(userId: number): Promise<number>;
+
+  // Notification methods
+  getNotifications(userId: number): Promise<Notification[]>;
+  createNotification(notification: InsertNotification): Promise<Notification>;
+  markNotificationsAsRead(userId: number): Promise<void>;
+  getUnreadNotificationCount(userId: number): Promise<number>;
 
   // Product question methods
   createProductQuestion(question: InsertProductQuestion): Promise<ProductQuestion>;
@@ -544,6 +551,38 @@ export class DatabaseStorage implements IStorage {
       .where(eq(supportTickets.id, id))
       .returning();
     return t;
+  }
+
+  // Notification methods
+  async getNotifications(userId: number): Promise<Notification[]> {
+    return await db
+      .select()
+      .from(notifications)
+      .where(eq(notifications.userId, userId))
+      .orderBy(desc(notifications.createdAt));
+  }
+
+  async createNotification(insertNotification: InsertNotification): Promise<Notification> {
+    const [n] = await db
+      .insert(notifications)
+      .values(insertNotification)
+      .returning();
+    return n;
+  }
+
+  async markNotificationsAsRead(userId: number): Promise<void> {
+    await db
+      .update(notifications)
+      .set({ isRead: true })
+      .where(eq(notifications.userId, userId));
+  }
+
+  async getUnreadNotificationCount(userId: number): Promise<number> {
+    const [res] = await db
+      .select({ count: sql`count(*)`.mapWith(Number) })
+      .from(notifications)
+      .where(and(eq(notifications.userId, userId), eq(notifications.isRead, false)));
+    return res?.count ?? 0;
   }
 
   // Cart methods
