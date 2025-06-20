@@ -105,11 +105,14 @@ export const products = pgTable("products", {
   description: text("description").notNull(),
   category: text("category").notNull(),
   price: doublePrecision("price").notNull(),
+  retailMsrp: doublePrecision("retail_msrp"),
   totalUnits: integer("total_units").notNull(),
   availableUnits: integer("available_units").notNull(),
   minOrderQuantity: integer("min_order_quantity").notNull(),
   orderMultiple: integer("order_multiple").notNull().default(1),
   images: text("images").array().notNull(),
+  variations: jsonb("variations"),
+  variationPrices: jsonb("variation_prices"),
   fobLocation: text("fob_location"),
   retailComparisonUrl: text("retail_comparison_url"),
   upc: text("upc"),
@@ -129,7 +132,10 @@ export const productsRelations = relations(products, ({ one, many }) => ({
 export const insertProductSchema = createInsertSchema(products, {
   fobLocation: z.string().optional().nullable(),
   retailComparisonUrl: z.string().optional().nullable(),
-  upc: z.string().optional().nullable()
+  upc: z.string().optional().nullable(),
+  retailMsrp: z.coerce.number().optional().nullable(),
+  variations: z.record(z.array(z.string())).optional().nullable(),
+  variationPrices: z.record(z.number()).optional().nullable()
 })
   .omit({
     id: true,
@@ -186,6 +192,7 @@ export const orderItems = pgTable("order_items", {
   quantity: integer("quantity").notNull(),
   unitPrice: doublePrecision("unit_price").notNull(),
   totalPrice: doublePrecision("total_price").notNull(),
+  selectedVariations: jsonb("selected_variations"),
 });
 
 export const orderItemsRelations = relations(orderItems, ({ one }) => ({
@@ -202,6 +209,9 @@ export const orderItemsRelations = relations(orderItems, ({ one }) => ({
 export const insertOrderItemSchema = createInsertSchema(orderItems)
   .omit({
     id: true,
+  })
+  .extend({
+    selectedVariations: z.record(z.string()).optional().nullable(),
   });
 
 // Seller application schema
@@ -387,4 +397,6 @@ export interface CartItem {
   minOrderQuantity: number;
   orderMultiple: number;
   availableUnits: number;
+  selectedVariations?: Record<string, string>;
+  variationKey?: string;
 }

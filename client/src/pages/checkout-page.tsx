@@ -277,7 +277,8 @@ export default function CheckoutPage() {
             productId: i.productId,
             quantity: i.quantity,
             unitPrice: i.price,
-            totalPrice: i.price * i.quantity
+            totalPrice: i.price * i.quantity,
+            selectedVariations: i.selectedVariations
           }))
         });
         if (!orderRes.ok) throw new Error("Failed to create order");
@@ -784,7 +785,7 @@ export default function CheckoutPage() {
 
                 <ul className="divide-y divide-gray-200 mb-6">
                   {items.map((item) => (
-                    <li key={item.productId} className="py-4 flex">
+                    <li key={item.productId + (item.variationKey || '')} className="py-4 flex">
                       <div className="flex-shrink-0 w-16 h-16 border border-gray-200 rounded-md overflow-hidden">
                         <img
                           src={item.image}
@@ -794,6 +795,11 @@ export default function CheckoutPage() {
                       </div>
                       <div className="ml-4 flex-1">
                         <h3 className="text-sm font-medium text-gray-900">{item.title}</h3>
+                        {item.selectedVariations && (
+                          <p className="text-xs text-gray-500">
+                            {Object.entries(item.selectedVariations).map(([k,v]) => `${k}: ${v}`).join(', ')}
+                          </p>
+                        )}
                         <div className="flex justify-between mt-1">
                           <p className="text-sm text-gray-500">{item.quantity} x {formatCurrency(item.price)}</p>
                           <p className="text-sm font-medium text-gray-900">{formatCurrency(item.price * item.quantity)}</p>
