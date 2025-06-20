@@ -95,6 +95,7 @@ export interface IStorage {
   getSupportTicket(id: number): Promise<SupportTicket | undefined>;
   createSupportTicket(ticket: InsertSupportTicket): Promise<SupportTicket>;
   respondToSupportTicket(id: number, response: string): Promise<SupportTicket | undefined>;
+  updateSupportTicketStatus(id: number, status: string): Promise<SupportTicket | undefined>;
 
   // Cart methods
   getCart(userId: number): Promise<Cart | undefined>;
@@ -547,7 +548,16 @@ export class DatabaseStorage implements IStorage {
   async respondToSupportTicket(id: number, response: string): Promise<SupportTicket | undefined> {
     const [t] = await db
       .update(supportTickets)
-      .set({ response, status: 'closed', respondedAt: new Date() })
+      .set({ response, respondedAt: new Date() })
+      .where(eq(supportTickets.id, id))
+      .returning();
+    return t;
+  }
+
+  async updateSupportTicketStatus(id: number, status: string): Promise<SupportTicket | undefined> {
+    const [t] = await db
+      .update(supportTickets)
+      .set({ status })
       .where(eq(supportTickets.id, id))
       .returning();
     return t;
