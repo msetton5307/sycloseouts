@@ -36,21 +36,6 @@ export default function Footer() {
                   <a className="text-base text-gray-400 hover:text-white">About</a>
                 </Link>
               </li>
-              <li>
-                <Link href="/partners">
-                  <a className="text-base text-gray-400 hover:text-white">Partners</a>
-                </Link>
-              </li>
-              <li>
-                <Link href="/careers">
-                  <a className="text-base text-gray-400 hover:text-white">Careers</a>
-                </Link>
-              </li>
-              <li>
-                <Link href="/press">
-                  <a className="text-base text-gray-400 hover:text-white">Press</a>
-                </Link>
-              </li>
             </ul>
           </div>
           <div>
@@ -59,21 +44,6 @@ export default function Footer() {
               <li>
                 <Link href="/help">
                   <a className="text-base text-gray-400 hover:text-white">Help Center</a>
-                </Link>
-              </li>
-              <li>
-                <Link href="/contact">
-                  <a className="text-base text-gray-400 hover:text-white">Contact Us</a>
-                </Link>
-              </li>
-              <li>
-                <Link href="/shipping">
-                  <a className="text-base text-gray-400 hover:text-white">Shipping Info</a>
-                </Link>
-              </li>
-              <li>
-                <Link href="/returns">
-                  <a className="text-base text-gray-400 hover:text-white">Returns</a>
                 </Link>
               </li>
             </ul>
@@ -104,25 +74,6 @@ export default function Footer() {
             </ul>
           </div>
           <div>
-            <h3 className="text-sm font-semibold text-gray-300 tracking-wider uppercase">Connect with us</h3>
-            <div className="flex space-x-6 mt-4">
-              <a href="#" className="text-gray-400 hover:text-white">
-                <span className="sr-only">Facebook</span>
-                <Facebook className="h-6 w-6" />
-              </a>
-              <a href="#" className="text-gray-400 hover:text-white">
-                <span className="sr-only">Instagram</span>
-                <Instagram className="h-6 w-6" />
-              </a>
-              <a href="#" className="text-gray-400 hover:text-white">
-                <span className="sr-only">Twitter</span>
-                <Twitter className="h-6 w-6" />
-              </a>
-              <a href="#" className="text-gray-400 hover:text-white">
-                <span className="sr-only">LinkedIn</span>
-                <Linkedin className="h-6 w-6" />
-              </a>
-            </div>
             <div className="mt-8">
               <h3 className="text-sm font-semibold text-gray-300 tracking-wider uppercase">Subscribe to our newsletter</h3>
               <p className="mt-4 text-gray-400 text-sm">Get the latest updates, deals and wholesale opportunities.</p>
