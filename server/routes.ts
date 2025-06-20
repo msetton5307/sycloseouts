@@ -623,6 +623,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get(
+    "/api/admin/conversations/:userA/:userB/messages",
+    isAuthenticated,
+    isAdmin,
+    async (req, res) => {
+      try {
+        const userA = parseInt(req.params.userA, 10);
+        const userB = parseInt(req.params.userB, 10);
+        if (Number.isNaN(userA) || Number.isNaN(userB)) {
+          return res.status(400).json({ message: "Invalid user IDs" });
+        }
+
+        const msgs = await storage.getConversationMessages(userA, userB);
+        res.json(msgs);
+      } catch (error) {
+        handleApiError(res, error);
+      }
+    },
+  );
+
   app.post("/api/conversations/:userId/messages/read", isAuthenticated, async (req, res) => {
     try {
       const otherId = parseInt(req.params.userId, 10);
