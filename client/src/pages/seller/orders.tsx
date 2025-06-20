@@ -78,6 +78,15 @@ export default function SellerOrdersPage() {
   const [trackingOrderId, setTrackingOrderId] = useState<number | null>(null);
   const [trackingNum, setTrackingNum] = useState("");
 
+  const [labelOrderId, setLabelOrderId] = useState<number | null>(null);
+  const [pkgWeight, setPkgWeight] = useState("");
+  const [pkgLength, setPkgLength] = useState("");
+  const [pkgWidth, setPkgWidth] = useState("");
+  const [pkgHeight, setPkgHeight] = useState("");
+  const [rates, setRates] = useState<any[]>([]);
+  const [labelUrl, setLabelUrl] = useState<string | null>(null);
+  const [loadingRates, setLoadingRates] = useState(false);
+
   function handleConfirmTracking() {
     if (trackingOrderId && trackingNum) {
       updateOrder.mutate({ id: trackingOrderId, update: { trackingNumber: trackingNum } });
@@ -108,6 +117,55 @@ export default function SellerOrdersPage() {
     const msg = window.prompt("Message to buyer");
     if (!msg) return;
     messageBuyer.mutate({ buyerId, message: msg });
+  }
+
+  function handleBuyLabel(id: number) {
+    setLabelOrderId(id);
+    setPkgWeight("");
+    setPkgLength("");
+    setPkgWidth("");
+    setPkgHeight("");
+    setRates([]);
+    setLabelUrl(null);
+  }
+
+  async function fetchRates() {
+    if (!labelOrderId) return;
+    setLoadingRates(true);
+    try {
+      const res = await apiRequest(
+        "POST",
+        `/api/orders/${labelOrderId}/shipping/rates`,
+        {
+          weight: parseFloat(pkgWeight),
+          length: parseFloat(pkgLength),
+          width: parseFloat(pkgWidth),
+          height: parseFloat(pkgHeight),
+        },
+      );
+      const data = await res.json();
+      setRates(data.rates || []);
+    } catch (err: any) {
+      toast({ title: "Failed to get rates", description: err.message, variant: "destructive" });
+    } finally {
+      setLoadingRates(false);
+    }
+  }
+
+  async function purchaseLabel(rateId: string) {
+    if (!labelOrderId) return;
+    try {
+      const res = await apiRequest(
+        "POST",
+        `/api/orders/${labelOrderId}/shipping/purchase`,
+        { rateObjectId: rateId },
+      );
+      const data = await res.json();
+      setLabelUrl(data.labelUrl);
+      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+    } catch (err: any) {
+      toast({ title: "Purchase failed", description: err.message, variant: "destructive" });
+    }
   }
 
   return (
@@ -197,6 +255,11 @@ export default function SellerOrdersPage() {
                       <Button variant="outline" size="sm" onClick={() => handleCancelOrder(order.id)}>
                         Cancel Order
                       </Button>
+                      {!order.shippingDetails?.labelUrl && (
+                        <Button variant="outline" size="sm" onClick={() => handleBuyLabel(order.id)}>
+                          Buy Shipping Label
+                        </Button>
+                      )}
                       <Button variant="outline" size="sm" onClick={() => handleContactBuyer(order.buyerId)}>
                         Contact Buyer
                       </Button>
@@ -233,6 +296,38 @@ export default function SellerOrdersPage() {
             </DialogClose>
             <Button onClick={handleConfirmTracking} disabled={!trackingNum}>Confirm</Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={labelOrderId !== null} onOpenChange={() => setLabelOrderId(null)}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Buy Shipping Label</DialogTitle>
+          </DialogHeader>
+          {labelUrl ? (
+            <div className="space-y-4">
+              <p className="text-sm">Label purchased.</p>
+              <a href={labelUrl} target="_blank" className="text-primary underline">Download Label</a>
+            </div>
+          ) : rates.length > 0 ? (
+            <div className="space-y-2">
+              {rates.map((r) => (
+                <Button key={r.object_id} className="w-full" onClick={() => purchaseLabel(r.object_id)}>
+                  {r.provider} {r.servicelevel} - {formatCurrency(r.amount)}
+                </Button>
+              ))}
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <Input value={pkgWeight} onChange={(e) => setPkgWeight(e.target.value)} placeholder="Weight (oz)" />
+              <div className="grid grid-cols-3 gap-2">
+                <Input value={pkgLength} onChange={(e) => setPkgLength(e.target.value)} placeholder="L" />
+                <Input value={pkgWidth} onChange={(e) => setPkgWidth(e.target.value)} placeholder="W" />
+                <Input value={pkgHeight} onChange={(e) => setPkgHeight(e.target.value)} placeholder="H" />
+              </div>
+              <Button onClick={fetchRates} disabled={loadingRates}>Get Rates</Button>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </>
