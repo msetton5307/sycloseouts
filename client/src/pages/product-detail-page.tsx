@@ -200,6 +200,9 @@ export default function ProductDetailPage() {
             </div>
 
             <div className="text-3xl font-bold mb-2">{formatCurrency(unitPrice)} <span className="text-sm font-normal text-gray-500">/unit</span></div>
+            {product.retailMsrp && (
+              <div className="text-sm text-gray-500 mb-2">Retail MSRP: {formatCurrency(product.retailMsrp)}</div>
+            )}
             <div className="text-sm text-gray-600 mb-1"><Package className="inline-block h-4 w-4 mr-1" />{product.availableUnits} units</div>
             <div className="text-sm text-gray-600 mb-1"><Layers className="inline-block h-4 w-4 mr-1" />Minimum {product.minOrderQuantity} (by {product.orderMultiple})</div>
             {product.fobLocation && (
