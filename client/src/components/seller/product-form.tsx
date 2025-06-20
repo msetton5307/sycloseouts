@@ -42,7 +42,7 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [sizeOptions, setSizeOptions] = useState<string>(product?.variations?.size?.join(", ") || "");
   const [colorOptions, setColorOptions] = useState<string>(product?.variations?.color?.join(", ") || "");
-  const [variationPrices, setVariationPrices] = useState<Record<string, number>>(product?.variationPrices || {});
+  const [variationPrices, setVariationPrices] = useState<Record<string, number | undefined>>(product?.variationPrices || {});
   const [comboKeys, setComboKeys] = useState<string[]>([]);
 
   useEffect(() => {
@@ -60,10 +60,10 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
     }
     setComboKeys(combos);
     setVariationPrices(prev => {
-      const updated = { ...prev };
+      const updated: Record<string, number | undefined> = { ...prev };
       combos.forEach(k => {
-        if (updated[k] === undefined) {
-          updated[k] = 0;
+        if (!(k in updated)) {
+          updated[k] = undefined;
         }
       });
       Object.keys(updated).forEach(k => {
@@ -202,7 +202,7 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
         color: colorOptions.split(',').map(c => c.trim()).filter(Boolean)
       },
       variationPrices: Object.fromEntries(
-        Object.entries(variationPrices).map(([k, v]) => [k, typeof v === 'string' ? parseFloat(v as any) : v])
+        Object.entries(variationPrices).map(([k, v]) => [k, v])
       )
     };
     
@@ -543,9 +543,16 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
           <div>
             <FormLabel className="block mb-2">Variation Prices</FormLabel>
             <div className="space-y-2">
-              {comboKeys.map(key => {
+              {comboKeys.map((key, idx) => {
                 const combo = JSON.parse(key) as Record<string, string>;
                 const label = Object.values(combo).join(' / ');
+                const priceOptions = Array.from(
+                  new Set(
+                    Object.values(variationPrices).filter(
+                      (p): p is number => typeof p === 'number' && !isNaN(p)
+                    )
+                  )
+                );
                 return (
                   <div key={key} className="flex items-center space-x-2">
                     <span className="flex-1 text-sm">{label}</span>
@@ -553,6 +560,7 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
                       type="number"
                       min="0.01"
                       step="0.01"
+                      list={`price-options-${idx}`}
                       value={variationPrices[key] === undefined ? '' : variationPrices[key]}
                       onChange={e => {
                         const val = e.target.value;
@@ -562,6 +570,13 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
                         }));
                       }}
                     />
+                    {priceOptions.length > 0 && (
+                      <datalist id={`price-options-${idx}`}>
+                        {priceOptions.map(p => (
+                          <option key={p} value={p.toFixed(2)} />
+                        ))}
+                      </datalist>
+                    )}
                   </div>
                 );
               })}
