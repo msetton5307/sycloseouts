@@ -301,15 +301,21 @@ export default function AdminUsers() {
                         </TableCell>
                         <TableCell>
                           <div className="flex space-x-2">
-                            <Button 
-                              size="sm" 
-                              variant="outline" 
+                            <Button
+                              size="sm"
+                              variant="outline"
                               onClick={() => setSelectedUser(user)}
                               className="h-8 px-2 flex items-center"
                             >
                               <UserCog className="h-4 w-4 mr-1" />
                               Details
                             </Button>
+                            <Link
+                              href={`/admin/users/${user.id}`}
+                              className="border rounded px-2 h-8 flex items-center text-sm"
+                            >
+                              Profile
+                            </Link>
                             
                             {user.role === "seller" && !user.isApproved && (
                               <Button 

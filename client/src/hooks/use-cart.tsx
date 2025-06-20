@@ -108,6 +108,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
         ? parseFloat((basePrice * (1 + SERVICE_FEE_RATE)).toFixed(2))
         : basePrice;
 
+    const variationKey = JSON.stringify(variations);
+
     setItems(prevItems => {
       const existingItemIndex = prevItems.findIndex(
         item => item.productId === product.id && item.variationKey === variationKey

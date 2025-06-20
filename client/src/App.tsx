@@ -32,6 +32,8 @@ import AdminUsers from "@/pages/admin/users";
 import AdminApplications from "@/pages/admin/applications";
 import HelpPage from "@/pages/help-page";
 import AdminTicketsPage from "@/pages/admin/tickets";
+import AdminMessagesPage from "@/pages/admin/messages";
+import AdminUserProfilePage from "@/pages/admin/user-profile";
 import AboutPage from "@/pages/about-page";
 import SellerAgreementPage from "@/pages/seller-agreement";
 import BuyerAgreementPage from "@/pages/buyer-agreement";
@@ -75,9 +77,11 @@ function Router() {
 
       {/* Admin routes */}
       <ProtectedRoute path="/admin/dashboard" component={AdminDashboard} allowedRoles={["admin"]} />
+      <ProtectedRoute path="/admin/users/:id" component={AdminUserProfilePage} allowedRoles={["admin"]} />
       <ProtectedRoute path="/admin/users" component={AdminUsers} allowedRoles={["admin"]} />
       <ProtectedRoute path="/admin/applications" component={AdminApplications} allowedRoles={["admin"]} />
       <ProtectedRoute path="/admin/featured" component={FeaturedProductsPage} allowedRoles={["admin"]} />
+      <ProtectedRoute path="/admin/messages" component={AdminMessagesPage} allowedRoles={["admin"]} />
       <ProtectedRoute path="/admin/tickets" component={AdminTicketsPage} allowedRoles={["admin"]} />
 
       {/* Fallback to 404 */}
