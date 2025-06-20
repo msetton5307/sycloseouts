@@ -3,6 +3,7 @@ export interface InvoiceItem {
   quantity: number;
   unitPrice: number;
   totalPrice: number;
+  selectedVariations?: Record<string, string>;
 }
 
 import type { Order } from "@shared/schema";
@@ -31,7 +32,12 @@ export function generateInvoicePdf(order: Order, items: InvoiceItem[]): Buffer {
   lines.push(textBlock(430, y, 12, "Amount"));
   y -= 15;
   for (const item of items) {
-    lines.push(textBlock(50, y, 12, item.title));
+    const lineTitle = item.selectedVariations
+      ? `${item.title} (${Object.entries(item.selectedVariations)
+          .map(([k, v]) => `${k}: ${v}`)
+          .join(', ')})`
+      : item.title;
+    lines.push(textBlock(50, y, 12, lineTitle));
     lines.push(textBlock(300, y, 12, String(item.quantity)));
     lines.push(textBlock(350, y, 12, `$${item.unitPrice.toFixed(2)}`));
     lines.push(textBlock(430, y, 12, `$${item.totalPrice.toFixed(2)}`));

@@ -320,6 +320,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         quantity: i.quantity,
         unitPrice: i.unitPrice,
         totalPrice: i.totalPrice,
+        selectedVariations: i.selectedVariations,
       }));
 
       const pdf = generateInvoicePdf(order, invoiceItems);
@@ -352,6 +353,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         quantity: number;
         unitPrice: number;
         totalPrice: number;
+        selectedVariations?: Record<string, string>;
       }[] = [];
 
       const order = await db.transaction(async (tx) => {
@@ -385,6 +387,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 quantity: item.quantity,
                 unitPrice: item.unitPrice,
                 totalPrice: item.totalPrice,
+                selectedVariations: item.selectedVariations,
               });
             }
           }

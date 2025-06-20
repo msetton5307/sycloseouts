@@ -98,10 +98,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    const variationKey = JSON.stringify(variations);
+    const basePrice =
+      product.variationPrices && product.variationPrices[variationKey] !== undefined
+        ? product.variationPrices[variationKey]
+        : product.price;
     const priceWithFee =
       !user || user.role === "buyer"
-        ? parseFloat((product.price * (1 + SERVICE_FEE_RATE)).toFixed(2))
-        : product.price;
+        ? parseFloat((basePrice * (1 + SERVICE_FEE_RATE)).toFixed(2))
+        : basePrice;
 
     const variationKey = JSON.stringify(variations);
 

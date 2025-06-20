@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertProductSchema, InsertProduct, Product } from "@shared/schema";
@@ -42,6 +42,36 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [sizeOptions, setSizeOptions] = useState<string>(product?.variations?.size?.join(", ") || "");
   const [colorOptions, setColorOptions] = useState<string>(product?.variations?.color?.join(", ") || "");
+  const [variationPrices, setVariationPrices] = useState<Record<string, number>>(product?.variationPrices || {});
+  const [comboKeys, setComboKeys] = useState<string[]>([]);
+
+  useEffect(() => {
+    const sizes = sizeOptions.split(',').map(s => s.trim()).filter(Boolean);
+    const colors = colorOptions.split(',').map(c => c.trim()).filter(Boolean);
+    let combos: string[] = [];
+    if (sizes.length === 0 && colors.length === 0) {
+      combos = [];
+    } else if (sizes.length === 0) {
+      combos = colors.map(c => JSON.stringify({ color: c }));
+    } else if (colors.length === 0) {
+      combos = sizes.map(s => JSON.stringify({ size: s }));
+    } else {
+      combos = sizes.flatMap(s => colors.map(c => JSON.stringify({ size: s, color: c })));
+    }
+    setComboKeys(combos);
+    setVariationPrices(prev => {
+      const updated = { ...prev };
+      combos.forEach(k => {
+        if (updated[k] === undefined) {
+          updated[k] = 0;
+        }
+      });
+      Object.keys(updated).forEach(k => {
+        if (!combos.includes(k)) delete updated[k];
+      });
+      return updated;
+    });
+  }, [sizeOptions, colorOptions]);
   
   const categories = [
     "Electronics",
@@ -77,6 +107,7 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
       retailComparisonUrl: product.retailComparisonUrl || '',
       upc: product.upc || '',
       variations: (product as any).variations || {},
+      variationPrices: (product as any).variationPrices || {},
       isBanner: product.isBanner ?? false,
     } : {
       sellerId: 0, // Will be set by the server
@@ -94,6 +125,7 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
       retailComparisonUrl: "",
       upc: "",
       variations: {},
+      variationPrices: {},
       condition: "New",
       isBanner: false
     },
@@ -168,7 +200,10 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
       variations: {
         size: sizeOptions.split(',').map(s => s.trim()).filter(Boolean),
         color: colorOptions.split(',').map(c => c.trim()).filter(Boolean)
-      }
+      },
+      variationPrices: Object.fromEntries(
+        Object.entries(variationPrices).map(([k, v]) => [k, typeof v === 'string' ? parseFloat(v as any) : v])
+      )
     };
     
     // Check for NaN values and replace with defaults
@@ -178,6 +213,12 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
     if (isNaN(formattedData.availableUnits)) formattedData.availableUnits = 0;
     if (isNaN(formattedData.minOrderQuantity)) formattedData.minOrderQuantity = 1;
     if (isNaN((formattedData as any).orderMultiple)) (formattedData as any).orderMultiple = 1;
+    for (const key in formattedData.variationPrices) {
+      const val = formattedData.variationPrices[key];
+      if (val === undefined || isNaN(val)) {
+        delete formattedData.variationPrices[key];
+      }
+    }
     
     console.log("Formatted data for submission:", formattedData);
     try {
@@ -497,6 +538,36 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
             />
           </div>
         </div>
+
+        {comboKeys.length > 0 && (
+          <div>
+            <FormLabel className="block mb-2">Variation Prices</FormLabel>
+            <div className="space-y-2">
+              {comboKeys.map(key => {
+                const combo = JSON.parse(key) as Record<string, string>;
+                const label = Object.values(combo).join(' / ');
+                return (
+                  <div key={key} className="flex items-center space-x-2">
+                    <span className="flex-1 text-sm">{label}</span>
+                    <Input
+                      type="number"
+                      min="0.01"
+                      step="0.01"
+                      value={variationPrices[key] === undefined ? '' : variationPrices[key]}
+                      onChange={e => {
+                        const val = e.target.value;
+                        setVariationPrices(prev => ({
+                          ...prev,
+                          [key]: val === '' ? undefined : parseFloat(val)
+                        }));
+                      }}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <FormField

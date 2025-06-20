@@ -98,10 +98,15 @@ export default function ProductDetailPage() {
     questionMutation.mutate(q);
   }
 
+  const variationKey = JSON.stringify(selectedVariations);
+  const basePrice =
+    product?.variationPrices && product.variationPrices[variationKey] !== undefined
+      ? product.variationPrices[variationKey]
+      : product?.price ?? 0;
   const unitPrice =
     product && (!user || user.role === "buyer")
-      ? product.price * (1 + SERVICE_FEE_RATE)
-      : product?.price ?? 0;
+      ? basePrice * (1 + SERVICE_FEE_RATE)
+      : basePrice;
   const totalCost = product ? unitPrice * quantity : 0;
 
   if (isLoading) {
