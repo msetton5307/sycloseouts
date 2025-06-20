@@ -1059,6 +1059,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/support-tickets/:id/status", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id, 10);
+      if (Number.isNaN(id)) return res.status(400).json({ message: "Invalid ticket ID" });
+      const status = req.body.status;
+      if (status !== 'open' && status !== 'closed') {
+        return res.status(400).json({ message: 'Invalid status' });
+      }
+      const ticket = await storage.updateSupportTicketStatus(id, status);
+      if (!ticket) return res.status(404).json({ message: "Ticket not found" });
+      res.json(ticket);
+    } catch (error) {
+      handleApiError(res, error);
+    }
+  });
+
   // Create the HTTP server
   const httpServer = createServer(app);
   return httpServer;

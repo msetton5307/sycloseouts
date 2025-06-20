@@ -1,7 +1,7 @@
 import { useState } from "react";
 import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
-import { useSupportTickets, useRespondTicket } from "@/hooks/use-support-tickets";
+import { useSupportTickets, useRespondTicket, useUpdateTicketStatus } from "@/hooks/use-support-tickets";
 import { useQuery } from "@tanstack/react-query";
 import { SupportTicket, User } from "@shared/schema";
 import { getQueryFn } from "@/lib/queryClient";
@@ -16,6 +16,7 @@ function TicketCard({ ticket }: { ticket: SupportTicket }) {
     queryFn: getQueryFn({ on401: "throw" }),
   });
   const respond = useRespondTicket(ticket.id);
+  const updateStatus = useUpdateTicketStatus(ticket.id);
   const [response, setResponse] = useState("");
 
   return (
@@ -25,37 +26,50 @@ function TicketCard({ ticket }: { ticket: SupportTicket }) {
           <CardTitle>{ticket.subject}</CardTitle>
           <Badge variant="secondary">{ticket.topic}</Badge>
         </div>
-        <span className="text-sm text-gray-600 self-center">
-          {user ? user.username : `User #${ticket.userId}`}
-        </span>
+        <div className="flex flex-col items-end space-y-1">
+          <span className="text-sm text-gray-600">
+            {user ? user.username : `User #${ticket.userId}`}
+          </span>
+          <Badge variant={ticket.status === 'open' ? 'outline' : 'default'}>{ticket.status}</Badge>
+        </div>
       </CardHeader>
       <CardContent className="space-y-2">
         <p className="whitespace-pre-line">{ticket.message}</p>
         {ticket.response && (
           <div className="space-y-1">
-            <Badge className="w-fit">Closed</Badge>
             <p className="whitespace-pre-line">{ticket.response}</p>
           </div>
         )}
       </CardContent>
-      {!ticket.response && (
-        <CardFooter>
-          <form
-            onSubmit={e => {
-              e.preventDefault();
-              respond.mutate(response);
-            }}
-            className="flex w-full flex-col space-y-2"
-          >
-            <Textarea
-              value={response}
-              onChange={e => setResponse(e.target.value)}
-              placeholder="Write your response..."
-            />
-            <Button type="submit" disabled={respond.isPending} className="self-end">
-              Send Response
+      {(ticket.status === 'open' || !ticket.response) && (
+        <CardFooter className="flex flex-col space-y-2 items-start">
+          {!ticket.response && (
+            <form
+              onSubmit={e => {
+                e.preventDefault();
+                respond.mutate(response);
+              }}
+              className="flex w-full flex-col space-y-2"
+            >
+              <Textarea
+                value={response}
+                onChange={e => setResponse(e.target.value)}
+                placeholder="Write your response..."
+              />
+              <Button type="submit" disabled={respond.isPending} className="self-end">
+                Send Response
+              </Button>
+            </form>
+          )}
+          {ticket.status === 'open' && (
+            <Button
+              variant="outline"
+              onClick={() => updateStatus.mutate('closed')}
+              disabled={updateStatus.isPending}
+            >
+              Close Ticket
             </Button>
-          </form>
+          )}
         </CardFooter>
       )}
     </Card>

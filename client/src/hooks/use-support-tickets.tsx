@@ -26,3 +26,12 @@ export function useRespondTicket(id: number) {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["/api/support-tickets"] }),
   });
 }
+
+export function useUpdateTicketStatus(id: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (status: string) =>
+      apiRequest("POST", `/api/support-tickets/${id}/status`, { status }).then(r => r.json()),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["/api/support-tickets"] }),
+  });
+}
