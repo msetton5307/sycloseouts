@@ -191,7 +191,9 @@ export default function SellerOrdersPage() {
                     </div>
 
                     <div className="flex flex-wrap gap-2 justify-end">
-                      <Button variant="outline" size="sm">View Details</Button>
+                      <Button variant="outline" size="sm" asChild>
+                        <Link href={`/seller/orders/${order.id}`}>View Details</Link>
+                      </Button>
                       <Button variant="outline" size="sm" onClick={() => handleCancelOrder(order.id)}>
                         Cancel Order
                       </Button>

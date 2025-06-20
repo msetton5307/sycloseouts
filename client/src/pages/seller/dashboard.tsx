@@ -394,7 +394,9 @@ export default function SellerDashboard() {
                         </div>
                         
                         <div className="flex flex-wrap gap-2 justify-end">
-                          <Button variant="outline" size="sm">View Details</Button>
+                          <Button variant="outline" size="sm" asChild>
+                            <Link href={`/seller/orders/${order.id}`}>View Details</Link>
+                          </Button>
 
                           {order.status === "ordered" && (
                             <Button size="sm" onClick={() => handleMarkAsShipped(order.id)}>
