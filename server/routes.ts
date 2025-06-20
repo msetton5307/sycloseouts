@@ -9,6 +9,7 @@ import {
   sendOrderMessageEmail,
   sendProductQuestionEmail,
   sendAdminAlertEmail,
+  sendAdminUserEmail,
 } from "./email";
 import { generateInvoicePdf } from "./pdf";
 import {
@@ -622,6 +623,94 @@ export async function registerRoutes(app: Express): Promise<Server> {
       handleApiError(res, error);
     }
   });
+
+  app.get(
+    "/api/admin/conversations/:userA/:userB/messages",
+    isAuthenticated,
+    isAdmin,
+    async (req, res) => {
+      try {
+        const userA = parseInt(req.params.userA, 10);
+        const userB = parseInt(req.params.userB, 10);
+        if (Number.isNaN(userA) || Number.isNaN(userB)) {
+          return res.status(400).json({ message: "Invalid user IDs" });
+        }
+
+        const msgs = await storage.getConversationMessages(userA, userB);
+        res.json(msgs);
+      } catch (error) {
+        handleApiError(res, error);
+      }
+    },
+  );
+
+  app.get(
+    "/api/admin/users/:userId/messages",
+    isAuthenticated,
+    isAdmin,
+    async (req, res) => {
+      try {
+        const userId = parseInt(req.params.userId, 10);
+        if (Number.isNaN(userId)) {
+          return res.status(400).json({ message: "Invalid user ID" });
+        }
+
+        const msgs = await storage.getMessagesForUser(userId);
+        res.json(msgs);
+      } catch (error) {
+        handleApiError(res, error);
+      }
+    },
+  );
+
+  app.get(
+    "/api/admin/users/:userId/orders",
+    isAuthenticated,
+    isAdmin,
+    async (req, res) => {
+      try {
+        const userId = parseInt(req.params.userId, 10);
+        if (Number.isNaN(userId)) {
+          return res.status(400).json({ message: "Invalid user ID" });
+        }
+
+        const buyerOrders = await storage.getOrders({ buyerId: userId });
+        const sellerOrders = await storage.getOrders({ sellerId: userId });
+        res.json([...buyerOrders, ...sellerOrders]);
+      } catch (error) {
+        handleApiError(res, error);
+      }
+    },
+  );
+
+  app.post(
+    "/api/admin/users/:userId/email",
+    isAuthenticated,
+    isAdmin,
+    async (req, res) => {
+      try {
+        const userId = parseInt(req.params.userId, 10);
+        if (Number.isNaN(userId)) {
+          return res.status(400).json({ message: "Invalid user ID" });
+        }
+
+        const user = await storage.getUser(userId);
+        if (!user) {
+          return res.status(404).json({ message: "User not found" });
+        }
+
+        const { subject, message } = req.body;
+        if (!subject || !message) {
+          return res.status(400).json({ message: "Missing subject or message" });
+        }
+
+        await sendAdminUserEmail(user.email, subject, message);
+        res.sendStatus(204);
+      } catch (error) {
+        handleApiError(res, error);
+      }
+    },
+  );
 
   app.post("/api/conversations/:userId/messages/read", isAuthenticated, async (req, res) => {
     try {

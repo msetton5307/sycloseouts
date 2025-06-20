@@ -283,3 +283,27 @@ export async function sendAdminAlertEmail(subject: string, body: string) {
     console.error("Failed to send admin alert email", err);
   }
 }
+
+export async function sendAdminUserEmail(
+  to: string,
+  subject: string,
+  body: string,
+) {
+  if (!transporter) {
+    console.warn("Email transport not configured; skipping admin user email");
+    return;
+  }
+
+  const mailOptions = {
+    from: process.env.SMTP_FROM || user,
+    to,
+    subject,
+    text: body,
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+  } catch (err) {
+    console.error("Failed to send admin user email", err);
+  }
+}
