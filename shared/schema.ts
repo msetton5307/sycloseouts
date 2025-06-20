@@ -391,4 +391,6 @@ export interface CartItem {
   minOrderQuantity: number;
   orderMultiple: number;
   availableUnits: number;
+  selectedVariations?: Record<string, string>;
+  variationKey?: string;
 }

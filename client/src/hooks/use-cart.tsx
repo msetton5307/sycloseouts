@@ -6,9 +6,17 @@ import { SERVICE_FEE_RATE } from "@/lib/utils";
 
 interface CartContextType {
   items: CartItem[];
-  addToCart: (product: Product, quantity: number) => void;
-  removeFromCart: (productId: number) => void;
-  updateQuantity: (productId: number, quantity: number) => void;
+  addToCart: (
+    product: Product,
+    quantity: number,
+    variations?: Record<string, string>
+  ) => void;
+  removeFromCart: (productId: number, variationKey?: string) => void;
+  updateQuantity: (
+    productId: number,
+    variationKey: string | undefined,
+    quantity: number
+  ) => void;
   clearCart: () => void;
   cartTotal: number;
   itemCount: number;
@@ -53,7 +61,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
     localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
   }, [items]);
 
-  const addToCart = (product: Product, quantity: number) => {
+  const addToCart = (
+    product: Product,
+    quantity: number,
+    variations: Record<string, string> = {}
+  ) => {
     if (quantity <= 0) return;
 
     // Check if product meets MOQ
@@ -91,8 +103,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
         ? parseFloat((product.price * (1 + SERVICE_FEE_RATE)).toFixed(2))
         : product.price;
 
+    const variationKey = JSON.stringify(variations);
+
     setItems(prevItems => {
-      const existingItemIndex = prevItems.findIndex(item => item.productId === product.id);
+      const existingItemIndex = prevItems.findIndex(
+        item => item.productId === product.id && item.variationKey === variationKey
+      );
       
       if (existingItemIndex >= 0) {
         // Update existing item
@@ -117,16 +133,21 @@ export function CartProvider({ children }: { children: ReactNode }) {
         return updatedItems;
       } else {
         // Add new item
-        return [...prevItems, {
-          productId: product.id,
-          title: product.title,
-          price: priceWithFee,
-          quantity,
-          image: product.images[0],
-          minOrderQuantity: product.minOrderQuantity,
-          orderMultiple: product.orderMultiple,
-          availableUnits: product.availableUnits
-        }];
+        return [
+          ...prevItems,
+          {
+            productId: product.id,
+            title: product.title,
+            price: priceWithFee,
+            quantity,
+            image: product.images[0],
+            minOrderQuantity: product.minOrderQuantity,
+            orderMultiple: product.orderMultiple,
+            availableUnits: product.availableUnits,
+            selectedVariations: variations,
+            variationKey
+          }
+        ];
       }
     });
 
@@ -138,8 +159,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setIsCartOpen(true);
   };
 
-  const removeFromCart = (productId: number) => {
-    setItems(prevItems => prevItems.filter(item => item.productId !== productId));
+  const removeFromCart = (productId: number, variationKey = "") => {
+    setItems(prevItems =>
+      prevItems.filter(
+        item => !(item.productId === productId && (item.variationKey ?? "") === variationKey)
+      )
+    );
     
     toast({
       title: "Removed from cart",
@@ -147,15 +172,19 @@ export function CartProvider({ children }: { children: ReactNode }) {
     });
   };
 
-  const updateQuantity = (productId: number, quantity: number) => {
+  const updateQuantity = (
+    productId: number,
+    variationKey: string | undefined,
+    quantity: number
+  ) => {
     if (quantity <= 0) {
-      removeFromCart(productId);
+      removeFromCart(productId, variationKey);
       return;
     }
 
     setItems(prevItems => {
       return prevItems.map(item => {
-        if (item.productId === productId) {
+        if (item.productId === productId && (item.variationKey ?? "") === (variationKey ?? "")) {
           // Check if quantity meets MOQ
           if (quantity < item.minOrderQuantity) {
             toast({
