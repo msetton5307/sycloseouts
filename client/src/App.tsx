@@ -12,6 +12,7 @@ import HomePage from "@/pages/home-page";
 import ProductsPage from "@/pages/products-page";
 import ProductDetailPage from "@/pages/product-detail-page";
 import AuthPage from "@/pages/auth-page";
+import ForgotPasswordPage from "@/pages/forgot-password";
 import CartPage from "@/pages/cart-page";
 import CheckoutPage from "@/pages/checkout-page";
 import BuyerHomePage from "@/pages/buyer/home";
@@ -32,6 +33,8 @@ import AdminUsers from "@/pages/admin/users";
 import AdminApplications from "@/pages/admin/applications";
 import HelpPage from "@/pages/help-page";
 import AdminTicketsPage from "@/pages/admin/tickets";
+import AdminMessagesPage from "@/pages/admin/messages";
+import AdminUserProfilePage from "@/pages/admin/user-profile";
 import AboutPage from "@/pages/about-page";
 import SellerAgreementPage from "@/pages/seller-agreement";
 import BuyerAgreementPage from "@/pages/buyer-agreement";
@@ -46,6 +49,7 @@ function Router() {
       <Route path="/products" component={ProductsPage} />
       <Route path="/products/:id" component={ProductDetailPage} />
       <Route path="/auth" component={AuthPage} />
+      <Route path="/forgot-password" component={ForgotPasswordPage} />
       <Route path="/cart" component={CartPage} />
       <Route path="/about" component={AboutPage} />
       <Route path="/seller-agreement" component={SellerAgreementPage} />
@@ -75,9 +79,11 @@ function Router() {
 
       {/* Admin routes */}
       <ProtectedRoute path="/admin/dashboard" component={AdminDashboard} allowedRoles={["admin"]} />
+      <ProtectedRoute path="/admin/users/:id" component={AdminUserProfilePage} allowedRoles={["admin"]} />
       <ProtectedRoute path="/admin/users" component={AdminUsers} allowedRoles={["admin"]} />
       <ProtectedRoute path="/admin/applications" component={AdminApplications} allowedRoles={["admin"]} />
       <ProtectedRoute path="/admin/featured" component={FeaturedProductsPage} allowedRoles={["admin"]} />
+      <ProtectedRoute path="/admin/messages" component={AdminMessagesPage} allowedRoles={["admin"]} />
       <ProtectedRoute path="/admin/tickets" component={AdminTicketsPage} allowedRoles={["admin"]} />
 
       {/* Fallback to 404 */}

@@ -47,6 +47,22 @@ export function useConversation(otherId: number) {
   return { ...messagesQuery, sendMessage, markRead };
 }
 
+export function useAdminConversation(userA: number, userB: number) {
+  return useQuery<Message[]>({
+    queryKey: [
+      `/api/admin/conversations/${userA}/${userB}/messages`,
+    ],
+    enabled: !!userA && !!userB,
+  });
+}
+
+export function useAdminUserMessages(userId: number) {
+  return useQuery<Message[]>({
+    queryKey: [`/api/admin/users/${userId}/messages`],
+    enabled: !!userId,
+  });
+}
+
 export function useUnreadMessages() {
   const { data } = useQuery<{ count: number }>({
     queryKey: ["/api/messages/unread-count"],

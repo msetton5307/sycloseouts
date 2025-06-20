@@ -79,6 +79,7 @@ export interface IStorage {
   markConversationAsRead(receiverId: number, senderId: number): Promise<void>;
   getLatestOrderBetweenUsers(buyerId: number, sellerId: number): Promise<Order | undefined>;
   getUnreadMessageCount(userId: number): Promise<number>;
+  getMessagesForUser(userId: number): Promise<Message[]>;
 
   // Notification methods
   getNotifications(userId: number): Promise<Notification[]>;
@@ -509,6 +510,14 @@ export class DatabaseStorage implements IStorage {
       .from(messages)
       .where(and(eq(messages.receiverId, userId), eq(messages.isRead, false)));
     return res?.count ?? 0;
+  }
+
+  async getMessagesForUser(userId: number): Promise<Message[]> {
+    return await db
+      .select()
+      .from(messages)
+      .where(or(eq(messages.senderId, userId), eq(messages.receiverId, userId)))
+      .orderBy(messages.createdAt);
   }
 
   // Product question methods

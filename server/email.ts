@@ -283,3 +283,47 @@ export async function sendAdminAlertEmail(subject: string, body: string) {
     console.error("Failed to send admin alert email", err);
   }
 }
+
+export async function sendPasswordResetEmail(to: string, code: string) {
+  if (!transporter) {
+    console.warn("Email transport not configured; skipping password reset email");
+    return;
+  }
+
+  const mailOptions = {
+    from: process.env.SMTP_FROM || user,
+    to,
+    subject: "Password Reset Verification Code",
+    text: `Your password reset verification code is: ${code}`,
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+  } catch (err) {
+    console.error("Failed to send password reset email", err);
+  }
+}
+
+export async function sendAdminUserEmail(
+  to: string,
+  subject: string,
+  body: string,
+) {
+  if (!transporter) {
+    console.warn("Email transport not configured; skipping admin user email");
+    return;
+  }
+
+  const mailOptions = {
+    from: process.env.SMTP_FROM || user,
+    to,
+    subject,
+    text: body,
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+  } catch (err) {
+    console.error("Failed to send admin user email", err);
+  }
+}

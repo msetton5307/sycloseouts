@@ -80,6 +80,10 @@ export default function Header({ dashboardTabs, onProfileClick }: HeaderProps) {
                     label: "Tickets",
                     href: "/admin/tickets",
                   },
+                  user?.role === "admin" && {
+                    label: "Messages",
+                    href: "/admin/messages",
+                  },
                   { label: "About", href: "/about" },
                 ]
                   .filter(Boolean)
