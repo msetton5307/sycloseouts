@@ -96,11 +96,6 @@ export default function Footer() {
                     </Link>
                   </li>
                   <li>
-                    <Link href="/careers" className="text-base text-gray-400 hover:text-white">
-                      Careers
-                    </Link>
-                  </li>
-                  <li>
                     <Link href="/faq" className="text-base text-gray-400 hover:text-white">
                       FAQ
                     </Link>
@@ -115,21 +110,6 @@ export default function Footer() {
                   <li>
                     <Link href="/help" className="text-base text-gray-400 hover:text-white">
                       Help Center
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="/contact" className="text-base text-gray-400 hover:text-white">
-                      Contact Us
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="/shipping" className="text-base text-gray-400 hover:text-white">
-                      Shipping Info
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="/returns" className="text-base text-gray-400 hover:text-white">
-                      Returns
                     </Link>
                   </li>
                 </ul>
