@@ -16,6 +16,7 @@ import {
   insertOrderSchema,
   insertOrderItemSchema,
   insertSellerApplicationSchema,
+  insertSupportTicketSchema,
   orders as ordersTable,
   orderItems as orderItemsTable,
   products as productsTable
@@ -927,6 +928,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       await storage.deletePaymentMethod(id);
       res.sendStatus(204);
+    } catch (error) {
+      handleApiError(res, error);
+    }
+  });
+
+  // Support ticket routes
+  app.get("/api/support-tickets", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user as Express.User;
+      const filter = user.role === "admin" ? {} : { userId: user.id };
+      const tickets = await storage.getSupportTickets(filter);
+      res.json(tickets);
+    } catch (error) {
+      handleApiError(res, error);
+    }
+  });
+
+  app.post("/api/support-tickets", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user as Express.User;
+      const data = insertSupportTicketSchema.parse({ ...req.body, userId: user.id });
+      const ticket = await storage.createSupportTicket(data);
+      res.status(201).json(ticket);
+    } catch (error) {
+      handleApiError(res, error);
+    }
+  });
+
+  app.get("/api/support-tickets/:id", isAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id, 10);
+      if (Number.isNaN(id)) return res.status(400).json({ message: "Invalid ticket ID" });
+      const user = req.user as Express.User;
+      const ticket = await storage.getSupportTicket(id);
+      if (!ticket) return res.status(404).json({ message: "Ticket not found" });
+      if (user.role !== "admin" && ticket.userId !== user.id) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+      res.json(ticket);
+    } catch (error) {
+      handleApiError(res, error);
+    }
+  });
+
+  app.post("/api/support-tickets/:id/respond", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id, 10);
+      if (Number.isNaN(id)) return res.status(400).json({ message: "Invalid ticket ID" });
+      const ticket = await storage.respondToSupportTicket(id, req.body.response);
+      if (!ticket) return res.status(404).json({ message: "Ticket not found" });
+      res.json(ticket);
     } catch (error) {
       handleApiError(res, error);
     }
