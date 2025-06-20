@@ -85,6 +85,7 @@ export interface IStorage {
   createNotification(notification: InsertNotification): Promise<Notification>;
   markNotificationsAsRead(userId: number): Promise<void>;
   getUnreadNotificationCount(userId: number): Promise<number>;
+  deleteNotification(id: number, userId: number): Promise<void>;
 
   // Product question methods
   createProductQuestion(question: InsertProductQuestion): Promise<ProductQuestion>;
@@ -593,6 +594,12 @@ export class DatabaseStorage implements IStorage {
       .from(notifications)
       .where(and(eq(notifications.userId, userId), eq(notifications.isRead, false)));
     return res?.count ?? 0;
+  }
+
+  async deleteNotification(id: number, userId: number): Promise<void> {
+    await db
+      .delete(notifications)
+      .where(and(eq(notifications.id, id), eq(notifications.userId, userId)));
   }
 
   // Cart methods

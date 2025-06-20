@@ -720,6 +720,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.delete("/api/notifications/:id", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user as Express.User;
+      const id = Number(req.params.id);
+      if (Number.isNaN(id)) {
+        return res.status(400).json({ message: "Invalid id" });
+      }
+      await storage.deleteNotification(id, user.id);
+      res.sendStatus(204);
+    } catch (error) {
+      handleApiError(res, error);
+    }
+  });
+
   app.get("/api/seller/questions", isAuthenticated, async (req, res) => {
     try {
       const user = req.user as Express.User;
