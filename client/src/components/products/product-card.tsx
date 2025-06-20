@@ -20,7 +20,7 @@ export default function ProductCard({ product }: ProductCardProps) {
       : product.price;
   
   const handleAddToCart = () => {
-    addToCart(product, product.minOrderQuantity);
+    addToCart(product, product.minOrderQuantity, {});
   };
   
   return (

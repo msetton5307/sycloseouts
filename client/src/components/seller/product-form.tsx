@@ -40,6 +40,8 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
   const [newImageUrl, setNewImageUrl] = useState("");
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [sizeOptions, setSizeOptions] = useState<string>(product?.variations?.size?.join(", ") || "");
+  const [colorOptions, setColorOptions] = useState<string>(product?.variations?.color?.join(", ") || "");
   
   const categories = [
     "Electronics",
@@ -66,6 +68,7 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
     defaultValues: product ? {
       ...product,
       price: typeof product.price === 'number' && !isNaN(product.price) ? product.price : 0,
+      retailMsrp: typeof (product as any).retailMsrp === 'number' && !isNaN((product as any).retailMsrp) ? (product as any).retailMsrp : undefined,
       totalUnits: typeof product.totalUnits === 'number' && !isNaN(product.totalUnits) ? product.totalUnits : 0,
       availableUnits: typeof product.availableUnits === 'number' && !isNaN(product.availableUnits) ? product.availableUnits : 0,
       minOrderQuantity: typeof product.minOrderQuantity === 'number' && !isNaN(product.minOrderQuantity) ? product.minOrderQuantity : 1,
@@ -73,21 +76,24 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
       fobLocation: product.fobLocation || '',
       retailComparisonUrl: product.retailComparisonUrl || '',
       upc: product.upc || '',
+      variations: (product as any).variations || {},
       isBanner: product.isBanner ?? false,
     } : {
       sellerId: 0, // Will be set by the server
       title: "",
       description: "",
       category: "",
-      price: 0,
-      totalUnits: 0,
-      availableUnits: 0,
-      minOrderQuantity: 1,
-      orderMultiple: 1,
+      price: undefined as unknown as number,
+      retailMsrp: undefined as unknown as number,
+      totalUnits: undefined as unknown as number,
+      availableUnits: undefined as unknown as number,
+      minOrderQuantity: undefined as unknown as number,
+      orderMultiple: undefined as unknown as number,
       images: [],
       fobLocation: "",
       retailComparisonUrl: "",
       upc: "",
+      variations: {},
       condition: "New",
       isBanner: false
     },
@@ -154,14 +160,20 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
     const formattedData = {
       ...data,
       price: typeof data.price === 'string' ? parseFloat(data.price) : data.price,
+      retailMsrp: typeof (data as any).retailMsrp === 'string' ? parseFloat((data as any).retailMsrp) : (data as any).retailMsrp,
       totalUnits: typeof data.totalUnits === 'string' ? parseInt(data.totalUnits) : data.totalUnits,
       availableUnits: typeof data.availableUnits === 'string' ? parseInt(data.availableUnits) : data.availableUnits,
       minOrderQuantity: typeof data.minOrderQuantity === 'string' ? parseInt(data.minOrderQuantity) : data.minOrderQuantity,
       orderMultiple: typeof (data as any).orderMultiple === 'string' ? parseInt((data as any).orderMultiple) : (data as any).orderMultiple,
+      variations: {
+        size: sizeOptions.split(',').map(s => s.trim()).filter(Boolean),
+        color: colorOptions.split(',').map(c => c.trim()).filter(Boolean)
+      }
     };
     
     // Check for NaN values and replace with defaults
     if (isNaN(formattedData.price)) formattedData.price = 0;
+    if (isNaN((formattedData as any).retailMsrp)) (formattedData as any).retailMsrp = undefined;
     if (isNaN(formattedData.totalUnits)) formattedData.totalUnits = 0;
     if (isNaN(formattedData.availableUnits)) formattedData.availableUnits = 0;
     if (isNaN(formattedData.minOrderQuantity)) formattedData.minOrderQuantity = 1;
@@ -381,9 +393,35 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
                     step="0.01"
                     placeholder="0.00"
                     {...field}
+                    value={field.value === undefined ? "" : field.value}
                     onChange={(e) => {
                       const value = e.target.value;
-                      field.onChange(value === "" ? 0 : parseFloat(value));
+                      field.onChange(value === "" ? undefined : parseFloat(value));
+                    }}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="retailMsrp"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Retail MSRP</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    min="0.01"
+                    step="0.01"
+                    placeholder="0.00"
+                    {...field}
+                    value={field.value === undefined ? "" : field.value}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      field.onChange(value === "" ? undefined : parseFloat(value));
                     }}
                   />
                 </FormControl>
@@ -404,9 +442,10 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
                     min="1"
                     placeholder="0"
                     {...field}
+                    value={field.value === undefined ? "" : field.value}
                     onChange={(e) => {
                       const value = e.target.value;
-                      field.onChange(value === "" ? 0 : parseInt(value));
+                      field.onChange(value === "" ? undefined : parseInt(value));
                     }}
                   />
                 </FormControl>
@@ -427,9 +466,10 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
                     min="0"
                     placeholder="0"
                     {...field}
+                    value={field.value === undefined ? "" : field.value}
                     onChange={(e) => {
                       const value = e.target.value;
-                      field.onChange(value === "" ? 0 : parseInt(value));
+                      field.onChange(value === "" ? undefined : parseInt(value));
                     }}
                   />
                 </FormControl>
@@ -437,6 +477,25 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
               </FormItem>
             )}
           />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <FormLabel>Sizes (comma separated)</FormLabel>
+            <Input
+              placeholder="S, M, L"
+              value={sizeOptions}
+              onChange={(e) => setSizeOptions(e.target.value)}
+            />
+          </div>
+          <div>
+            <FormLabel>Colors (comma separated)</FormLabel>
+            <Input
+              placeholder="Red, Blue"
+              value={colorOptions}
+              onChange={(e) => setColorOptions(e.target.value)}
+            />
+          </div>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -452,9 +511,10 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
                     min="1"
                     placeholder="1"
                     {...field}
+                    value={field.value === undefined ? "" : field.value}
                     onChange={(e) => {
                       const value = e.target.value;
-                      field.onChange(value === "" ? 0 : parseInt(value));
+                      field.onChange(value === "" ? undefined : parseInt(value));
                     }}
                   />
                 </FormControl>
@@ -478,9 +538,10 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
                     min="1"
                     placeholder="1"
                     {...field}
+                    value={field.value === undefined ? "" : field.value}
                     onChange={(e) => {
                       const value = e.target.value;
-                      field.onChange(value === "" ? 0 : parseInt(value));
+                      field.onChange(value === "" ? undefined : parseInt(value));
                     }}
                   />
                 </FormControl>

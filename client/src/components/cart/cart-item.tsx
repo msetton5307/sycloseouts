@@ -10,18 +10,26 @@ interface CartItemProps {
 
 export default function CartItem({ item }: CartItemProps) {
   const { updateQuantity, removeFromCart } = useCart();
-  
+
   const handleDecrease = () => {
     if (item.quantity <= item.minOrderQuantity) {
       // If reducing would go below MOQ, remove the item
-      removeFromCart(item.productId);
+      removeFromCart(item.productId, item.variationKey);
     } else {
-      updateQuantity(item.productId, item.quantity - item.orderMultiple);
+      updateQuantity(
+        item.productId,
+        item.variationKey,
+        item.quantity - item.orderMultiple
+      );
     }
   };
 
   const handleIncrease = () => {
-    updateQuantity(item.productId, item.quantity + item.orderMultiple);
+    updateQuantity(
+      item.productId,
+      item.variationKey,
+      item.quantity + item.orderMultiple
+    );
   };
   
   const itemTotal = item.price * item.quantity;
@@ -39,9 +47,16 @@ export default function CartItem({ item }: CartItemProps) {
       <div className="ml-4 flex-1 flex flex-col">
         <div>
           <div className="flex justify-between text-base font-medium text-gray-900">
-            <h3>
-              {item.title}
-            </h3>
+          <h3>
+            {item.title}
+          </h3>
+          {item.selectedVariations && (
+            <p className="text-xs text-gray-500">
+              {Object.entries(item.selectedVariations)
+                .map(([k, v]) => `${k}: ${v}`)
+                .join(", ")}
+            </p>
+          )}
             <p className="ml-4">
               {formatCurrency(itemTotal)}
             </p>
@@ -78,7 +93,7 @@ export default function CartItem({ item }: CartItemProps) {
               variant="ghost" 
               size="sm" 
               className="text-primary hover:text-primary-foreground hover:bg-primary font-medium flex items-center"
-              onClick={() => removeFromCart(item.productId)}
+              onClick={() => removeFromCart(item.productId, item.variationKey)}
             >
               <Trash2 className="h-4 w-4 mr-1" />
               Remove
