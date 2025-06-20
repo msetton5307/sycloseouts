@@ -23,13 +23,6 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 import { Separator } from "@/components/ui/separator";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { formatCurrency, SERVICE_FEE_RATE } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
 import { useCart } from "@/hooks/use-cart";
@@ -42,7 +35,6 @@ export default function ProductDetailPage() {
   const { id } = useParams();
   const productId = parseInt(id);
   const [quantity, setQuantity] = useState(0);
-  const [selectedVariations, setSelectedVariations] = useState<Record<string, string>>({});
   const { addToCart } = useCart();
   const { user } = useAuth();
   const { toast } = useToast();
@@ -63,15 +55,6 @@ export default function ProductDetailPage() {
     if (product && quantity === 0) {
       setQuantity(product.minOrderQuantity);
     }
-    if (product && product.variations) {
-      const init: Record<string, string> = {};
-      Object.entries(product.variations).forEach(([key, vals]) => {
-        if (Array.isArray(vals) && vals.length > 0) {
-          init[key] = vals[0] as string;
-        }
-      });
-      setSelectedVariations(init);
-    }
   }, [product]);
 
   const handleDecrease = () => {
@@ -88,7 +71,7 @@ export default function ProductDetailPage() {
 
   const handleAddToCart = () => {
     if (product) {
-      addToCart(product, quantity, selectedVariations);
+      addToCart(product, quantity);
     }
   };
 
@@ -98,10 +81,15 @@ export default function ProductDetailPage() {
     questionMutation.mutate(q);
   }
 
+  const variationKey = JSON.stringify(selectedVariations);
+  const basePrice =
+    product?.variationPrices && product.variationPrices[variationKey] !== undefined
+      ? product.variationPrices[variationKey]
+      : product?.price ?? 0;
   const unitPrice =
     product && (!user || user.role === "buyer")
-      ? product.price * (1 + SERVICE_FEE_RATE)
-      : product?.price ?? 0;
+      ? basePrice * (1 + SERVICE_FEE_RATE)
+      : basePrice;
   const totalCost = product ? unitPrice * quantity : 0;
 
   if (isLoading) {
@@ -199,35 +187,6 @@ export default function ProductDetailPage() {
             <div className="text-sm text-gray-600 mb-1"><Layers className="inline-block h-4 w-4 mr-1" />Minimum {product.minOrderQuantity} (by {product.orderMultiple})</div>
             {product.fobLocation && (
               <div className="text-sm text-gray-600 mb-4"><Truck className="inline-block h-4 w-4 mr-1" />Ships from {product.fobLocation}</div>
-            )}
-
-            {product.variations && Object.keys(product.variations).length > 0 && (
-              <div className="space-y-2 mb-4">
-                {Object.entries(product.variations).map(([name, options]) => (
-                  <div key={name}>
-                    <label className="block text-sm font-medium mb-1 capitalize">
-                      {name}
-                    </label>
-                    <Select
-                      value={selectedVariations[name]}
-                      onValueChange={(val) =>
-                        setSelectedVariations((prev) => ({ ...prev, [name]: val }))
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder={`Select ${name}`} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {(options as string[]).map((opt) => (
-                          <SelectItem key={opt} value={opt}>
-                            {opt}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                ))}
-              </div>
             )}
 
             <div className="flex items-center space-x-2 mb-4">
