@@ -194,6 +194,12 @@ export default function SellerDashboard() {
                 Orders
               </Button>
             </Link>
+            <Link href="/seller/analytics">
+              <Button variant="outline" className="flex items-center">
+                <BarChart4 className="mr-2 h-4 w-4" />
+                Analytics
+              </Button>
+            </Link>
             <Link href="/seller/products?action=new">
               <Button className="flex items-center">
                 <PlusCircle className="mr-2 h-4 w-4" />
