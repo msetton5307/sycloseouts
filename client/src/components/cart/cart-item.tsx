@@ -1,5 +1,7 @@
+import { useState, useEffect } from "react";
 import { CartItem as CartItemType } from "@shared/schema";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { formatCurrency } from "@/lib/utils";
 import { Minus, Plus, Trash2 } from "lucide-react";
 import { useCart } from "@/hooks/use-cart";
@@ -10,6 +12,11 @@ interface CartItemProps {
 
 export default function CartItem({ item }: CartItemProps) {
   const { updateQuantity, removeFromCart } = useCart();
+  const [inputQty, setInputQty] = useState(item.quantity);
+
+  useEffect(() => {
+    setInputQty(item.quantity);
+  }, [item.quantity]);
 
   const handleDecrease = () => {
     if (item.quantity <= item.minOrderQuantity) {
@@ -22,6 +29,14 @@ export default function CartItem({ item }: CartItemProps) {
         item.quantity - item.orderMultiple
       );
     }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setInputQty(parseInt(e.target.value) || 0);
+  };
+
+  const commitInput = () => {
+    updateQuantity(item.productId, item.variationKey, inputQty);
   };
 
   const handleIncrease = () => {
@@ -67,19 +82,30 @@ export default function CartItem({ item }: CartItemProps) {
         </div>
         <div className="flex-1 flex items-end justify-between text-sm">
           <div className="flex items-center">
-            <Button 
-              variant="outline" 
-              size="icon" 
+            <Button
+              variant="outline"
+              size="icon"
               className="h-7 w-7"
               onClick={handleDecrease}
               disabled={item.quantity <= item.minOrderQuantity}
             >
               <Minus className="h-3 w-3" />
             </Button>
-            <span className="text-gray-500 mx-2 min-w-[2rem] text-center">{item.quantity}</span>
-            <Button 
-              variant="outline" 
-              size="icon" 
+            <Input
+              type="number"
+              className="mx-2 h-7 w-16 text-center"
+              value={inputQty}
+              min={item.minOrderQuantity}
+              max={item.availableUnits}
+              step={item.orderMultiple}
+              onChange={handleInputChange}
+              onBlur={commitInput}
+              onFocus={(e) => e.target.select()}
+              onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
+            />
+            <Button
+              variant="outline"
+              size="icon"
               className="h-7 w-7"
               onClick={handleIncrease}
               disabled={item.quantity + item.orderMultiple > item.availableUnits}
