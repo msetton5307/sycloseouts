@@ -355,6 +355,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         unitPrice: number;
         totalPrice: number;
         selectedVariations?: Record<string, string>;
+        image?: string;
       }[] = [];
 
       const order = await db.transaction(async (tx) => {
@@ -389,6 +390,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 unitPrice: item.unitPrice,
                 totalPrice: item.totalPrice,
                 selectedVariations: item.selectedVariations,
+                image: product.images?.[0],
               });
             }
           }
@@ -398,7 +400,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       // send invoice email asynchronously, do not block response
-      sendInvoiceEmail(user.email, order, invoiceItems).catch(console.error);
+      sendInvoiceEmail(user.email, order, invoiceItems, user).catch(console.error);
 
       res.status(201).json(order);
     } catch (error) {
