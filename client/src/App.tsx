@@ -40,6 +40,7 @@ import AboutPage from "@/pages/about-page";
 import SellerAgreementPage from "@/pages/seller-agreement";
 import BuyerAgreementPage from "@/pages/buyer-agreement";
 import NotificationsPage from "@/pages/notifications-page";
+import SuspendedPage from "@/pages/suspended";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -51,6 +52,7 @@ function Router() {
       <Route path="/products/:id" component={ProductDetailPage} />
       <Route path="/auth" component={AuthPage} />
       <Route path="/forgot-password" component={ForgotPasswordPage} />
+      <Route path="/suspended" component={SuspendedPage} />
       <Route path="/cart" component={CartPage} />
       <Route path="/about" component={AboutPage} />
       <Route path="/seller-agreement" component={SellerAgreementPage} />

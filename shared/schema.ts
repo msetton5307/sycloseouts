@@ -17,6 +17,7 @@ export const users = pgTable("users", {
   role: text("role").notNull().default("buyer"), // buyer, seller, admin
   isSeller: boolean("is_seller").default(false),
   isApproved: boolean("is_approved").default(false),
+  suspendedUntil: timestamp("suspended_until"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { format } from "date-fns";
 import { useParams, Link } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import {
@@ -59,6 +60,13 @@ export default function AdminUserProfilePage() {
     },
   });
 
+  const [suspendDays, setSuspendDays] = useState(0);
+  const suspendUser = useMutation({
+    mutationFn: () =>
+      apiRequest("POST", `/api/users/${userId}/suspend`, { days: suspendDays }),
+    onSuccess: () => setSuspendDays(0),
+  });
+
   return (
     <>
       <Header />
@@ -76,6 +84,13 @@ export default function AdminUserProfilePage() {
               <p>Email: {user.email}</p>
               <p>Username: {user.username}</p>
               <p>Role: {user.role}</p>
+              {user.suspendedUntil ? (
+                <p>
+                  Suspended until {format(new Date(user.suspendedUntil), "PPP")}
+                </p>
+              ) : (
+                <p>Not suspended</p>
+              )}
             </CardContent>
           </Card>
         )}
@@ -117,6 +132,23 @@ export default function AdminUserProfilePage() {
             {messages.map(m => (
               <ChatMessage key={m.id} message={m} isOwn={m.senderId === userId} />
             ))}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Suspend Account</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <Input
+              type="number"
+              value={suspendDays}
+              onChange={e => setSuspendDays(parseInt(e.target.value))}
+              placeholder="Days"
+            />
+            <Button onClick={() => suspendUser.mutate()} disabled={suspendUser.isPending}>
+              Suspend
+            </Button>
           </CardContent>
         </Card>
 
