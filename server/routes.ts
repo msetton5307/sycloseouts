@@ -12,7 +12,7 @@ import {
   sendAdminUserEmail,
   sendSuspensionEmail,
 } from "./email";
-import { generateInvoicePdf } from "./pdf";
+import { generateInvoicePdf, generateSalesReportPdf } from "./pdf";
 import {
   insertProductSchema,
   insertOrderSchema,
@@ -841,6 +841,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/seller/sales", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user as Express.User;
+      if (user.role !== "seller" && user.role !== "admin") {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+      const start = req.query.start ? new Date(String(req.query.start)) : new Date(Date.now() - 30 * 86400000);
+      const end = req.query.end ? new Date(String(req.query.end)) : new Date();
+      const sellerId = user.role === "seller" ? user.id : user.id;
+      const summary = await storage.getSalesSummary(sellerId, start, end);
+      res.json(summary);
+    } catch (error) {
+      handleApiError(res, error);
+    }
+  });
+
+  app.get("/api/seller/sales.pdf", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user as Express.User;
+      if (user.role !== "seller" && user.role !== "admin") {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+      const start = req.query.start ? new Date(String(req.query.start)) : new Date(Date.now() - 30 * 86400000);
+      const end = req.query.end ? new Date(String(req.query.end)) : new Date();
+      const sellerId = user.role === "seller" ? user.id : user.id;
+      const summary = await storage.getSalesSummary(sellerId, start, end);
+      const pdf = generateSalesReportPdf(user, summary, start, end);
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename=sales-${start.toISOString().slice(0, 10)}-${end.toISOString().slice(0, 10)}.pdf`,
+      );
+      res.send(pdf);
+    } catch (error) {
+      handleApiError(res, error);
+    }
+  });
+
   // Seller application routes
   app.post("/api/seller-applications", isAuthenticated, async (req, res) => {
     try {
@@ -992,6 +1030,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (updated) {
         await sendSuspensionEmail(updated.email, days);
+        const { password, ...u } = updated;
+        return res.json(u);
+      }
+
+      res.status(404).json({ message: "User not found" });
+    } catch (error) {
+      handleApiError(res, error);
+    }
+  });
+
+  app.post("/api/users/:id/reinstate", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id, 10);
+      if (Number.isNaN(id)) {
+        return res.status(400).json({ message: "Invalid user ID" });
+      }
+
+      const user = await storage.getUser(id);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const updated = await storage.updateUser(id, { suspendedUntil: null });
+
+      if (updated) {
         const { password, ...u } = updated;
         return res.json(u);
       }
