@@ -3,6 +3,7 @@ import { Link } from "wouter";
 import { ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { formatCurrency, SERVICE_FEE_RATE } from "@/lib/utils";
 import { useCart } from "@/hooks/use-cart";
 import { useAuth } from "@/hooks/use-auth";
@@ -37,18 +38,15 @@ export default function ProductCard({ product }: ProductCardProps) {
       <CardContent className="flex flex-col flex-1 p-4 gap-2">
         <Link
           href={`/products/${product.id}`}
-          className="text-sm font-medium text-blue-600 hover:underline line-clamp-2"
+          className="text-base font-semibold text-gray-900 hover:underline line-clamp-2"
         >
           {product.title}
         </Link>
-        <p className="text-sm text-gray-500 line-clamp-2">
-          {product.description}
-        </p>
-        <div className="text-xs text-gray-500 flex flex-wrap gap-x-2">
-          <span>MOQ: {product.minOrderQuantity}</span>
-          <span>Order by {product.orderMultiple}</span>
-          <span>{product.availableUnits} avail.</span>
-          <span>{product.condition}</span>
+        <div className="flex flex-wrap gap-1 text-xs">
+          <Badge variant="secondary">MOQ: {product.minOrderQuantity}</Badge>
+          <Badge variant="secondary">Order by {product.orderMultiple}</Badge>
+          <Badge variant="secondary">{product.availableUnits} avail.</Badge>
+          <Badge variant="secondary">{product.condition}</Badge>
         </div>
         <div className="mt-auto">
           <p className="text-lg font-bold text-gray-900">
