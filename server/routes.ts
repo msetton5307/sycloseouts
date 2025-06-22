@@ -12,7 +12,7 @@ import {
   sendAdminUserEmail,
   sendSuspensionEmail,
 } from "./email";
-import { generateInvoicePdf } from "./pdf";
+import { generateInvoicePdf, generateSalesReportPdf } from "./pdf";
 import {
   insertProductSchema,
   insertOrderSchema,
@@ -836,6 +836,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const sellerId = user.role === "seller" ? user.id : undefined;
       const questions = await storage.getProductQuestionsForSeller(sellerId ?? user.id);
       res.json(questions);
+    } catch (error) {
+      handleApiError(res, error);
+    }
+  });
+
+  app.get("/api/seller/sales", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user as Express.User;
+      if (user.role !== "seller" && user.role !== "admin") {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+      const start = req.query.start ? new Date(String(req.query.start)) : new Date(Date.now() - 30 * 86400000);
+      const end = req.query.end ? new Date(String(req.query.end)) : new Date();
+      const sellerId = user.role === "seller" ? user.id : user.id;
+      const summary = await storage.getSalesSummary(sellerId, start, end);
+      res.json(summary);
+    } catch (error) {
+      handleApiError(res, error);
+    }
+  });
+
+  app.get("/api/seller/sales.pdf", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user as Express.User;
+      if (user.role !== "seller" && user.role !== "admin") {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+      const start = req.query.start ? new Date(String(req.query.start)) : new Date(Date.now() - 30 * 86400000);
+      const end = req.query.end ? new Date(String(req.query.end)) : new Date();
+      const sellerId = user.role === "seller" ? user.id : user.id;
+      const summary = await storage.getSalesSummary(sellerId, start, end);
+      const pdf = generateSalesReportPdf(user, summary, start, end);
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename=sales-${start.toISOString().slice(0, 10)}-${end.toISOString().slice(0, 10)}.pdf`,
+      );
+      res.send(pdf);
     } catch (error) {
       handleApiError(res, error);
     }

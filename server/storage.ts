@@ -612,6 +612,22 @@ export class DatabaseStorage implements IStorage {
       .where(and(eq(notifications.id, id), eq(notifications.userId, userId)));
   }
 
+  async getSalesSummary(
+    sellerId: number,
+    start: Date,
+    end: Date,
+  ): Promise<{ date: string; revenue: number }[]> {
+    const result = await pool.query(
+      `SELECT DATE(created_at) AS date, SUM(total_amount) AS revenue
+         FROM orders
+        WHERE seller_id = $1 AND created_at BETWEEN $2 AND $3
+        GROUP BY DATE(created_at)
+        ORDER BY DATE(created_at)`,
+      [sellerId, start, end],
+    );
+    return result.rows.map((r) => ({ date: r.date, revenue: Number(r.revenue) }));
+  }
+
   // Cart methods
   async getCart(userId: number): Promise<Cart | undefined> {
     const [cart] = await db
