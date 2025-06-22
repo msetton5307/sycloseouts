@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { formatCurrency } from "@/lib/utils";
 import { Minus, Plus, Trash2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { useCart } from "@/hooks/use-cart";
 
 interface CartItemProps {
@@ -65,11 +66,17 @@ export default function CartItem({ item }: CartItemProps) {
             <div>
               <h3 className="text-base font-medium text-gray-900">{item.title}</h3>
               {item.selectedVariations && (
-                <p className="text-xs text-gray-500">
-                  {Object.entries(item.selectedVariations)
-                    .map(([k, v]) => `${k}: ${v}`)
-                    .join(", ")}
-                </p>
+                <div className="flex flex-wrap gap-1 mt-1">
+                  {Object.entries(item.selectedVariations).map(([k, v]) => (
+                    <Badge
+                      key={k}
+                      variant="outline"
+                      className="bg-gray-100 text-gray-800 border-gray-200 px-2 py-0.5 text-[10px]"
+                    >
+                      {k}: {v}
+                    </Badge>
+                  ))}
+                </div>
               )}
             </div>
             <p className="text-base font-medium text-gray-900">
