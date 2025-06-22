@@ -3,6 +3,7 @@ import { Link } from "wouter";
 import { ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { formatCurrency, SERVICE_FEE_RATE } from "@/lib/utils";
 import { useCart } from "@/hooks/use-cart";
 import { useAuth } from "@/hooks/use-auth";
@@ -10,6 +11,14 @@ import { useAuth } from "@/hooks/use-auth";
 interface ProductCardProps {
   product: Product;
 }
+
+const conditionColors: Record<string, string> = {
+  New: "bg-green-100 text-green-800 hover:bg-green-100",
+  "Like New": "bg-blue-100 text-blue-800 hover:bg-blue-100",
+  Good: "bg-yellow-100 text-yellow-800 hover:bg-yellow-100",
+  Refurbished: "bg-purple-100 text-purple-800 hover:bg-purple-100",
+  Used: "bg-gray-100 text-gray-800 hover:bg-gray-100",
+};
 
 export default function ProductCard({ product }: ProductCardProps) {
   const { addToCart } = useCart();
@@ -37,18 +46,26 @@ export default function ProductCard({ product }: ProductCardProps) {
       <CardContent className="flex flex-col flex-1 p-4 gap-2">
         <Link
           href={`/products/${product.id}`}
-          className="text-sm font-medium text-blue-600 hover:underline line-clamp-2"
+          className="text-lg font-semibold text-primary hover:underline line-clamp-2"
         >
           {product.title}
         </Link>
-        <p className="text-sm text-gray-500 line-clamp-2">
-          {product.description}
-        </p>
-        <div className="text-xs text-gray-500 flex flex-wrap gap-x-2">
-          <span>MOQ: {product.minOrderQuantity}</span>
-          <span>Order by {product.orderMultiple}</span>
-          <span>{product.availableUnits} avail.</span>
-          <span>{product.condition}</span>
+        <div className="flex flex-wrap gap-1 text-xs">
+          <Badge variant="outline" className="bg-blue-100 text-blue-800 hover:bg-blue-100">
+            MOQ: {product.minOrderQuantity}
+          </Badge>
+          <Badge variant="outline" className="bg-purple-100 text-purple-800 hover:bg-purple-100">
+            Order by {product.orderMultiple}
+          </Badge>
+          <Badge
+            variant="outline"
+            className={product.availableUnits > 0 ? "bg-green-100 text-green-800 hover:bg-green-100" : "bg-red-100 text-red-800 hover:bg-red-100"}
+          >
+            {product.availableUnits} avail.
+          </Badge>
+          <Badge variant="outline" className={conditionColors[product.condition] ?? "bg-gray-100 text-gray-800 hover:bg-gray-100"}>
+            {product.condition}
+          </Badge>
         </div>
         <div className="mt-auto">
           <p className="text-lg font-bold text-gray-900">
