@@ -73,10 +73,16 @@ export function setupAuth(app: Express) {
       try {
         const user = await storage.getUserByUsername(username);
         if (!user || !(await comparePasswords(password, user.password))) {
-          return done(null, false);
-        } else {
-          return done(null, user);
+          return done(null, false, { message: "Invalid username or password" });
         }
+
+        if (user.suspendedUntil && user.suspendedUntil > new Date()) {
+          return done(null, false, {
+            message: `Account suspended until ${user.suspendedUntil.toISOString()}`,
+          });
+        }
+
+        return done(null, user);
       } catch (error) {
         return done(error);
       }
@@ -163,9 +169,9 @@ export function setupAuth(app: Express) {
       (err: Error | null, user: User | false, info: any) => {
         if (err) return next(err);
         if (!user) {
-          return res
-            .status(401)
-            .json({ error: "Invalid username or password" });
+          const message = info?.message || "Invalid username or password";
+          const status = message.toLowerCase().includes("suspended") ? 403 : 401;
+          return res.status(status).json({ error: message });
         }
 
         loginAndSaveSession(req, user)

@@ -75,6 +75,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
     },
     onError: (error: Error) => {
+      const match = error.message.match(/suspended until ([0-9TZ:\-\.]+)/i);
+      if (match) {
+        const until = encodeURIComponent(match[1]);
+        window.location.href = `/suspended?until=${until}`;
+        return;
+      }
       toast({
         title: "Login failed",
         description: error.message,
