@@ -27,6 +27,8 @@ interface InvoiceItem {
   quantity: number;
   unitPrice: number;
   totalPrice: number;
+  image?: string;
+  selectedVariations?: Record<string, string>;
 }
 
 export async function sendInvoiceEmail(
@@ -41,17 +43,43 @@ export async function sendInvoiceEmail(
   }
 
   const itemLines = items
-    .map((i) => `${i.title} x${i.quantity} - $${i.totalPrice.toFixed(2)}`)
+    .map((i) => {
+      const variationText = i.selectedVariations
+        ? ` (${Object.entries(i.selectedVariations)
+            .map(([k, v]) => `${k}: ${v}`)
+            .join(", ")})`
+        : "";
+      return `${i.title}${variationText} x${i.quantity} - $${i.totalPrice.toFixed(
+        2,
+      )}`;
+    })
     .join("\n");
 
   const itemRows = items
     .map(
-      (i) => `
+      (i) => {
+        const variationText = i.selectedVariations
+          ? ` <div style="font-size:12px;color:#555;">(${Object.entries(
+              i.selectedVariations,
+            )
+              .map(([k, v]) => `${k}: ${v}`)
+              .join(", ")})</div>`
+          : "";
+        const imageCell = i.image
+          ? `<img src="${i.image}" alt="${i.title}" style="height:40px;width:40px;object-fit:cover;margin-right:8px;" />`
+          : "";
+        return `
               <tr>
-                <td>${i.title}</td>
+                <td style="display:flex;align-items:center;">
+                  ${imageCell}
+                  <div>
+                    <div>${i.title}</div>${variationText}
+                  </div>
+                </td>
                 <td align="center">${i.quantity}</td>
                 <td align="right">$${i.totalPrice.toFixed(2)}</td>
-              </tr>`,
+              </tr>`;
+      },
     )
     .join("\n");
 
