@@ -156,7 +156,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
     toast({
       title: "Added to cart",
-      description: `${quantity} ${quantity === 1 ? 'unit' : 'units'} of ${product.title} added to cart.`
+      description: `${quantity} ${quantity === 1 ? 'unit' : 'units'} of ${product.title} added to cart.`,
+      // Keep the toast extremely short so it doesn't block actions
+      duration: 300
     });
     
     setIsCartOpen(true);
