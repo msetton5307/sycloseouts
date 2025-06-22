@@ -1002,6 +1002,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/users/:id/reinstate", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id, 10);
+      if (Number.isNaN(id)) {
+        return res.status(400).json({ message: "Invalid user ID" });
+      }
+
+      const user = await storage.getUser(id);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const updated = await storage.updateUser(id, { suspendedUntil: null });
+
+      if (updated) {
+        const { password, ...u } = updated;
+        return res.json(u);
+      }
+
+      res.status(404).json({ message: "User not found" });
+    } catch (error) {
+      handleApiError(res, error);
+    }
+  });
+
   app.get("/api/users/:id", isAuthenticated, async (req, res) => {
     try {
       const id = parseInt(req.params.id, 10);
