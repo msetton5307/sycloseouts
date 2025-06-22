@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, Link } from "wouter";
+import { useParams, Link, useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Product } from "@shared/schema";
 import {
@@ -41,6 +41,7 @@ import Footer from "@/components/layout/footer";
 
 export default function ProductDetailPage() {
   const { id } = useParams();
+  const [, navigate] = useLocation();
   const productId = parseInt(id);
   const [quantity, setQuantity] = useState(0);
   const [selectedVariations, setSelectedVariations] = useState<Record<string, string>>({});
@@ -51,7 +52,10 @@ export default function ProductDetailPage() {
   const questionMutation = useMutation({
     mutationFn: (q: string) =>
       apiRequest("POST", `/api/products/${productId}/questions`, { question: q }),
-    onSuccess: () => toast({ title: "Question sent" }),
+    onSuccess: () => {
+      toast({ title: "Question sent" });
+      if (product) navigate(`/conversations/${product.sellerId}`);
+    },
     onError: (err: Error) =>
       toast({ title: "Failed to send question", description: err.message, variant: "destructive" }),
   });

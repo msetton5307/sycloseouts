@@ -159,15 +159,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Sharing contact information is not allowed" });
       }
 
-      const question = await storage.createProductQuestion({
-        productId: id,
-        buyerId: user.id,
-        sellerId: product.sellerId,
-        question: req.body.question,
+      const latestOrder = await storage.getLatestOrderBetweenUsers(user.id, product.sellerId);
+      const message = await storage.createMessage({
+        orderId: latestOrder?.id ?? 0,
+        senderId: user.id,
+        receiverId: product.sellerId,
+        content: req.body.question,
+      });
+
+      await storage.createNotification({
+        userId: product.sellerId,
+        type: 'message',
+        content: `New question about ${product.title}`,
+        link: `/conversations/${user.id}`,
       });
 
       await sendProductQuestionEmail(seller.email, product.title, req.body.question);
-      res.status(201).json(question);
+      res.status(201).json(message);
     } catch (error) {
       handleApiError(res, error);
     }

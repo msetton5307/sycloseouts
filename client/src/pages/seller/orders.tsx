@@ -263,9 +263,6 @@ export default function SellerOrdersPage() {
                       <Button variant="outline" size="sm" onClick={() => handleContactBuyer(order.buyerId)}>
                         Contact Buyer
                       </Button>
-                      <Button variant="outline" size="sm" asChild>
-                        <Link href={`/conversations/${order.buyerId}`}>Messages</Link>
-                      </Button>
                     </div>
                   </div>
                 ))}
