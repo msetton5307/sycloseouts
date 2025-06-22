@@ -10,6 +10,7 @@ import {
   sendProductQuestionEmail,
   sendAdminAlertEmail,
   sendAdminUserEmail,
+  sendSuspensionEmail,
 } from "./email";
 import { generateInvoicePdf } from "./pdf";
 import {
@@ -964,6 +965,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Remove password from response
       const { password, ...userWithoutPassword } = updatedUser;
       res.json(userWithoutPassword);
+    } catch (error) {
+      handleApiError(res, error);
+    }
+  });
+
+  app.post("/api/users/:id/suspend", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id, 10);
+      if (Number.isNaN(id)) {
+        return res.status(400).json({ message: "Invalid user ID" });
+      }
+
+      const days = parseInt(req.body.days, 10);
+      if (!Number.isFinite(days) || days < 0) {
+        return res.status(400).json({ message: "Invalid suspension duration" });
+      }
+
+      const user = await storage.getUser(id);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const suspendedUntil = days > 0 ? new Date(Date.now() + days * 86400000) : null;
+      const updated = await storage.updateUser(id, { suspendedUntil });
+
+      if (updated) {
+        await sendSuspensionEmail(updated.email, days);
+        const { password, ...u } = updated;
+        return res.json(u);
+      }
+
+      res.status(404).json({ message: "User not found" });
     } catch (error) {
       handleApiError(res, error);
     }

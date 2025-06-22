@@ -304,6 +304,26 @@ export async function sendPasswordResetEmail(to: string, code: string) {
   }
 }
 
+export async function sendSuspensionEmail(to: string, days: number) {
+  if (!transporter) {
+    console.warn("Email transport not configured; skipping suspension email");
+    return;
+  }
+
+  const mailOptions = {
+    from: process.env.SMTP_FROM || user,
+    to,
+    subject: "Account Suspension Notice",
+    text: `Your account has been suspended for ${days} day${days === 1 ? "" : "s"}.`,
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+  } catch (err) {
+    console.error("Failed to send suspension email", err);
+  }
+}
+
 export async function sendAdminUserEmail(
   to: string,
   subject: string,

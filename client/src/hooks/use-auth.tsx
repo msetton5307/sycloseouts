@@ -75,6 +75,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
     },
     onError: (error: Error) => {
+      if (error.message.toLowerCase().includes("suspended")) {
+        window.location.href = "/suspended";
+        return;
+      }
       toast({
         title: "Login failed",
         description: error.message,
