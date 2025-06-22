@@ -326,6 +326,9 @@ export default function SellerOrdersPage() {
                 <Input value={pkgHeight} onChange={(e) => setPkgHeight(e.target.value)} placeholder="H" />
               </div>
               <Button onClick={fetchRates} disabled={loadingRates}>Get Rates</Button>
+              <p className="text-xs text-red-600 mt-2">
+                Entering incorrect package details may result in additional fees and account suspension.
+              </p>
             </div>
           )}
         </DialogContent>
