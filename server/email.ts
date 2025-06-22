@@ -1,5 +1,10 @@
 import nodemailer from "nodemailer";
+import path from "path";
+import { fileURLToPath } from "url";
+import type { Express } from "express";
 import type { Order } from "@shared/schema";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const host = process.env.SMTP_HOST;
 const port = parseInt(process.env.SMTP_PORT || "587", 10);
@@ -28,6 +33,7 @@ export async function sendInvoiceEmail(
   to: string,
   order: Order,
   items: InvoiceItem[],
+  buyer?: Express.User,
 ) {
   if (!transporter) {
     console.warn("Email transport not configured; skipping invoice email");
@@ -41,119 +47,80 @@ export async function sendInvoiceEmail(
   const itemRows = items
     .map(
       (i) => `
-        <tr>
-          <td class="px-6 py-4 whitespace-nowrap">
-            <div class="flex items-center">
-              <div class="ml-4">
-                <div class="text-sm font-medium text-gray-900">${i.title}</div>
-              </div>
-            </div>
-          </td>
-          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${i.quantity}</td>
-          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">$${i.unitPrice.toFixed(2)}</td>
-          <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">$${i.totalPrice.toFixed(2)}</td>
-        </tr>`,
+              <tr>
+                <td>${i.title}</td>
+                <td align="center">${i.quantity}</td>
+                <td align="right">$${i.totalPrice.toFixed(2)}</td>
+              </tr>`,
     )
     .join("\n");
 
+  const subtotal = items.reduce((sum, i) => sum + i.totalPrice, 0);
+
+  const buyerName = buyer ? `${buyer.firstName} ${buyer.lastName}`.trim() : "";
+
   const html = `<!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Invoice - Your Order</title>
-  <style>
-    body {
-      font-family: 'Inter', sans-serif;
-      background-color: #f3f4f6;
-      color: #374151;
-    }
-    .invoice-header {
-      background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
-    }
-    .divider {
-      border-bottom: 1px dashed #d1d5db;
-    }
-    @media (max-width: 640px) {
-      .mobile-stack {
-        display: block !important;
-        width: 100% !important;
-      }
-      .mobile-padding {
-        padding: 20px !important;
-      }
-    }
-  </style>
-</head>
-<body class="bg-gray-100 p-4 sm:p-8">
-  <div class="max-w-3xl mx-auto bg-white rounded-lg shadow-md overflow-hidden">
-    <div class="invoice-header p-6 sm:p-8 text-white">
-      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center">
-        <div class="mb-4 sm:mb-0">
-          <h1 class="text-2xl sm:text-3xl font-bold">INVOICE</h1>
-          <p class="text-indigo-100 mt-1">Thank you for your order</p>
-        </div>
-        <div class="bg-white/20 backdrop-blur-sm rounded-lg p-4">
-          <p class="text-sm font-medium text-indigo-50">Invoice #</p>
-          <p class="text-lg font-bold">${order.id}</p>
-        </div>
-      </div>
-    </div>
-    <div class="p-6 sm:p-8 mobile-padding">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div>
-          <p class="text-sm font-medium text-gray-500">BILLED TO</p>
-          <h4 class="text-lg font-semibold mt-1">Customer</h4>
-        </div>
-        <div>
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <p class="text-sm font-medium text-gray-500">DATE</p>
-              <p class="text-gray-600">${new Date(order.createdAt || Date.now()).toDateString()}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="px-6 sm:px-8 mobile-padding">
-      <div class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-gray-200">
-          <thead class="bg-gray-50">
-            <tr>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Qty</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Unit Price</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
-            </tr>
-          </thead>
-          <tbody class="bg-white divide-y divide-gray-200">
-            ${itemRows}
-          </tbody>
-        </table>
-      </div>
-    </div>
-    <div class="bg-gray-50 p-6 sm:p-8 mobile-padding">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div>
-          <p class="text-sm text-gray-600">Notes: Thank you for your business.</p>
-        </div>
-        <div class="bg-white rounded-lg p-6">
-          <div class="space-y-3">
-            <div class="flex justify-between pt-3 border-t border-gray-200">
-              <span class="text-base font-medium">Total</span>
-              <span class="text-lg font-bold">$${order.totalAmount.toFixed(2)}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="bg-gray-800 text-white p-6 text-center">
-      <div class="flex flex-col items-center">
-        <p class="text-sm text-gray-300">© 2023 Your Company. All rights reserved.</p>
-      </div>
-    </div>
-  </div>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Sy Closeouts Invoice</title>
+  </head>
+  <body style="margin:0; padding:20px; background-color:#f7f7f7; font-family:Arial, sans-serif;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px; margin:auto; background-color:#ffffff; border-radius:8px; overflow:hidden; box-shadow:0 0 10px rgba(0,0,0,0.1);">
+      <tr>
+        <td style="background-color:#222222; padding:20px; text-align:center;">
+          <img src="cid:logo" alt="Sy Closeouts" style="max-height:50px; margin-bottom:10px;" />
+          <h1 style="margin:0; color:#ffffff; font-size:24px;">Sy Closeouts</h1>
+          <p style="margin:5px 0 0; color:#bbbbbb;">Invoice Confirmation</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td style="padding:20px;">
+          <p style="margin:0 0 10px;">Hello ${buyerName ? `<strong>${buyerName}</strong>` : "Customer"},</p>
+          <p style="margin:0 0 20px;">Thank you for your order! Here is your invoice:</p>
+
+          <table width="100%" cellpadding="8" cellspacing="0" style="border-collapse:collapse;">
+            <thead>
+              <tr style="background-color:#f0f0f0; border-bottom:2px solid #ddd;">
+                <th align="left">Item</th>
+                <th align="center">Qty</th>
+                <th align="right">Price</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${itemRows}
+              <tr style="border-top:1px solid #ccc;">
+                <td colspan="2" align="right" style="padding-top:10px;"><strong>Subtotal:</strong></td>
+                <td align="right" style="padding-top:10px;">$${subtotal.toFixed(2)}</td>
+              </tr>
+              <tr>
+                <td colspan="2" align="right"><strong>Total:</strong></td>
+                <td align="right"><strong>$${order.totalAmount.toFixed(2)}</strong></td>
+              </tr>
+            </tbody>
+          </table>
+
+          <p style="margin-top:30px;">Invoice #: <strong>#INV-${order.id}</strong></p>
+          <p>Order Date: <strong>${new Date(order.createdAt || Date.now()).toDateString()}</strong></p>
+        </td>
+      </tr>
+
+      <tr>
+        <td style="background-color:#f9f9f9; padding:20px;">
+          <p style="margin:0;">If you have any questions, reply to this email or contact us at <a href="mailto:support@sycloseouts.com">support@sycloseouts.com</a>.</p>
+          <p style="margin:5px 0 0;">Thank you for shopping with <strong>Sy Closeouts</strong>!</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td style="text-align:center; font-size:12px; color:#999999; padding:15px;">
+          &copy; ${new Date().getFullYear()} Sy Closeouts. All rights reserved.<br>
+          123 Wholesale Blvd, Brooklyn, NY 11201
+        </td>
+      </tr>
+    </table>
+  </body>
 </html>`;
 
   const mailOptions = {
@@ -167,6 +134,13 @@ export async function sendInvoiceEmail(
       `Items:\n${itemLines}\n\n` +
       `We appreciate your business!`,
     html,
+    attachments: [
+      {
+        filename: "logo.png",
+        path: path.resolve(__dirname, "..", "generated-icon.png"),
+        cid: "logo",
+      },
+    ],
   };
 
   try {
