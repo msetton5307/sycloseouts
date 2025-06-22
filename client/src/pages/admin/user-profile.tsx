@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { format } from "date-fns";
 import { useParams, Link } from "wouter";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   User,
   Order,
@@ -14,6 +14,7 @@ import { getQueryFn, apiRequest } from "@/lib/queryClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import ChatMessage from "@/components/messages/chat-message";
 import { useAdminUserMessages } from "@/hooks/use-messages";
 
@@ -45,6 +46,8 @@ export default function AdminUserProfilePage() {
     ? orders.filter(o => o.status === "delivered").length / orders.length
     : 0;
 
+  const queryClient = useQueryClient();
+
   const [emailSubject, setEmailSubject] = useState("");
   const [emailBody, setEmailBody] = useState("");
 
@@ -64,7 +67,17 @@ export default function AdminUserProfilePage() {
   const suspendUser = useMutation({
     mutationFn: () =>
       apiRequest("POST", `/api/users/${userId}/suspend`, { days: suspendDays }),
-    onSuccess: () => setSuspendDays(0),
+    onSuccess: () => {
+      setSuspendDays(0);
+      queryClient.invalidateQueries({ queryKey: ["/api/users/" + userId] });
+    },
+  });
+
+  const reinstateUser = useMutation({
+    mutationFn: () => apiRequest("POST", `/api/users/${userId}/reinstate`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/users/" + userId] });
+    },
   });
 
   return (
@@ -139,16 +152,25 @@ export default function AdminUserProfilePage() {
           <CardHeader>
             <CardTitle>Suspend Account</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2">
-            <Input
-              type="number"
-              value={suspendDays}
-              onChange={e => setSuspendDays(parseInt(e.target.value))}
-              placeholder="Days"
-            />
-            <Button onClick={() => suspendUser.mutate()} disabled={suspendUser.isPending}>
-              Suspend
-            </Button>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="suspend-days">Suspension Duration (days)</Label>
+              <Input
+                id="suspend-days"
+                type="number"
+                value={suspendDays}
+                onChange={e => setSuspendDays(parseInt(e.target.value))}
+                placeholder="Days"
+              />
+              <Button onClick={() => suspendUser.mutate()} disabled={suspendUser.isPending}>
+                Suspend
+              </Button>
+            </div>
+            {user?.suspendedUntil && new Date(user.suspendedUntil) > new Date() && (
+              <Button variant="secondary" onClick={() => reinstateUser.mutate()} disabled={reinstateUser.isPending}>
+                Reinstate Now
+              </Button>
+            )}
           </CardContent>
         </Card>
 
