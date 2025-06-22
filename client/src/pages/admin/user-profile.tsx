@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { format } from "date-fns";
 import { useParams, Link } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import {
@@ -83,6 +84,13 @@ export default function AdminUserProfilePage() {
               <p>Email: {user.email}</p>
               <p>Username: {user.username}</p>
               <p>Role: {user.role}</p>
+              {user.suspendedUntil ? (
+                <p>
+                  Suspended until {format(new Date(user.suspendedUntil), "PPP")}
+                </p>
+              ) : (
+                <p>Not suspended</p>
+              )}
             </CardContent>
           </Card>
         )}

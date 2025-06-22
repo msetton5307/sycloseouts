@@ -75,8 +75,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
     },
     onError: (error: Error) => {
-      if (error.message.toLowerCase().includes("suspended")) {
-        window.location.href = "/suspended";
+      const match = error.message.match(/suspended until ([0-9TZ:\-\.]+)/i);
+      if (match) {
+        const until = encodeURIComponent(match[1]);
+        window.location.href = `/suspended?until=${until}`;
         return;
       }
       toast({
