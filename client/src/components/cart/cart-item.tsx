@@ -61,18 +61,18 @@ export default function CartItem({ item }: CartItemProps) {
 
       <div className="ml-4 flex-1 flex flex-col">
         <div>
-          <div className="flex justify-between text-base font-medium text-gray-900">
-          <h3>
-            {item.title}
-          </h3>
-          {item.selectedVariations && (
-            <p className="text-xs text-gray-500">
-              {Object.entries(item.selectedVariations)
-                .map(([k, v]) => `${k}: ${v}`)
-                .join(", ")}
-            </p>
-          )}
-            <p className="ml-4">
+          <div className="flex justify-between">
+            <div>
+              <h3 className="text-base font-medium text-gray-900">{item.title}</h3>
+              {item.selectedVariations && (
+                <p className="text-xs text-gray-500">
+                  {Object.entries(item.selectedVariations)
+                    .map(([k, v]) => `${k}: ${v}`)
+                    .join(", ")}
+                </p>
+              )}
+            </div>
+            <p className="text-base font-medium text-gray-900">
               {formatCurrency(itemTotal)}
             </p>
           </div>
