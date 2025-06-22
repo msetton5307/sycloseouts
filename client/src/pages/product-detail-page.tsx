@@ -30,6 +30,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import { formatCurrency, SERVICE_FEE_RATE } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
 import { useCart } from "@/hooks/use-cart";
@@ -239,11 +240,32 @@ export default function ProductDetailPage() {
             )}
 
             <div className="flex items-center space-x-2 mb-4">
-              <Button variant="outline" size="icon" onClick={handleDecrease} disabled={quantity <= product.minOrderQuantity}>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={handleDecrease}
+                disabled={quantity <= product.minOrderQuantity}
+              >
                 <Minus className="h-4 w-4" />
               </Button>
-              <div className="w-10 text-center">{quantity}</div>
-              <Button variant="outline" size="icon" onClick={handleIncrease} disabled={quantity + product.orderMultiple > product.availableUnits}>
+              <Input
+                type="number"
+                className="w-20 text-center"
+                value={quantity}
+                min={product.minOrderQuantity}
+                max={product.availableUnits}
+                step={product.orderMultiple}
+                onChange={(e) => setQuantity(parseInt(e.target.value) || 0)}
+                onFocus={(e) => e.target.select()}
+              />
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={handleIncrease}
+                disabled={
+                  quantity + product.orderMultiple > product.availableUnits
+                }
+              >
                 <Plus className="h-4 w-4" />
               </Button>
             </div>
