@@ -12,6 +12,14 @@ interface ProductCardProps {
   product: Product;
 }
 
+const conditionColors: Record<string, string> = {
+  New: "bg-green-100 text-green-800 hover:bg-green-100",
+  "Like New": "bg-blue-100 text-blue-800 hover:bg-blue-100",
+  Good: "bg-yellow-100 text-yellow-800 hover:bg-yellow-100",
+  Refurbished: "bg-purple-100 text-purple-800 hover:bg-purple-100",
+  Used: "bg-gray-100 text-gray-800 hover:bg-gray-100",
+};
+
 export default function ProductCard({ product }: ProductCardProps) {
   const { addToCart } = useCart();
   const { user } = useAuth();
@@ -38,15 +46,26 @@ export default function ProductCard({ product }: ProductCardProps) {
       <CardContent className="flex flex-col flex-1 p-4 gap-2">
         <Link
           href={`/products/${product.id}`}
-          className="text-base font-semibold text-gray-900 hover:underline line-clamp-2"
+          className="text-lg font-semibold text-primary hover:underline line-clamp-2"
         >
           {product.title}
         </Link>
         <div className="flex flex-wrap gap-1 text-xs">
-          <Badge variant="secondary">MOQ: {product.minOrderQuantity}</Badge>
-          <Badge variant="secondary">Order by {product.orderMultiple}</Badge>
-          <Badge variant="secondary">{product.availableUnits} avail.</Badge>
-          <Badge variant="secondary">{product.condition}</Badge>
+          <Badge variant="outline" className="bg-blue-100 text-blue-800 hover:bg-blue-100">
+            MOQ: {product.minOrderQuantity}
+          </Badge>
+          <Badge variant="outline" className="bg-purple-100 text-purple-800 hover:bg-purple-100">
+            Order by {product.orderMultiple}
+          </Badge>
+          <Badge
+            variant="outline"
+            className={product.availableUnits > 0 ? "bg-green-100 text-green-800 hover:bg-green-100" : "bg-red-100 text-red-800 hover:bg-red-100"}
+          >
+            {product.availableUnits} avail.
+          </Badge>
+          <Badge variant="outline" className={conditionColors[product.condition] ?? "bg-gray-100 text-gray-800 hover:bg-gray-100"}>
+            {product.condition}
+          </Badge>
         </div>
         <div className="mt-auto">
           <p className="text-lg font-bold text-gray-900">
