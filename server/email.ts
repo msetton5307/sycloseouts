@@ -91,14 +91,14 @@ export async function sendInvoiceEmail(
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>Sy Closeouts Invoice</title>
+    <title>SY Closeouts Invoice</title>
   </head>
   <body style="margin:0; padding:20px; background-color:#f7f7f7; font-family:Arial, sans-serif;">
     <table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px; margin:auto; background-color:#ffffff; border-radius:8px; overflow:hidden; box-shadow:0 0 10px rgba(0,0,0,0.1);">
       <tr>
         <td style="background-color:#222222; padding:20px; text-align:center;">
-          <img src="cid:logo" alt="Sy Closeouts" style="max-height:50px; margin-bottom:10px;" />
-          <h1 style="margin:0; color:#ffffff; font-size:24px;">Sy Closeouts</h1>
+          <img src="cid:logo" alt="SY Closeouts" style="max-height:50px; margin-bottom:10px;" />
+          <h1 style="margin:0; color:#ffffff; font-size:24px;">SY Closeouts</h1>
           <p style="margin:5px 0 0; color:#bbbbbb;">Invoice Confirmation</p>
         </td>
       </tr>
@@ -137,13 +137,13 @@ export async function sendInvoiceEmail(
       <tr>
         <td style="background-color:#f9f9f9; padding:20px;">
           <p style="margin:0;">If you have any questions, reply to this email or contact us at <a href="mailto:support@sycloseouts.com">support@sycloseouts.com</a>.</p>
-          <p style="margin:5px 0 0;">Thank you for shopping with <strong>Sy Closeouts</strong>!</p>
+          <p style="margin:5px 0 0;">Thank you for shopping with <strong>SY Closeouts</strong>!</p>
         </td>
       </tr>
 
       <tr>
         <td style="text-align:center; font-size:12px; color:#999999; padding:15px;">
-          &copy; ${new Date().getFullYear()} Sy Closeouts. All rights reserved.<br>
+          &copy; ${new Date().getFullYear()} SY Closeouts. All rights reserved.<br>
           123 Wholesale Blvd, Brooklyn, NY 11201
         </td>
       </tr>
@@ -246,14 +246,14 @@ export async function sendSellerOrderEmail(
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>Sy Closeouts Order Sold</title>
+    <title>SY Closeouts Order Sold</title>
   </head>
   <body style="margin:0; padding:20px; background-color:#f7f7f7; font-family:Arial, sans-serif;">
     <table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:auto; background-color:#ffffff; border-radius:8px; overflow:hidden; box-shadow:0 0 10px rgba(0,0,0,0.1);">
       <tr>
         <td style="background-color:#222222; padding:20px; text-align:center;">
-          <img src="cid:logo" alt="Sy Closeouts" style="max-height:50px; margin-bottom:10px;" />
-          <h1 style="margin:0; color:#ffffff; font-size:24px;">Sy Closeouts</h1>
+          <img src="cid:logo" alt="SY Closeouts" style="max-height:50px; margin-bottom:10px;" />
+          <h1 style="margin:0; color:#ffffff; font-size:24px;">SY Closeouts</h1>
           <p style="margin:5px 0 0; color:#bbbbbb;">New Order Received</p>
         </td>
       </tr>
@@ -294,13 +294,13 @@ export async function sendSellerOrderEmail(
       <tr>
         <td style="background-color:#f9f9f9; padding:20px;">
           <p style="margin:0;">Log in to your dashboard to manage this order.</p>
-          <p style="margin:5px 0 0;">Thank you for selling with <strong>Sy Closeouts</strong>!</p>
+          <p style="margin:5px 0 0;">Thank you for selling with <strong>SY Closeouts</strong>!</p>
         </td>
       </tr>
 
       <tr>
         <td style="text-align:center; font-size:12px; color:#999999; padding:15px;">
-          &copy; ${new Date().getFullYear()} Sy Closeouts. All rights reserved.<br>
+          &copy; ${new Date().getFullYear()} SY Closeouts. All rights reserved.<br>
           123 Wholesale Blvd, Brooklyn, NY 11201
         </td>
       </tr>
