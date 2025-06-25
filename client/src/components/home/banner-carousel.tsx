@@ -23,6 +23,8 @@ export default function BannerCarousel() {
     queryKey: ["/api/banner-products"],
   });
 
+  const inStockProducts = products?.filter(p => p.availableUnits > 0) || [];
+
   const [api, setApi] = useState<CarouselApi | null>(null);
   const [current, setCurrent] = useState(0);
 
@@ -45,7 +47,7 @@ export default function BannerCarousel() {
     );
   }
 
-  if (!products || products.length === 0) return null;
+  if (inStockProducts.length === 0) return null;
 
   return (
     <section className="py-8 px-4 max-w-7xl mx-auto">
@@ -56,7 +58,7 @@ export default function BannerCarousel() {
           className="relative h-96 md:h-[32rem] w-full"
         >
           <CarouselContent className="h-full">
-            {products.map((product) => {
+            {inStockProducts.map((product) => {
               const price =
                 !user || user.role === "buyer"
                   ? product.price * (1 + SERVICE_FEE_RATE)
@@ -113,7 +115,7 @@ export default function BannerCarousel() {
           <CarouselPrevious className="!left-4 !top-1/2 !-translate-y-1/2 z-20 w-10 h-10 md:w-12 md:h-12 bg-white/80 hover:bg-white text-gray-800 shadow-lg transition-all opacity-0 group-hover:opacity-100" />
           <CarouselNext className="!right-4 !top-1/2 !-translate-y-1/2 z-20 w-10 h-10 md:w-12 md:h-12 bg-white/80 hover:bg-white text-gray-800 shadow-lg transition-all opacity-0 group-hover:opacity-100" />
           <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex space-x-2">
-            {products.map((_, index) => (
+            {inStockProducts.map((_, index) => (
               <button
                 key={index}
                 onClick={() => api?.scrollTo(index)}

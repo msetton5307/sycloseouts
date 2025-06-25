@@ -11,6 +11,8 @@ export default function FeaturedProducts() {
     queryKey: ["/api/products"],
   });
 
+  const inStockProducts = products?.filter(p => p.availableUnits > 0) || [];
+
   const renderSkeletons = () => {
     return Array(4).fill(0).map((_, index) => (
       <div key={index} className="group relative bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-300">
@@ -57,8 +59,8 @@ export default function FeaturedProducts() {
                 Refresh
               </Button>
             </div>
-          ) : products && products.length > 0 ? (
-            products.slice(0, 4).map((product) => (
+          ) : inStockProducts && inStockProducts.length > 0 ? (
+            inStockProducts.slice(0, 4).map((product) => (
               <ProductCard key={product.id} product={product} />
             ))
           ) : (
