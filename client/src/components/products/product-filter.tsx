@@ -3,13 +3,21 @@ import { useLocation } from "wouter";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { 
+import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetFooter,
+  SheetClose,
+} from "@/components/ui/sheet";
 import { Search, Filter, RefreshCw } from "lucide-react";
 
 interface FilterValues {
@@ -96,7 +104,7 @@ export default function ProductFilter({
   
   return (
     <div className="mb-6">
-      {/* Search Bar - Always visible */}
+      {/* Search Bar */}
       <form onSubmit={handleSearchSubmit} className="mb-4 flex space-x-2">
         <div className="relative flex-grow">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
@@ -119,8 +127,9 @@ export default function ProductFilter({
         </Button>
       </form>
 
+      {/* Desktop Filters */}
       {showFilters && (
-        <div className="mt-4 grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="hidden md:grid mt-4 grid-cols-4 gap-4">
           <div>
             <Label htmlFor="category">Category</Label>
             <Select
@@ -176,7 +185,7 @@ export default function ProductFilter({
               </SelectContent>
             </Select>
           </div>
-          <div className="flex gap-2 col-span-full md:col-span-1 md:justify-end">
+          <div className="flex gap-2 col-span-full md:justify-end">
             <Button onClick={applyFilters} className="flex-1">Apply</Button>
             <Button
               type="button"
@@ -189,6 +198,85 @@ export default function ProductFilter({
           </div>
         </div>
       )}
+
+      {/* Mobile Filter Sheet */}
+      <Sheet open={showFilters} onOpenChange={setShowFilters}>
+        <SheetContent side="bottom" className="p-6 md:hidden space-y-4">
+          <SheetHeader>
+            <SheetTitle>Filters</SheetTitle>
+          </SheetHeader>
+          <div className="grid grid-cols-1 gap-4">
+            <div>
+              <Label htmlFor="m-category">Category</Label>
+              <Select
+                value={filters.category}
+                onValueChange={(value) => handleFilterChange("category", value)}
+              >
+                <SelectTrigger id="m-category">
+                  <SelectValue placeholder="Select category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((category) => (
+                    <SelectItem key={category} value={category}>
+                      {category}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="m-condition">Condition</Label>
+              <Select
+                value={filters.condition}
+                onValueChange={(value) => handleFilterChange("condition", value)}
+              >
+                <SelectTrigger id="m-condition">
+                  <SelectValue placeholder="Select condition" />
+                </SelectTrigger>
+                <SelectContent>
+                  {conditions.map((condition) => (
+                    <SelectItem key={condition} value={condition}>
+                      {condition}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="m-sort">Sort By</Label>
+              <Select
+                value={filters.sort}
+                onValueChange={(value) => handleFilterChange("sort", value)}
+              >
+                <SelectTrigger id="m-sort">
+                  <SelectValue placeholder="Sort by" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="newest">Newest</SelectItem>
+                  <SelectItem value="price_low">Price: Low to High</SelectItem>
+                  <SelectItem value="price_high">Price: High to Low</SelectItem>
+                  <SelectItem value="qty_high">Quantity: High to Low</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <SheetFooter className="pt-4">
+            <SheetClose asChild>
+              <Button onClick={applyFilters} className="w-full">
+                Apply
+              </Button>
+            </SheetClose>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={resetFilters}
+              className="w-full"
+            >
+              <RefreshCw className="h-4 w-4" />
+            </Button>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }

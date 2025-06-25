@@ -12,7 +12,9 @@ import { useAuth } from "@/hooks/use-auth";
 
 export default function ProductsPage() {
   const { user } = useAuth();
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [viewMode, setViewMode] = useState<"grid" | "list">(
+    () => (window.innerWidth < 640 ? "list" : "grid")
+  );
   const [filters, setFilters] = useState({
     search: "",
     category: "All Categories",
