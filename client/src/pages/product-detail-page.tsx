@@ -49,6 +49,13 @@ export default function ProductDetailPage() {
   const { user } = useAuth();
   const { toast } = useToast();
 
+  // Scroll to top on mount so mobile users see the product images first
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.innerWidth <= 768) {
+      window.scrollTo({ top: 0 });
+    }
+  }, []);
+
   const questionMutation = useMutation({
     mutationFn: (q: string) =>
       apiRequest("POST", `/api/products/${productId}/questions`, { question: q }),
