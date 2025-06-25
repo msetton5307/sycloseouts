@@ -38,6 +38,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
+import AskQuestionDialog from "@/components/products/ask-question-dialog";
 
 export default function ProductDetailPage() {
   const { id } = useParams();
@@ -104,11 +105,6 @@ export default function ProductDetailPage() {
     }
   };
 
-  function handleAskQuestion() {
-    const q = window.prompt("Enter your question for the seller");
-    if (!q) return;
-    questionMutation.mutate(q);
-  }
 
   const varKey = JSON.stringify(selectedVariations);
   const basePrice =
@@ -287,9 +283,7 @@ export default function ProductDetailPage() {
               Add to Cart
             </Button>
             {user?.role === "buyer" && (
-              <Button variant="outline" className="w-full mb-4" onClick={handleAskQuestion}>
-                Ask Seller a Question
-              </Button>
+              <AskQuestionDialog onSubmit={q => questionMutation.mutate(q)} />
             )}
 
             {product.retailComparisonUrl && (
