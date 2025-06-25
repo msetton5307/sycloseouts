@@ -62,7 +62,7 @@ export default function AdminOrderDetailPage() {
         </div>
 
         <h1 className="text-3xl font-extrabold tracking-tight text-gray-900">
-          Order #{order.id}
+          Order #{order.code}
         </h1>
         <p className="text-sm text-gray-500 flex items-center">
           <CalendarIcon className="h-3 w-3 mr-1" /> Placed on {formatDate(order.createdAt)}
