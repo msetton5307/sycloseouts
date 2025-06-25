@@ -13,6 +13,12 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+} from "@/components/ui/accordion";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -116,57 +122,106 @@ export default function BuyerOrdersPage() {
                 ))}
               </div>
             ) : filteredOrders.length > 0 ? (
-              <div className="space-y-6">
-                {filteredOrders.map((order) => (
-                  <div key={order.id} className="border rounded-lg p-4">
-                    <div className="flex flex-col sm:flex-row sm:justify-between mb-4 gap-2">
-                      <div>
-                        <h3 className="font-medium">Order #{order.id}</h3>
-                        <p className="text-sm text-gray-500 flex items-center">
-                          <CalendarIcon className="h-3 w-3 mr-1" />
-                          Placed on {formatDate(order.createdAt)}
-                        </p>
+              <>
+                {/* Desktop layout */}
+                <div className="space-y-6 hidden sm:block">
+                  {filteredOrders.map((order) => (
+                    <div key={order.id} className="border rounded-lg p-4">
+                      <div className="flex flex-col sm:flex-row sm:justify-between mb-4 gap-2">
+                        <div>
+                          <h3 className="font-medium">Order #{order.id}</h3>
+                          <p className="text-sm text-gray-500 flex items-center">
+                            <CalendarIcon className="h-3 w-3 mr-1" />
+                            Placed on {formatDate(order.createdAt)}
+                          </p>
+                        </div>
+                        <div className="text-left sm:text-right">
+                          <p className="font-medium">{formatCurrency(order.totalAmount)}</p>
+                          <span
+                            className={`text-xs px-2 py-1 rounded-full ${
+                              order.status === "delivered"
+                                ? "bg-green-100 text-green-800"
+                                : order.status === "shipped" || order.status === "out_for_delivery"
+                                ? "bg-blue-100 text-blue-800"
+                                : "bg-yellow-100 text-yellow-800"
+                            }`}
+                          >
+                            {order.status.charAt(0).toUpperCase() + order.status.slice(1).replace("_", " ")}
+                          </span>
+                        </div>
                       </div>
-                      <div className="text-left sm:text-right">
-                        <p className="font-medium">{formatCurrency(order.totalAmount)}</p>
-                        <span className={`text-xs px-2 py-1 rounded-full ${
-                          order.status === "delivered" 
-                            ? "bg-green-100 text-green-800" 
-                            : order.status === "shipped" || order.status === "out_for_delivery"
-                            ? "bg-blue-100 text-blue-800"
-                            : "bg-yellow-100 text-yellow-800"
-                        }`}>
-                          {order.status.charAt(0).toUpperCase() + order.status.slice(1).replace("_", " ")}
-                        </span>
-                      </div>
-                    </div>
-                    
-                    <OrderStatus order={order} />
-                    
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      <Button variant="outline" size="sm" asChild>
-                        <Link href={`/buyer/orders/${order.id}`}>View Details</Link>
-                      </Button>
-                      
-                      {order.trackingNumber && (
-                        <Button variant="outline" size="sm">
-                          Track Package
+
+                      <OrderStatus order={order} />
+
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        <Button variant="outline" size="sm" asChild>
+                          <Link href={`/buyer/orders/${order.id}`}>View Details</Link>
                         </Button>
-                      )}
-                      
-                      <Button variant="outline" size="sm" asChild>
-                        <a
-                          href={`/api/orders/${order.id}/invoice.pdf`}
-                          target="_blank"
-                          download
-                        >
-                          Download Invoice
-                        </a>
-                      </Button>
+
+                        {order.trackingNumber && (
+                          <Button variant="outline" size="sm">
+                            Track Package
+                          </Button>
+                        )}
+
+                        <Button variant="outline" size="sm" asChild>
+                          <a href={`/api/orders/${order.id}/invoice.pdf`} target="_blank" download>
+                            Download Invoice
+                          </a>
+                        </Button>
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+
+                {/* Mobile layout */}
+                <Accordion type="single" collapsible className="block sm:hidden">
+                  {filteredOrders.map((order) => (
+                    <AccordionItem key={order.id} value={String(order.id)} className="border rounded-lg">
+                      <AccordionTrigger className="px-4 py-2 text-left">
+                        <div className="flex flex-col w-full gap-1">
+                          <div className="flex items-center justify-between">
+                            <span className="font-medium">Order #{order.id}</span>
+                            <span className={`text-xs px-2 py-1 rounded-full ${
+                              order.status === "delivered"
+                                ? "bg-green-100 text-green-800"
+                                : order.status === "shipped" || order.status === "out_for_delivery"
+                                ? "bg-blue-100 text-blue-800"
+                                : "bg-yellow-100 text-yellow-800"
+                            }`}
+                            >
+                              {order.status.charAt(0).toUpperCase() + order.status.slice(1).replace("_", " ")}
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-500 flex items-center">
+                            <CalendarIcon className="h-3 w-3 mr-1" />
+                            Placed on {formatDate(order.createdAt)}
+                          </p>
+                          <p className="font-medium">{formatCurrency(order.totalAmount)}</p>
+                        </div>
+                      </AccordionTrigger>
+                      <AccordionContent className="px-4 pb-4">
+                        <OrderStatus order={order} />
+                        <div className="mt-4 flex flex-wrap gap-2">
+                          <Button variant="outline" size="sm" asChild>
+                            <Link href={`/buyer/orders/${order.id}`}>View Details</Link>
+                          </Button>
+                          {order.trackingNumber && (
+                            <Button variant="outline" size="sm">
+                              Track Package
+                            </Button>
+                          )}
+                          <Button variant="outline" size="sm" asChild>
+                            <a href={`/api/orders/${order.id}/invoice.pdf`} target="_blank" download>
+                              Download Invoice
+                            </a>
+                          </Button>
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                  ))}
+                </Accordion>
+              </>
             ) : (
               <div className="text-center py-6">
                 {searchTerm || filter !== "all" ? (
