@@ -243,7 +243,7 @@ export default function ProductDetailPage() {
               </div>
             )}
 
-            <div className="flex items-center space-x-2 mb-4">
+            <div className="hidden md:flex items-center space-x-2 mb-4">
               <Button
                 variant="outline"
                 size="icon"
@@ -274,8 +274,8 @@ export default function ProductDetailPage() {
               </Button>
             </div>
 
-            <div className="text-xl font-bold mb-2">Total: {formatCurrency(totalCost)}</div>
-            <Button className="w-full mb-4" onClick={handleAddToCart} disabled={quantity < product.minOrderQuantity}>
+            <div className="hidden md:block text-xl font-bold mb-2">Total: {formatCurrency(totalCost)}</div>
+            <Button className="hidden md:block w-full mb-4" onClick={handleAddToCart} disabled={quantity < product.minOrderQuantity}>
               <ShoppingCart className="mr-2 h-5 w-5" />
               Add to Cart
             </Button>
@@ -332,13 +332,44 @@ export default function ProductDetailPage() {
 
         {/* Sticky Add to Cart for mobile */}
         {product.availableUnits > 0 && (
-          <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t p-4 md:hidden flex justify-between items-center">
-            <span className="font-semibold text-lg">{formatCurrency(totalCost)}</span>
+          <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t p-4 md:hidden">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={handleDecrease}
+                  disabled={quantity <= product.minOrderQuantity}
+                >
+                  <Minus className="h-4 w-4" />
+                </Button>
+                <Input
+                  type="number"
+                  className="w-16 text-center"
+                  value={quantity}
+                  min={product.minOrderQuantity}
+                  max={product.availableUnits}
+                  step={product.orderMultiple}
+                  onChange={(e) => setQuantity(parseInt(e.target.value) || 0)}
+                />
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={handleIncrease}
+                  disabled={
+                    quantity + product.orderMultiple > product.availableUnits
+                  }
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
+              <span className="font-semibold text-lg">{formatCurrency(totalCost)}</span>
+            </div>
             <Button
               size="lg"
               onClick={handleAddToCart}
               disabled={quantity < product.minOrderQuantity}
-              className="ml-4 flex-1"
+              className="w-full"
             >
               <ShoppingCart className="mr-2 h-5 w-5" />
               Add to Cart
