@@ -153,7 +153,7 @@ export default function ProductsPage() {
               ) : (
                 <div
                   key={product.id}
-                  className="flex p-2 border rounded-lg bg-white shadow-sm hover:shadow-md transition-shadow duration-300"
+                  className="flex items-center p-2 border rounded-lg bg-white shadow-sm hover:shadow-md transition-shadow duration-300"
                 >
                   <div className="w-24 h-24 flex-shrink-0">
                     <img
@@ -164,22 +164,13 @@ export default function ProductsPage() {
                   </div>
                   <div className="ml-4 flex flex-col flex-1">
                     <h3 className="text-sm font-medium text-gray-900 line-clamp-2">{product.title}</h3>
-                    <p className="text-gray-500 mb-2 line-clamp-2">{product.description.slice(0, 150)}...</p>
-                    <div className="flex flex-wrap gap-2 mb-2">
-                      <div className="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded">
-                        {product.availableUnits} units available
-                      </div>
-                      <div className="bg-gray-100 text-gray-800 text-xs font-medium px-2.5 py-0.5 rounded">
-                        MOQ: {product.minOrderQuantity}
-                      </div>
-                      <div className="bg-purple-100 text-purple-800 text-xs font-medium px-2.5 py-0.5 rounded">
-                        {product.condition}
-                      </div>
-                    </div>
                     <p className="text-base font-semibold text-green-600">
                       {formatCurrency((!user || user.role === 'buyer') ? product.price * (1 + SERVICE_FEE_RATE) : product.price)}
                       /unit
                     </p>
+                    {product.retailMsrp && (
+                      <p className="text-xs text-gray-500">MSRP: {formatCurrency(product.retailMsrp)}</p>
+                    )}
                     <div className="mt-2 flex gap-2">
                       <Button
                         size="sm"
