@@ -91,18 +91,6 @@ export interface IStorage {
   // Billing methods
   getOrdersForBilling(): Promise<any[]>;
 
-  // Analytics methods
-  getBestSellingProducts(
-    sellerId: number,
-    start: Date,
-    end: Date,
-  ): Promise<{ productId: number; title: string; unitsSold: number; revenue: number }[]>;
-  getPayoutSummary(
-    sellerId: number,
-    start: Date,
-    end: Date,
-  ): Promise<{ paid: number; pending: number }>;
-
   // Product question methods
   createProductQuestion(question: InsertProductQuestion): Promise<ProductQuestion>;
   getProductQuestionsForSeller(sellerId: number): Promise<ProductQuestion[]>;
@@ -568,11 +556,6 @@ export class DatabaseStorage implements IStorage {
 
   async createSupportTicket(ticket: InsertSupportTicket): Promise<SupportTicket> {
     const [t] = await db.insert(supportTickets).values(ticket).returning();
-    await db.insert(supportTicketMessages).values({
-      ticketId: t.id,
-      senderId: ticket.userId,
-      message: ticket.message,
-    });
     return t;
   }
 
@@ -592,19 +575,6 @@ export class DatabaseStorage implements IStorage {
       .where(eq(supportTickets.id, id))
       .returning();
     return t;
-  }
-
-  async getSupportTicketMessages(ticketId: number): Promise<SupportTicketMessage[]> {
-    return await db
-      .select()
-      .from(supportTicketMessages)
-      .where(eq(supportTicketMessages.ticketId, ticketId))
-      .orderBy(supportTicketMessages.createdAt);
-  }
-
-  async createSupportTicketMessage(msg: InsertSupportTicketMessage): Promise<SupportTicketMessage> {
-    const [m] = await db.insert(supportTicketMessages).values(msg).returning();
-    return m;
   }
 
   // Notification methods
@@ -659,46 +629,6 @@ export class DatabaseStorage implements IStorage {
       [sellerId, start, end],
     );
     return result.rows.map((r) => ({ date: r.date, revenue: Number(r.revenue) }));
-  }
-
-  async getBestSellingProducts(
-    sellerId: number,
-    start: Date,
-    end: Date,
-  ): Promise<{ productId: number; title: string; unitsSold: number; revenue: number }[]> {
-    const result = await pool.query(
-      `SELECT oi.product_id, p.title, SUM(oi.quantity) AS units_sold, SUM(oi.total_price) AS revenue
-         FROM order_items oi
-         JOIN orders o ON o.id = oi.order_id
-         JOIN products p ON p.id = oi.product_id
-        WHERE o.seller_id = $1 AND o.created_at BETWEEN $2 AND $3
-        GROUP BY oi.product_id, p.title
-        ORDER BY units_sold DESC`,
-      [sellerId, start, end],
-    );
-    return result.rows.map((r) => ({
-      productId: r.product_id,
-      title: r.title,
-      unitsSold: Number(r.units_sold),
-      revenue: Number(r.revenue),
-    }));
-  }
-
-  async getPayoutSummary(
-    sellerId: number,
-    start: Date,
-    end: Date,
-  ): Promise<{ paid: number; pending: number }> {
-    const result = await pool.query(
-      `SELECT
-          COALESCE(SUM(total_amount) FILTER (WHERE seller_paid = true), 0) AS paid,
-          COALESCE(SUM(total_amount) FILTER (WHERE seller_paid = false AND status = 'delivered'), 0) AS pending
-         FROM orders
-        WHERE seller_id = $1 AND created_at BETWEEN $2 AND $3`,
-      [sellerId, start, end],
-    );
-    const row = result.rows[0] || { paid: 0, pending: 0 };
-    return { paid: Number(row.paid), pending: Number(row.pending) };
   }
 
   async getOrdersForBilling(): Promise<any[]> {

@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2, ArrowLeft, DollarSign } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, SERVICE_FEE_RATE } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 
 interface BillingOrder {
@@ -196,8 +196,8 @@ export default function AdminBillingPage() {
                           <div className="text-xs text-gray-500">{o.seller_email}</div>
                         </TableCell>
                         <TableCell className="text-right">{formatCurrency(Number(o.total_amount))}</TableCell>
-                        <TableCell className="text-right">{formatCurrency(Number(o.total_amount) * 0.1)}</TableCell>
-                        <TableCell className="text-right">{formatCurrency(Number(o.total_amount) * 0.9)}</TableCell>
+                        <TableCell className="text-right">{formatCurrency(Number(o.total_amount) * SERVICE_FEE_RATE)}</TableCell>
+                        <TableCell className="text-right">{formatCurrency(Number(o.total_amount) * (1 - SERVICE_FEE_RATE))}</TableCell>
                         <TableCell>{o.status}</TableCell>
                         <TableCell className="space-x-2">
                           {!o.buyer_charged && (
@@ -213,6 +213,9 @@ export default function AdminBillingPage() {
                               Pay Seller
                             </Button>
                           )}
+                          <Button variant="link" size="sm" asChild>
+                            <Link href={`/admin/orders/${o.id}`}>View</Link>
+                          </Button>
                         </TableCell>
                       </TableRow>
                     ))}

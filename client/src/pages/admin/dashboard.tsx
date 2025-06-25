@@ -33,7 +33,7 @@ import {
   DollarSign
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, SERVICE_FEE_RATE } from "@/lib/utils";
 
 export default function AdminDashboard() {
   const { user } = useAuth();
@@ -89,7 +89,7 @@ export default function AdminDashboard() {
   const totalProducts = products.length;
   const totalOrders = orders.length;
   const totalRevenue = orders.reduce((sum, order) => sum + order.totalAmount, 0);
-  const platformFees = totalRevenue * 0.10; // Assuming 10% platform fee
+  const platformFees = totalRevenue * SERVICE_FEE_RATE;
 
   const isLoading = isLoadingUsers || isLoadingOrders || isLoadingApplications || isLoadingProducts;
   const isError = usersError || ordersError || applicationsError || productsError;
@@ -196,7 +196,7 @@ export default function AdminDashboard() {
                     <CardContent>
                       <div className="text-sm text-gray-500 flex items-center">
                         <Calculator className="h-4 w-4 mr-1 text-green-500" />
-                        10% commission on {formatCurrency(totalRevenue)}
+                        3.5% commission on {formatCurrency(totalRevenue)}
                       </div>
                     </CardContent>
                   </Card>
@@ -316,7 +316,7 @@ export default function AdminDashboard() {
                             <div className="text-right">
                               <p className="font-medium">{formatCurrency(order.totalAmount)}</p>
                               <p className="text-xs text-gray-500">
-                                Commission: {formatCurrency(order.totalAmount * 0.10)}
+                                Commission: {formatCurrency(order.totalAmount * SERVICE_FEE_RATE)}
                               </p>
                             </div>
                           </div>
@@ -495,7 +495,7 @@ export default function AdminDashboard() {
                         </CardHeader>
                         <CardContent>
                           <div className="text-sm text-gray-500">
-                            10% commission on all orders
+                            3.5% commission on all orders
                           </div>
                         </CardContent>
                       </Card>
