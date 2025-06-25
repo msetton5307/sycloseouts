@@ -50,7 +50,6 @@ export default function ProductDetailPage() {
   const { user } = useAuth();
   const { toast } = useToast();
 
-  // Scroll to top on mount so mobile users see the product images first
   useEffect(() => {
     if (typeof window !== "undefined" && window.innerWidth <= 768) {
       window.scrollTo({ top: 0 });
@@ -104,7 +103,6 @@ export default function ProductDetailPage() {
       addToCart(product, quantity, selectedVariations);
     }
   };
-
 
   const varKey = JSON.stringify(selectedVariations);
   const basePrice =
@@ -269,28 +267,22 @@ export default function ProductDetailPage() {
                 variant="outline"
                 size="icon"
                 onClick={handleIncrease}
-                disabled={
-                  quantity + product.orderMultiple > product.availableUnits
-                }
+                disabled={quantity + product.orderMultiple > product.availableUnits}
               >
                 <Plus className="h-4 w-4" />
               </Button>
             </div>
 
             <div className="hidden md:block text-xl font-bold mb-2">Total: {formatCurrency(totalCost)}</div>
-<<<<<<< codex/fix-misaligned-add-to-cart-button-text
             <Button
               className="relative hidden md:block w-full mb-4 pl-8 gap-0"
               onClick={handleAddToCart}
               disabled={quantity < product.minOrderQuantity}
             >
               <ShoppingCart className="absolute left-3 h-4 w-4" aria-hidden="true" />
-=======
-            <Button className="hidden md:block w-full mb-4" onClick={handleAddToCart} disabled={quantity < product.minOrderQuantity}>
-              <ShoppingCart className="h-4 w-4" />
->>>>>>> main
               Add to Cart
             </Button>
+
             {user?.role === "buyer" && (
               <AskQuestionDialog onSubmit={q => questionMutation.mutate(q)} />
             )}
@@ -315,11 +307,9 @@ export default function ProductDetailPage() {
               <TabsTrigger value="shipping">Shipping</TabsTrigger>
               <TabsTrigger value="seller">Seller</TabsTrigger>
             </TabsList>
-
             <TabsContent value="description" className="py-4">
               <p>{product.description}</p>
             </TabsContent>
-
             <TabsContent value="shipping" className="py-4">
               <p>This product ships from {product.fobLocation || "seller's warehouse"}.</p>
               <ul className="list-disc ml-5 mt-2 text-sm text-gray-700">
@@ -327,7 +317,6 @@ export default function ProductDetailPage() {
                 <li>Delivery in 3–7 days depending on location</li>
               </ul>
             </TabsContent>
-
             <TabsContent value="seller" className="py-4">
               <p>This item is sold by a verified SY Closeouts seller.</p>
               <ul className="list-disc ml-5 mt-2 text-sm text-gray-700">
@@ -340,7 +329,6 @@ export default function ProductDetailPage() {
 
         <Separator className="my-10" />
 
-        {/* Sticky Add to Cart for mobile */}
         {product.availableUnits > 0 && (
           <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t p-4 md:hidden">
             <div className="flex items-center justify-between mb-2">
@@ -366,9 +354,7 @@ export default function ProductDetailPage() {
                   variant="outline"
                   size="icon"
                   onClick={handleIncrease}
-                  disabled={
-                    quantity + product.orderMultiple > product.availableUnits
-                  }
+                  disabled={quantity + product.orderMultiple > product.availableUnits}
                 >
                   <Plus className="h-4 w-4" />
                 </Button>
@@ -381,11 +367,7 @@ export default function ProductDetailPage() {
               disabled={quantity < product.minOrderQuantity}
               className="relative w-full pl-8 gap-0"
             >
-<<<<<<< codex/fix-misaligned-add-to-cart-button-text
               <ShoppingCart className="absolute left-3 h-4 w-4" aria-hidden="true" />
-=======
-              <ShoppingCart className="h-4 w-4" />
->>>>>>> main
               Add to Cart
             </Button>
           </div>
