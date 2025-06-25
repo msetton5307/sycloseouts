@@ -6,6 +6,7 @@ import {
   sendInvoiceEmail,
   sendShippingUpdateEmail,
   sendSellerApprovalEmail,
+  sendSellerOrderEmail,
   sendOrderMessageEmail,
   sendProductQuestionEmail,
   sendAdminAlertEmail,
@@ -269,7 +270,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Admins can see all orders
 
       const orders = await storage.getOrders(filter);
-      res.json(orders);
+      const ordersWithPreview = await Promise.all(
+        orders.map(async (o) => {
+          const items = await storage.getOrderItemsWithProducts(o.id);
+          const previewImage = items[0]?.productImages[0] || null;
+          return { ...o, previewImage };
+        }),
+      );
+      res.json(ordersWithPreview);
     } catch (error) {
       handleApiError(res, error);
     }
@@ -409,6 +417,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // send invoice email asynchronously, do not block response
       sendInvoiceEmail(user.email, order, invoiceItems, user).catch(console.error);
+
+      // notify seller of the new order
+      const seller = await storage.getUser(order.sellerId);
+      if (seller) {
+        sendSellerOrderEmail(seller.email, order, invoiceItems, user, seller).catch(console.error);
+      }
 
       res.status(201).json(order);
     } catch (error) {
