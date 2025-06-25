@@ -279,7 +279,7 @@ export default function ProductDetailPage() {
 
             <div className="hidden md:block text-xl font-bold mb-2">Total: {formatCurrency(totalCost)}</div>
             <Button className="hidden md:block w-full mb-4" onClick={handleAddToCart} disabled={quantity < product.minOrderQuantity}>
-              <ShoppingCart className="mr-2 h-5 w-5" />
+              <ShoppingCart className="h-4 w-4" />
               Add to Cart
             </Button>
             {user?.role === "buyer" && (
@@ -372,7 +372,7 @@ export default function ProductDetailPage() {
               disabled={quantity < product.minOrderQuantity}
               className="w-full"
             >
-              <ShoppingCart className="mr-2 h-5 w-5" />
+              <ShoppingCart className="h-4 w-4" />
               Add to Cart
             </Button>
           </div>
