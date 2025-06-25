@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/hooks/use-auth";
 import { CartProvider } from "@/hooks/use-cart";
 import { ProtectedRoute } from "./lib/protected-route";
+import { ScrollToTop } from "@/lib/scroll-to-top";
 
 // Pages
 import HomePage from "@/pages/home-page";
@@ -104,6 +105,7 @@ function App() {
       <AuthProvider>
         <CartProvider>
           <TooltipProvider>
+            <ScrollToTop />
             <Toaster />
             <Router />
           </TooltipProvider>
