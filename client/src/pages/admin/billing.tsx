@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "wouter";
 import Header from "@/components/layout/header";
@@ -11,6 +12,7 @@ import {
 } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2, ArrowLeft, DollarSign } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { formatCurrency } from "@/lib/utils";
@@ -24,7 +26,7 @@ interface BillingOrder {
   seller_first_name: string;
   seller_last_name: string;
   seller_email: string;
-  totalamount: number; // note: returned fields names from pg are lowercase
+  total_amount: number; // field names returned from pg
   status: string;
   buyer_charged: boolean;
   seller_paid: boolean;
@@ -36,6 +38,22 @@ export default function AdminBillingPage() {
   const { data: orders = [], isLoading } = useQuery<BillingOrder[]>({
     queryKey: ["/api/admin/billing"],
   });
+
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
+
+  const toggleAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedIds(orders.map((o) => o.id));
+    } else {
+      setSelectedIds([]);
+    }
+  };
+
+  const toggleOne = (id: number, checked: boolean) => {
+    setSelectedIds((prev) =>
+      checked ? [...prev, id] : prev.filter((i) => i !== id),
+    );
+  };
 
   const { mutate: markCharged, isPending: isCharging } = useMutation({
     mutationFn: async (id: number) => {
@@ -65,6 +83,40 @@ export default function AdminBillingPage() {
     },
   });
 
+  const { mutate: bulkCharge, isPending: isBulkCharging } = useMutation({
+    mutationFn: async (ids: number[]) => {
+      await Promise.all(
+        ids.map((id) =>
+          apiRequest("POST", `/api/admin/orders/${id}/mark-charged`)
+        ),
+      );
+    },
+    onSuccess: () => {
+      toast({ title: "Marked Charged" });
+      setSelectedIds([]);
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/billing"] });
+    },
+    onError: (err: any) => {
+      toast({ title: "Action Failed", description: err.message, variant: "destructive" });
+    },
+  });
+
+  const { mutate: bulkPay, isPending: isBulkPaying } = useMutation({
+    mutationFn: async (ids: number[]) => {
+      await Promise.all(
+        ids.map((id) => apiRequest("POST", `/api/admin/orders/${id}/mark-paid`)),
+      );
+    },
+    onSuccess: () => {
+      toast({ title: "Marked Paid" });
+      setSelectedIds([]);
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/billing"] });
+    },
+    onError: (err: any) => {
+      toast({ title: "Action Failed", description: err.message, variant: "destructive" });
+    },
+  });
+
   return (
     <>
       <Header />
@@ -86,11 +138,35 @@ export default function AdminBillingPage() {
               <div className="flex justify-center py-12">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
               </div>
-            ) : orders.length > 0 ? (
-              <div className="overflow-x-auto">
+              ) : orders.length > 0 ? (
+                <>
+                <div className="mb-4 flex gap-2">
+                  <Button
+                    size="sm"
+                    onClick={() => bulkCharge(selectedIds)}
+                    disabled={selectedIds.length === 0 || isBulkCharging}
+                  >
+                    Mark Charged
+                  </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => bulkPay(selectedIds)}
+                  disabled={selectedIds.length === 0 || isBulkPaying}
+                >
+                  Pay Sellers
+                </Button>
+                </div>
+                <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead>
+                        <Checkbox
+                          checked={selectedIds.length === orders.length && orders.length > 0}
+                          onCheckedChange={(checked: boolean) => toggleAll(checked)}
+                        />
+                      </TableHead>
                       <TableHead>Order</TableHead>
                       <TableHead>Buyer</TableHead>
                       <TableHead>Seller</TableHead>
@@ -104,6 +180,12 @@ export default function AdminBillingPage() {
                   <TableBody>
                     {orders.map((o) => (
                       <TableRow key={o.id}>
+                        <TableCell>
+                          <Checkbox
+                            checked={selectedIds.includes(o.id)}
+                            onCheckedChange={(checked: boolean) => toggleOne(o.id, checked)}
+                          />
+                        </TableCell>
                         <TableCell>#{o.id}</TableCell>
                         <TableCell>
                           {o.buyer_first_name} {o.buyer_last_name}
@@ -113,9 +195,9 @@ export default function AdminBillingPage() {
                           {o.seller_first_name} {o.seller_last_name}
                           <div className="text-xs text-gray-500">{o.seller_email}</div>
                         </TableCell>
-                        <TableCell className="text-right">{formatCurrency(o.totalamount)}</TableCell>
-                        <TableCell className="text-right">{formatCurrency(o.totalamount * 0.1)}</TableCell>
-                        <TableCell className="text-right">{formatCurrency(o.totalamount * 0.9)}</TableCell>
+                        <TableCell className="text-right">{formatCurrency(Number(o.total_amount))}</TableCell>
+                        <TableCell className="text-right">{formatCurrency(Number(o.total_amount) * 0.1)}</TableCell>
+                        <TableCell className="text-right">{formatCurrency(Number(o.total_amount) * 0.9)}</TableCell>
                         <TableCell>{o.status}</TableCell>
                         <TableCell className="space-x-2">
                           {!o.buyer_charged && (
@@ -136,8 +218,9 @@ export default function AdminBillingPage() {
                     ))}
                   </TableBody>
                 </Table>
-              </div>
-            ) : (
+                </div>
+                </>
+              ) : (
               <div className="text-center py-12 text-gray-500">
                 <DollarSign className="h-8 w-8 mx-auto mb-2" />
                 No billing data
@@ -150,4 +233,3 @@ export default function AdminBillingPage() {
     </>
   );
 }
-
