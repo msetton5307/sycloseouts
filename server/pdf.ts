@@ -20,7 +20,7 @@ function textBlock(x: number, y: number, size: number, text: string) {
 export function generateInvoicePdf(order: Order, items: InvoiceItem[]): Buffer {
   const lines: string[] = [];
   lines.push(textBlock(50, 760, 24, "INVOICE"));
-  lines.push(textBlock(50, 735, 12, `Order #: ${order.id}`));
+  lines.push(textBlock(50, 735, 12, `Order #: ${order.code}`));
   lines.push(
     textBlock(50, 720, 12, `Date: ${new Date(order.createdAt || Date.now()).toDateString()}`)
   );

@@ -26,6 +26,7 @@ import {
 } from "@shared/schema";
 import { db } from "./db";
 import { eq } from "drizzle-orm";
+import { generateOrderCode } from "./orderCode";
 import { ZodError } from "zod";
 import { containsContactInfo } from "./contactFilter";
 
@@ -344,7 +345,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.setHeader("Content-Type", "application/pdf");
       res.setHeader(
         "Content-Disposition",
-        `attachment; filename=invoice-${order.id}.pdf`
+        `attachment; filename=invoice-${order.code}.pdf`
       );
       res.send(pdf);
     } catch (error) {
@@ -380,6 +381,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           .values(orderData)
           .returning();
 
+        const code = generateOrderCode(createdOrder.id);
+        const [withCode] = await tx
+          .update(ordersTable)
+          .set({ code })
+          .where(eq(ordersTable.id, createdOrder.id))
+          .returning();
+
         if (req.body.items && Array.isArray(req.body.items)) {
           for (const item of req.body.items) {
             const orderItemData = insertOrderItemSchema.parse({
@@ -412,7 +420,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
         }
 
-        return createdOrder;
+        return withCode;
       });
 
       // send invoice email asynchronously, do not block response
@@ -461,13 +469,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.createNotification({
         userId: updatedOrder.buyerId,
         type: 'order',
-        content: `Order #${updatedOrder.id} was cancelled`,
+        content: `Order #${updatedOrder.code} was cancelled`,
         link: `/buyer/orders/${updatedOrder.id}`,
       });
       await storage.createNotification({
         userId: updatedOrder.sellerId,
         type: 'order',
-        content: `Order #${updatedOrder.id} was cancelled`,
+        content: `Order #${updatedOrder.code} was cancelled`,
         link: `/seller/orders`,
       });
     } catch (error) {
@@ -525,13 +533,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await storage.createNotification({
           userId: updatedOrder.buyerId,
           type: 'order',
-          content: `Order #${updatedOrder.id} status updated to ${updateData.status}`,
+          content: `Order #${updatedOrder.code} status updated to ${updateData.status}`,
           link: `/buyer/orders/${updatedOrder.id}`,
         });
         await storage.createNotification({
           userId: updatedOrder.sellerId,
           type: 'order',
-          content: `Order #${updatedOrder.id} status updated to ${updateData.status}`,
+          content: `Order #${updatedOrder.code} status updated to ${updateData.status}`,
           link: `/seller/orders`,
         });
       }
@@ -566,7 +574,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (containsContactInfo(req.body.message)) {
         await sendAdminAlertEmail(
           "Blocked contact info in order message",
-          `User #${user.id} attempted to share contact info with user #${receiverId} in order #${order.id}.\n\n${req.body.message}`
+          `User #${user.id} attempted to share contact info with user #${receiverId} in order #${order.code}.\n\n${req.body.message}`
         );
         return res.status(400).json({ message: "Sharing contact information is not allowed" });
       }
@@ -581,11 +589,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.createNotification({
         userId: receiverId,
         type: 'message',
-        content: `New message about order #${order.id}`,
+        content: `New message about order #${order.code}`,
         link: `/orders/${order.id}/messages`,
       });
 
-      await sendOrderMessageEmail(receiver.email, order.id, req.body.message);
+      await sendOrderMessageEmail(receiver.email, order.code, req.body.message);
       res.status(201).json(message);
     } catch (error) {
       handleApiError(res, error);
@@ -645,11 +653,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.createNotification({
         userId: otherId,
         type: 'message',
-        content: `New message about order #${order.id}`,
+        content: `New message about order #${order.code}`,
         link: `/conversations/${user.id}`,
       });
 
-      await sendOrderMessageEmail(receiver.email, order.id, req.body.message);
+      await sendOrderMessageEmail(receiver.email, order.code, req.body.message);
       res.status(201).json(message);
     } catch (error) {
       handleApiError(res, error);

@@ -152,6 +152,7 @@ export const insertProductSchema = createInsertSchema(products, {
 // Order schema
 export const orders = pgTable("orders", {
   id: serial("id").primaryKey(),
+  code: text("code").notNull().unique(),
   buyerId: integer("buyer_id").notNull(),
   sellerId: integer("seller_id").notNull(),
   totalAmount: doublePrecision("total_amount").notNull(),
@@ -181,6 +182,7 @@ export const ordersRelations = relations(orders, ({ one, many }) => ({
 export const insertOrderSchema = createInsertSchema(orders)
   .omit({
     id: true,
+    code: true,
     buyerCharged: true,
     sellerPaid: true,
     deliveredAt: true,

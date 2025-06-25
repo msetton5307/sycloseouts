@@ -141,7 +141,7 @@ export default function SellerOrdersPage() {
                   <div key={order.id} className="border rounded-lg p-4">
                     <div className="flex flex-col sm:flex-row sm:justify-between mb-4 gap-2">
                       <div>
-                        <h3 className="font-medium">Order #{order.id}</h3>
+                        <h3 className="font-medium">Order #{order.code}</h3>
                         <p className="text-sm text-gray-500 flex items-center">
                           <CalendarIcon className="h-3 w-3 mr-1" />
                           Placed on {formatDate(order.createdAt)}
