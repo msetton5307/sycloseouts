@@ -56,6 +56,8 @@ export default function CheckoutPage() {
     nameOnCard: user ? `${user.firstName} ${user.lastName}` : "",
     expirationDate: "",
     cvc: "",
+    routingNumber: "",
+    accountNumber: "",
     paymentMethod: "credit_card",
     billingAddressSameAsShipping: true
   });
@@ -168,6 +170,15 @@ export default function CheckoutPage() {
       return;
     }
 
+    if (paymentInfo.paymentMethod === "bank_transfer" && (!paymentInfo.routingNumber || !paymentInfo.accountNumber)) {
+      toast({
+        title: "Bank details required",
+        description: "Please enter your routing and account numbers",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setIsProcessing(true);
 
     try {
@@ -267,6 +278,8 @@ export default function CheckoutPage() {
           paymentDetails: {
             method: paymentInfo.paymentMethod,
             last4,
+            routingNumber: paymentInfo.routingNumber || undefined,
+            accountNumber: paymentInfo.accountNumber || undefined,
           },
           estimatedDeliveryDate: estimatedDelivery
         };
@@ -622,12 +635,36 @@ export default function CheckoutPage() {
         )}
 
         {paymentInfo.paymentMethod === "bank_transfer" && (
-          <div className="bg-blue-50 p-4 rounded-md">
-            <p className="text-sm">
-              After placing your order, you will receive bank transfer information.
-              Your order will be processed once payment is received.
-            </p>
-          </div>
+          <>
+            <div>
+              <Label htmlFor="routingNumber">Routing Number</Label>
+              <Input
+                id="routingNumber"
+                value={paymentInfo.routingNumber}
+                onChange={(e) =>
+                  setPaymentInfo({ ...paymentInfo, routingNumber: e.target.value })
+                }
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="accountNumber">Account Number</Label>
+              <Input
+                id="accountNumber"
+                value={paymentInfo.accountNumber}
+                onChange={(e) =>
+                  setPaymentInfo({ ...paymentInfo, accountNumber: e.target.value })
+                }
+                required
+              />
+            </div>
+            <div className="bg-blue-50 p-4 rounded-md">
+              <p className="text-sm">
+                After placing your order, you will receive bank transfer information.
+                Your order will be processed once payment is received.
+              </p>
+            </div>
+          </>
         )}
 
         <div className="flex items-center space-x-2">
