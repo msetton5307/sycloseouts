@@ -297,28 +297,6 @@ export default function Header({ dashboardTabs, onProfileClick }: HeaderProps) {
                     </Button>
                   </div>
                 </div>
-                <div className="mt-3 space-y-1">
-                  <div
-                    className="block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100 cursor-pointer"
-                    onClick={() => {
-                      setIsMenuOpen(false);
-                      const path =
-                        user.role === "seller" ? "/seller/dashboard#profile" : "/buyer/profile";
-                      window.location.href = path;
-                    }}
-                  >
-                    Profile
-                  </div>
-                  <div
-                    className="block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100 cursor-pointer"
-                    onClick={() => {
-                      handleLogout();
-                      setIsMenuOpen(false);
-                    }}
-                  >
-                    Sign out
-                  </div>
-                </div>
               </div>
             ) : (
               <div className="pt-4 pb-3 border-t border-gray-200">
