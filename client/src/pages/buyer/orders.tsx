@@ -13,6 +13,12 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+} from "@/components/ui/accordion";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -21,21 +27,24 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { 
-  CalendarIcon, 
-  Search, 
-  ShoppingBag,
-  ArrowLeft
+  CalendarIcon,
+  Search,
+  ShoppingBag
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import OrderStatus from "@/components/buyer/order-status";
+
+interface OrderWithPreview extends Order {
+  previewImage?: string | null;
+}
 
 export default function BuyerOrdersPage() {
   const { user } = useAuth();
   const [filter, setFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   
-  const { data: orders = [], isLoading } = useQuery<Order[]>({
+  const { data: orders = [], isLoading } = useQuery<OrderWithPreview[]>({
     queryKey: ["/api/orders"],
     enabled: !!user,
   });
@@ -54,15 +63,6 @@ export default function BuyerOrdersPage() {
     <>
       <Header />
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-6">
-          <Link href="/buyer/home">
-            <a className="text-primary hover:underline flex items-center">
-              <ArrowLeft className="h-4 w-4 mr-1" />
-              Back to Home
-            </a>
-          </Link>
-        </div>
-        
         <h1 className="text-3xl font-extrabold tracking-tight text-gray-900 mb-8">
           My Orders
         </h1>
@@ -116,57 +116,124 @@ export default function BuyerOrdersPage() {
                 ))}
               </div>
             ) : filteredOrders.length > 0 ? (
-              <div className="space-y-6">
-                {filteredOrders.map((order) => (
-                  <div key={order.id} className="border rounded-lg p-4">
-                    <div className="flex flex-col sm:flex-row sm:justify-between mb-4 gap-2">
-                      <div>
-                        <h3 className="font-medium">Order #{order.id}</h3>
-                        <p className="text-sm text-gray-500 flex items-center">
-                          <CalendarIcon className="h-3 w-3 mr-1" />
-                          Placed on {formatDate(order.createdAt)}
-                        </p>
+              <>
+                {/* Desktop layout */}
+                <div className="space-y-6 hidden sm:block">
+                  {filteredOrders.map((order) => (
+                    <div key={order.id} className="border rounded-lg p-4">
+                      <div className="flex gap-4">
+                        {order.previewImage && (
+                          <img
+                            src={order.previewImage}
+                            alt={`Order ${order.id} item`}
+                            className="w-20 h-20 object-cover rounded"
+                          />
+                        )}
+                        <div className="flex flex-col sm:flex-row sm:justify-between mb-4 gap-2 flex-1">
+                          <div>
+                            <h3 className="font-medium">Order #{order.id}</h3>
+                            <p className="text-sm text-gray-500 flex items-center">
+                              <CalendarIcon className="h-3 w-3 mr-1" />
+                              Placed on {formatDate(order.createdAt)}
+                            </p>
+                          </div>
+                          <div className="text-left sm:text-right">
+                            <p className="font-medium">{formatCurrency(order.totalAmount)}</p>
+                            <span
+                              className={`text-xs px-2 py-1 rounded-full ${
+                                order.status === "delivered"
+                                  ? "bg-green-100 text-green-800"
+                                  : order.status === "shipped" || order.status === "out_for_delivery"
+                                  ? "bg-blue-100 text-blue-800"
+                                  : "bg-yellow-100 text-yellow-800"
+                              }`}
+                            >
+                              {order.status.charAt(0).toUpperCase() + order.status.slice(1).replace("_", " ")}
+                            </span>
+                          </div>
+                        </div>
                       </div>
-                      <div className="text-left sm:text-right">
-                        <p className="font-medium">{formatCurrency(order.totalAmount)}</p>
-                        <span className={`text-xs px-2 py-1 rounded-full ${
-                          order.status === "delivered" 
-                            ? "bg-green-100 text-green-800" 
-                            : order.status === "shipped" || order.status === "out_for_delivery"
-                            ? "bg-blue-100 text-blue-800"
-                            : "bg-yellow-100 text-yellow-800"
-                        }`}>
-                          {order.status.charAt(0).toUpperCase() + order.status.slice(1).replace("_", " ")}
-                        </span>
-                      </div>
-                    </div>
-                    
-                    <OrderStatus order={order} />
-                    
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      <Button variant="outline" size="sm" asChild>
-                        <Link href={`/buyer/orders/${order.id}`}>View Details</Link>
-                      </Button>
-                      
-                      {order.trackingNumber && (
-                        <Button variant="outline" size="sm">
-                          Track Package
+
+                      <OrderStatus order={order} />
+
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        <Button variant="outline" size="sm" asChild>
+                          <Link href={`/buyer/orders/${order.id}`}>View Details</Link>
                         </Button>
-                      )}
-                      
-                      <Button variant="outline" size="sm" asChild>
-                        <a
-                          href={`/api/orders/${order.id}/invoice.pdf`}
-                          target="_blank"
-                          download
-                        >
-                          Download Invoice
-                        </a>
-                      </Button>
+
+                        {order.trackingNumber && (
+                          <Button variant="outline" size="sm">
+                            Track Package
+                          </Button>
+                        )}
+
+                        <Button variant="outline" size="sm" asChild>
+                          <a href={`/api/orders/${order.id}/invoice.pdf`} target="_blank" download>
+                            Download Invoice
+                          </a>
+                        </Button>
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+
+                {/* Mobile layout */}
+                <Accordion type="single" collapsible className="block sm:hidden">
+                  {filteredOrders.map((order) => (
+                    <AccordionItem key={order.id} value={String(order.id)} className="border rounded-lg">
+                      <AccordionTrigger className="px-4 py-2 text-left">
+                        <div className="flex items-start gap-3 w-full">
+                          {order.previewImage && (
+                            <img
+                              src={order.previewImage}
+                              alt={`Order ${order.id} item`}
+                              className="w-12 h-12 object-cover rounded"
+                            />
+                          )}
+                          <div className="flex flex-col flex-1 gap-1">
+                            <div className="flex items-center justify-between">
+                              <span className="font-medium">Order #{order.id}</span>
+                              <span className={`text-xs px-2 py-1 rounded-full ${
+                                order.status === "delivered"
+                                  ? "bg-green-100 text-green-800"
+                                  : order.status === "shipped" || order.status === "out_for_delivery"
+                                  ? "bg-blue-100 text-blue-800"
+                                  : "bg-yellow-100 text-yellow-800"
+                              }`}
+                              >
+                                {order.status.charAt(0).toUpperCase() + order.status.slice(1).replace("_", " ")}
+                              </span>
+                            </div>
+                            <p className="text-sm text-gray-500 flex items-center">
+                              <CalendarIcon className="h-3 w-3 mr-1" />
+                              Placed on {formatDate(order.createdAt)}
+                            </p>
+                            <p className="font-medium">{formatCurrency(order.totalAmount)}</p>
+                          </div>
+                        </div>
+                      </AccordionTrigger>
+                      <AccordionContent className="px-4 pb-4">
+                        <OrderStatus order={order} />
+                        <div className="mt-4 flex flex-wrap gap-2">
+                          <Button variant="outline" size="sm" asChild>
+                            <Link href={`/buyer/orders/${order.id}`}>View Details</Link>
+                          </Button>
+                          {order.trackingNumber && (
+                            <Button variant="outline" size="sm">
+                              Track Package
+                            </Button>
+                          )}
+                          <Button variant="outline" size="sm" asChild>
+                            <a href={`/api/orders/${order.id}/invoice.pdf`} target="_blank" download>
+                              Download Invoice
+                            </a>
+                          </Button>
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                  ))}
+                </Accordion>
+              </>
             ) : (
               <div className="text-center py-6">
                 {searchTerm || filter !== "all" ? (
