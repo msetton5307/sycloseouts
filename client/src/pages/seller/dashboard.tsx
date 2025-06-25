@@ -41,7 +41,7 @@ import {
   ListOrdered
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
-import { formatCurrency, formatDate } from "@/lib/utils";
+import { formatCurrency, formatDate, SERVICE_FEE_RATE } from "@/lib/utils";
 
 export default function SellerDashboard() {
   const { user } = useAuth();
@@ -153,6 +153,23 @@ export default function SellerDashboard() {
   const totalInventory = sellerProducts.reduce((sum, product) => sum + product.availableUnits, 0);
   const totalOrders = orders.length;
   const totalRevenue = orders.reduce((sum, order) => sum + order.totalAmount, 0);
+
+  const pendingPayouts = orders.filter(o => !o.sellerPaid);
+  const pendingBalance = pendingPayouts.reduce(
+    (sum, o) => sum + o.totalAmount * (1 - SERVICE_FEE_RATE),
+    0,
+  );
+
+  const getPayoutDate = (order: Order) => {
+    const base = order.deliveredAt
+      ? new Date(order.deliveredAt)
+      : order.estimatedDeliveryDate
+      ? new Date(order.estimatedDeliveryDate)
+      : new Date(order.createdAt);
+    const payout = new Date(base);
+    payout.setDate(payout.getDate() + 7);
+    return payout;
+  };
   
   // Calculate inventory by category
   const inventoryByCategory = sellerProducts.reduce((acc, product) => {
@@ -264,6 +281,43 @@ export default function SellerDashboard() {
                 </CardContent>
               </Card>
             </div>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Upcoming Payouts</CardTitle>
+                <CardDescription>
+                  Balance: {formatCurrency(pendingBalance)}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {pendingPayouts.length > 0 ? (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b">
+                          <th className="py-2 px-4 text-left">Order</th>
+                          <th className="py-2 px-4 text-left">Status</th>
+                          <th className="py-2 px-4 text-right">Payout</th>
+                          <th className="py-2 px-4 text-right">Payout Date</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {pendingPayouts.map((order) => (
+                          <tr key={order.id} className="border-b">
+                            <td className="py-2 px-4">#{order.id}</td>
+                            <td className="py-2 px-4">{order.status}</td>
+                            <td className="py-2 px-4 text-right">{formatCurrency(order.totalAmount * (1 - SERVICE_FEE_RATE))}</td>
+                            <td className="py-2 px-4 text-right">{formatDate(getPayoutDate(order))}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-500">No upcoming payouts</p>
+                )}
+              </CardContent>
+            </Card>
             
             {/* Product Inventory */}
             <Card>
