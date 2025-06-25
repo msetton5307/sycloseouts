@@ -510,6 +510,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
+      if (updateData.status === "delivered" && prevStatus !== "delivered") {
+        updateData.deliveredAt = new Date();
+      }
+
       const updatedOrder = await storage.updateOrder(id, updateData);
       res.json(updatedOrder);
 
@@ -734,6 +738,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         await sendAdminUserEmail(user.email, subject, message);
         res.sendStatus(204);
+      } catch (error) {
+        handleApiError(res, error);
+      }
+    },
+  );
+
+  app.get("/api/admin/billing", isAuthenticated, isAdmin, async (_req, res) => {
+    try {
+      const orders = await storage.getOrdersForBilling();
+      res.json(orders);
+    } catch (error) {
+      handleApiError(res, error);
+    }
+  });
+
+  app.post(
+    "/api/admin/orders/:id/mark-charged",
+    isAuthenticated,
+    isAdmin,
+    async (req, res) => {
+      try {
+        const id = parseInt(req.params.id, 10);
+        if (Number.isNaN(id)) {
+          return res.status(400).json({ message: "Invalid order ID" });
+        }
+        const order = await storage.updateOrder(id, { buyerCharged: true });
+        res.json(order);
+      } catch (error) {
+        handleApiError(res, error);
+      }
+    },
+  );
+
+  app.post(
+    "/api/admin/orders/:id/mark-paid",
+    isAuthenticated,
+    isAdmin,
+    async (req, res) => {
+      try {
+        const id = parseInt(req.params.id, 10);
+        if (Number.isNaN(id)) {
+          return res.status(400).json({ message: "Invalid order ID" });
+        }
+        const order = await storage.updateOrder(id, { sellerPaid: true });
+        res.json(order);
       } catch (error) {
         handleApiError(res, error);
       }

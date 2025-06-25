@@ -29,7 +29,8 @@ import {
   Users,
   LayoutDashboard,
   Package,
-  Star
+  Star,
+  DollarSign
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { formatCurrency } from "@/lib/utils";
@@ -144,6 +145,12 @@ export default function AdminDashboard() {
                     {pendingApplications}
                   </span>
                 )}
+              </Button>
+            </Link>
+            <Link href="/admin/billing">
+              <Button variant="outline" className="flex items-center">
+                <DollarSign className="mr-2 h-4 w-4" />
+                Billing
               </Button>
             </Link>
             <Link href="/admin/featured">

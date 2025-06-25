@@ -88,6 +88,9 @@ export interface IStorage {
   getUnreadNotificationCount(userId: number): Promise<number>;
   deleteNotification(id: number, userId: number): Promise<void>;
 
+  // Billing methods
+  getOrdersForBilling(): Promise<any[]>;
+
   // Product question methods
   createProductQuestion(question: InsertProductQuestion): Promise<ProductQuestion>;
   getProductQuestionsForSeller(sellerId: number): Promise<ProductQuestion[]>;
@@ -626,6 +629,19 @@ export class DatabaseStorage implements IStorage {
       [sellerId, start, end],
     );
     return result.rows.map((r) => ({ date: r.date, revenue: Number(r.revenue) }));
+  }
+
+  async getOrdersForBilling(): Promise<any[]> {
+    const result = await pool.query(
+      `SELECT o.*, 
+              b.first_name AS buyer_first_name, b.last_name AS buyer_last_name, b.email AS buyer_email,
+              s.first_name AS seller_first_name, s.last_name AS seller_last_name, s.email AS seller_email
+         FROM orders o
+         JOIN users b ON b.id = o.buyer_id
+         JOIN users s ON s.id = o.seller_id
+        ORDER BY o.created_at DESC`
+    );
+    return result.rows;
   }
 
   // Cart methods
