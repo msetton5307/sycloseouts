@@ -160,6 +160,9 @@ export const orders = pgTable("orders", {
   paymentDetails: jsonb("payment_details"),
   estimatedDeliveryDate: timestamp("estimated_delivery_date"),
   trackingNumber: text("tracking_number"),
+  buyerCharged: boolean("buyer_charged").default(false),
+  sellerPaid: boolean("seller_paid").default(false),
+  deliveredAt: timestamp("delivered_at"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -178,6 +181,9 @@ export const ordersRelations = relations(orders, ({ one, many }) => ({
 export const insertOrderSchema = createInsertSchema(orders)
   .omit({
     id: true,
+    buyerCharged: true,
+    sellerPaid: true,
+    deliveredAt: true,
     createdAt: true,
   })
   .extend({
