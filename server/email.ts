@@ -129,7 +129,7 @@ export async function sendInvoiceEmail(
             </tbody>
           </table>
 
-          <p style="margin-top:30px;">Invoice #: <strong>#INV-${order.id}</strong></p>
+          <p style="margin-top:30px;">Invoice #: <strong>#INV-${order.code}</strong></p>
           <p>Order Date: <strong>${new Date(order.createdAt || Date.now()).toDateString()}</strong></p>
         </td>
       </tr>
@@ -154,10 +154,10 @@ export async function sendInvoiceEmail(
   const mailOptions = {
     from: process.env.SMTP_FROM || user,
     to,
-    subject: `Invoice for Order #${order.id}`,
+    subject: `Invoice for Order #${order.code}`,
     text:
       `Thank you for your order!\n\n` +
-      `Order ID: ${order.id}\n` +
+      `Order ID: ${order.code}\n` +
       `Total: $${order.totalAmount.toFixed(2)}\n\n` +
       `Items:\n${itemLines}\n\n` +
       `We appreciate your business!`,
@@ -286,7 +286,7 @@ export async function sendSellerOrderEmail(
 
           ${shippingLines ? `<div style="margin-top:20px;"><strong>Ship To:</strong>${shippingLines}</div>` : ""}
 
-          <p style="margin-top:30px;">Order #: <strong>${order.id}</strong></p>
+          <p style="margin-top:30px;">Order #: <strong>${order.code}</strong></p>
           <p>Order Date: <strong>${new Date(order.createdAt || Date.now()).toDateString()}</strong></p>
         </td>
       </tr>
@@ -311,10 +311,10 @@ export async function sendSellerOrderEmail(
   const mailOptions = {
     from: process.env.SMTP_FROM || user,
     to,
-    subject: `New Order #${order.id} Received`,
+    subject: `New Order #${order.code} Received`,
     text:
       `You have a new order!\n\n` +
-      `Order ID: ${order.id}\n` +
+      `Order ID: ${order.code}\n` +
       `Total: $${order.totalAmount.toFixed(2)}\n\n` +
       `Items:\n${itemLines}\n`,
     html,
@@ -343,7 +343,7 @@ export async function sendShippingUpdateEmail(to: string, order: Order) {
   const mailOptions = {
     from: process.env.SMTP_FROM || user,
     to,
-    subject: `Shipping update for Order #${order.id}`,
+    subject: `Shipping update for Order #${order.code}`,
     text: `Your order status is now: ${order.status}`,
   };
 
@@ -376,7 +376,7 @@ export async function sendSellerApprovalEmail(to: string) {
 
 export async function sendOrderMessageEmail(
   to: string,
-  orderId: number,
+  orderCode: string,
   message: string,
 ) {
   if (!transporter) {
@@ -387,7 +387,7 @@ export async function sendOrderMessageEmail(
   const mailOptions = {
     from: process.env.SMTP_FROM || user,
     to,
-    subject: `Message regarding Order #${orderId}`,
+    subject: `Message regarding Order #${orderCode}`,
     text: message,
   };
 

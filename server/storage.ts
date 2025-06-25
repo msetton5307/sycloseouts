@@ -16,6 +16,7 @@ import session from "express-session";
 import { db, pool } from "./db";
 import { eq, and, or, desc, SQL, ilike, lte, sql } from "drizzle-orm";
 import connectPgSimple from "connect-pg-simple";
+import { generateOrderCode } from "./orderCode";
 
 const PgStore = connectPgSimple(session);
 
@@ -287,7 +288,13 @@ export class DatabaseStorage implements IStorage {
 
   async createOrder(insertOrder: InsertOrder): Promise<Order> {
     const [order] = await db.insert(orders).values(insertOrder).returning();
-    return order;
+    const code = generateOrderCode(order.id);
+    const [withCode] = await db
+      .update(orders)
+      .set({ code })
+      .where(eq(orders.id, order.id))
+      .returning();
+    return withCode;
   }
 
   async updateOrder(id: number, orderData: Partial<Order>): Promise<Order | undefined> {

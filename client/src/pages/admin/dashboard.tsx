@@ -297,7 +297,7 @@ export default function AdminDashboard() {
                         {orders.slice(0, 5).map((order) => (
                           <div key={order.id} className="flex justify-between items-center border-b pb-4">
                             <div>
-                              <p className="font-medium">Order #{order.id}</p>
+                              <p className="font-medium">Order #{order.code}</p>
                               <p className="text-sm text-gray-500">
                                 Buyer #{order.buyerId} • Seller #{order.sellerId}
                               </p>

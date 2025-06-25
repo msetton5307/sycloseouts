@@ -131,7 +131,7 @@ export default function AdminUserProfilePage() {
             <p>On-time delivery rate: {(onTimeRate * 100).toFixed(0)}%</p>
             {orders.map(o => (
               <div key={o.id} className="border rounded p-2 text-sm">
-                Order #{o.id} - {o.status}
+                Order #{o.code} - {o.status}
               </div>
             ))}
           </CardContent>

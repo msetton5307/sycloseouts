@@ -53,7 +53,7 @@ export default function BuyerOrdersPage() {
     if (filter !== "all" && order.status !== filter) {
       return false;
     }
-    if (searchTerm && !order.id.toString().includes(searchTerm)) {
+    if (searchTerm && !order.code.toLowerCase().includes(searchTerm.toLowerCase())) {
       return false;
     }
     return true;
@@ -79,7 +79,7 @@ export default function BuyerOrdersPage() {
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                   <Input
-                    placeholder="Search by order #"
+                    placeholder="Search by order code"
                     className="pl-10 w-full sm:w-[200px] rounded-full"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
@@ -125,13 +125,13 @@ export default function BuyerOrdersPage() {
                         {order.previewImage && (
                           <img
                             src={order.previewImage}
-                            alt={`Order ${order.id} item`}
+                            alt={`Order ${order.code} item`}
                             className="w-20 h-20 object-cover rounded"
                           />
                         )}
                         <div className="flex flex-col sm:flex-row sm:justify-between mb-4 gap-2 flex-1">
                           <div>
-                            <h3 className="font-medium">Order #{order.id}</h3>
+                            <h3 className="font-medium">Order #{order.code}</h3>
                             <p className="text-sm text-gray-500 flex items-center">
                               <CalendarIcon className="h-3 w-3 mr-1" />
                               Placed on {formatDate(order.createdAt)}
@@ -186,13 +186,13 @@ export default function BuyerOrdersPage() {
                           {order.previewImage && (
                             <img
                               src={order.previewImage}
-                              alt={`Order ${order.id} item`}
+                          alt={`Order ${order.code} item`}
                               className="w-12 h-12 object-cover rounded"
                             />
                           )}
                           <div className="flex flex-col flex-1 gap-1">
                             <div className="flex items-center justify-between">
-                              <span className="font-medium">Order #{order.id}</span>
+                              <span className="font-medium">Order #{order.code}</span>
                               <span className={`text-xs px-2 py-1 rounded-full ${
                                 order.status === "delivered"
                                   ? "bg-green-100 text-green-800"

@@ -26,6 +26,7 @@ import {
 } from "@shared/schema";
 import { db } from "./db";
 import { eq } from "drizzle-orm";
+import { generateOrderCode } from "./orderCode";
 import { ZodError } from "zod";
 import { containsContactInfo } from "./contactFilter";
 
@@ -344,7 +345,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.setHeader("Content-Type", "application/pdf");
       res.setHeader(
         "Content-Disposition",
-        `attachment; filename=invoice-${order.id}.pdf`
+        `attachment; filename=invoice-${order.code}.pdf`
       );
       res.send(pdf);
     } catch (error) {
@@ -380,6 +381,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           .values(orderData)
           .returning();
 
+        const code = generateOrderCode(createdOrder.id);
+        const [withCode] = await tx
+          .update(ordersTable)
+          .set({ code })
+          .where(eq(ordersTable.id, createdOrder.id))
+          .returning();
+
         if (req.body.items && Array.isArray(req.body.items)) {
           for (const item of req.body.items) {
             const orderItemData = insertOrderItemSchema.parse({
@@ -412,7 +420,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
         }
 
-        return createdOrder;
+        return withCode;
       });
 
       // send invoice email asynchronously, do not block response
@@ -461,13 +469,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.createNotification({
         userId: updatedOrder.buyerId,
         type: 'order',
-        content: `Order #${updatedOrder.id} was cancelled`,
+        content: `Order #${updatedOrder.code} was cancelled`,
         link: `/buyer/orders/${updatedOrder.id}`,
       });
       await storage.createNotification({
         userId: updatedOrder.sellerId,
         type: 'order',
-        content: `Order #${updatedOrder.id} was cancelled`,
+        content: `Order #${updatedOrder.code} was cancelled`,
         link: `/seller/orders`,
       });
     } catch (error) {
@@ -525,13 +533,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await storage.createNotification({
           userId: updatedOrder.buyerId,
           type: 'order',
-          content: `Order #${updatedOrder.id} status updated to ${updateData.status}`,
+          content: `Order #${updatedOrder.code} status updated to ${updateData.status}`,
           link: `/buyer/orders/${updatedOrder.id}`,
         });
         await storage.createNotification({
           userId: updatedOrder.sellerId,
           type: 'order',
-          content: `Order #${updatedOrder.id} status updated to ${updateData.status}`,
+          content: `Order #${updatedOrder.code} status updated to ${updateData.status}`,
           link: `/seller/orders`,
         });
       }
@@ -566,7 +574,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (containsContactInfo(req.body.message)) {
         await sendAdminAlertEmail(
           "Blocked contact info in order message",
-          `User #${user.id} attempted to share contact info with user #${receiverId} in order #${order.id}.\n\n${req.body.message}`
+          `User #${user.id} attempted to share contact info with user #${receiverId} in order #${order.code}.\n\n${req.body.message}`
         );
         return res.status(400).json({ message: "Sharing contact information is not allowed" });
       }
@@ -581,11 +589,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.createNotification({
         userId: receiverId,
         type: 'message',
-        content: `New message about order #${order.id}`,
+        content: `New message about order #${order.code}`,
         link: `/orders/${order.id}/messages`,
       });
 
-      await sendOrderMessageEmail(receiver.email, order.id, req.body.message);
+      await sendOrderMessageEmail(receiver.email, order.code, req.body.message);
       res.status(201).json(message);
     } catch (error) {
       handleApiError(res, error);
@@ -645,11 +653,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.createNotification({
         userId: otherId,
         type: 'message',
-        content: `New message about order #${order.id}`,
+        content: `New message about order #${order.code}`,
         link: `/conversations/${user.id}`,
       });
 
-      await sendOrderMessageEmail(receiver.email, order.id, req.body.message);
+      await sendOrderMessageEmail(receiver.email, order.code, req.body.message);
       res.status(201).json(message);
     } catch (error) {
       handleApiError(res, error);
@@ -1308,201 +1316,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       handleApiError(res, error);
     }
   });
-
-  // Shipping label routes
-  app.post(
-    "/api/orders/:id/shipping/rates",
-    isAuthenticated,
-    isSeller,
-    async (req, res) => {
-      try {
-        const id = parseInt(req.params.id, 10);
-        if (Number.isNaN(id)) {
-          return res.status(400).json({ message: "Invalid order ID" });
-        }
-        const user = req.user as Express.User;
-        const order = await storage.getOrder(id);
-        if (!order) return res.status(404).json({ message: "Order not found" });
-        if (order.sellerId !== user.id && user.role !== "admin") {
-          return res.status(403).json({ message: "Forbidden" });
-        }
-
-        if (!process.env.SHIPPO_API_TOKEN) {
-          return res.status(500).json({ message: "Shippo not configured" });
-        }
-
-        const buyerAddr = order.shippingDetails as any;
-        if (!buyerAddr) {
-          return res.status(400).json({ message: "Missing shipping address" });
-        }
-
-        const sellerAddresses = await storage.getAddresses(user.id);
-        const from = sellerAddresses[0];
-        if (!from) {
-          return res
-            .status(400)
-            .json({ message: "Seller has no return address" });
-        }
-
-        const { weight, length, width, height, service } = req.body;
-
-        const shipmentRes = await fetch("https://api.goshippo.com/shipments/", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `ShippoToken ${process.env.SHIPPO_API_TOKEN}`,
-          },
-          body: JSON.stringify({
-            address_from: {
-              name: from.name,
-              street1: from.address,
-              city: from.city,
-              state: from.state,
-              zip: from.zipCode,
-              country: from.country ?? "US",
-            },
-            address_to: {
-              name: buyerAddr.name,
-              street1: buyerAddr.address,
-              city: buyerAddr.city,
-              state: buyerAddr.state,
-              zip: buyerAddr.zipCode,
-              country: buyerAddr.country ?? "US",
-            },
-            parcels: [
-              {
-                length,
-                width,
-                height,
-                distance_unit: "in",
-                weight,
-                mass_unit: "oz",
-              },
-            ],
-            async: false,
-          }),
-        });
-
-        if (!shipmentRes.ok) {
-          console.error(await shipmentRes.text());
-          return res.status(500).json({ message: "Failed to fetch rates" });
-        }
-
-        const shipmentData = await shipmentRes.json();
-        let rates: any[] = shipmentData.rates || [];
-        if (service) {
-          const svc = String(service).toLowerCase();
-          rates = rates.filter(
-            (r: any) =>
-              r.provider.toLowerCase().includes(svc) ||
-              r.servicelevel?.name?.toLowerCase().includes(svc),
-          );
-        }
-
-        const markup = parseFloat(process.env.SHIPPING_MARKUP || "0.5");
-        const mapped = rates.map((r: any) => ({
-          object_id: r.object_id,
-          provider: r.provider,
-          servicelevel: r.servicelevel?.name,
-          amount: parseFloat(r.amount) + markup,
-          currency: r.currency,
-        }));
-
-        res.json({ rates: mapped });
-      } catch (error) {
-        handleApiError(res, error);
-      }
-    },
-  );
-
-  app.post(
-    "/api/orders/:id/shipping/purchase",
-    isAuthenticated,
-    isSeller,
-    async (req, res) => {
-      try {
-        const id = parseInt(req.params.id, 10);
-        if (Number.isNaN(id)) {
-          return res.status(400).json({ message: "Invalid order ID" });
-        }
-        const user = req.user as Express.User;
-        const order = await storage.getOrder(id);
-        if (!order) return res.status(404).json({ message: "Order not found" });
-        if (order.sellerId !== user.id && user.role !== "admin") {
-          return res.status(403).json({ message: "Forbidden" });
-        }
-        if (!process.env.SHIPPO_API_TOKEN) {
-          return res.status(500).json({ message: "Shippo not configured" });
-        }
-
-        const { rateObjectId } = req.body;
-        if (!rateObjectId) {
-          return res.status(400).json({ message: "Missing rateObjectId" });
-        }
-
-        const rateRes = await fetch(
-          `https://api.goshippo.com/rates/${rateObjectId}`,
-          {
-            headers: {
-              Authorization: `ShippoToken ${process.env.SHIPPO_API_TOKEN}`,
-            },
-          },
-        );
-        const rateData = await rateRes.json();
-
-        const markup = parseFloat(process.env.SHIPPING_MARKUP || "0.5");
-        const totalAmount = parseFloat(rateData.amount) + markup;
-
-        if (process.env.STRIPE_SECRET_KEY && req.body.source) {
-          await fetch("https://api.stripe.com/v1/charges", {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${process.env.STRIPE_SECRET_KEY}`,
-              "Content-Type": "application/x-www-form-urlencoded",
-            },
-            body: new URLSearchParams({
-              amount: String(Math.round(totalAmount * 100)),
-              currency: rateData.currency || "usd",
-              source: req.body.source,
-              description: `Shipping label for order ${id}`,
-            }),
-          });
-        }
-
-        const txRes = await fetch("https://api.goshippo.com/transactions/", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `ShippoToken ${process.env.SHIPPO_API_TOKEN}`,
-          },
-          body: JSON.stringify({ rate: rateObjectId, label_file_type: "PDF" }),
-        });
-
-        const txData = await txRes.json();
-        if (txData.status !== "SUCCESS") {
-          return res.status(500).json({ message: "Failed to purchase label" });
-        }
-
-        const updatedOrder = await storage.updateOrder(id, {
-          trackingNumber: txData.tracking_number,
-          status: "label_generated",
-          shippingDetails: {
-            ...(order.shippingDetails as any),
-            labelUrl: txData.label_url,
-            carrier: rateData.provider,
-          },
-        });
-
-        res.json({
-          labelUrl: txData.label_url,
-          trackingNumber: txData.tracking_number,
-          order: updatedOrder,
-        });
-      } catch (error) {
-        handleApiError(res, error);
-      }
-    },
-  );
 
   // Support ticket routes
   app.get("/api/support-tickets", isAuthenticated, async (req, res) => {

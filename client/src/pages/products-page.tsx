@@ -33,6 +33,9 @@ export default function ProductsPage() {
   
   // Filter and sort products based on user selections
   const filteredProducts = products ? products.filter(product => {
+    if (product.availableUnits <= 0) {
+      return false;
+    }
     // Filter by search term
     if (filters.search && !product.title.toLowerCase().includes(filters.search.toLowerCase()) &&
         !product.description.toLowerCase().includes(filters.search.toLowerCase())) {
