@@ -952,6 +952,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/seller/best-sellers", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user as Express.User;
+      if (user.role !== "seller" && user.role !== "admin") {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+      const start = req.query.start ? new Date(String(req.query.start)) : new Date(Date.now() - 30 * 86400000);
+      const end = req.query.end ? new Date(String(req.query.end)) : new Date();
+      const sellerId = user.role === "seller" ? user.id : user.id;
+      const list = await storage.getBestSellingProducts(sellerId, start, end);
+      res.json(list);
+    } catch (error) {
+      handleApiError(res, error);
+    }
+  });
+
+  app.get("/api/seller/payout-summary", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user as Express.User;
+      if (user.role !== "seller" && user.role !== "admin") {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+      const start = req.query.start ? new Date(String(req.query.start)) : new Date(Date.now() - 30 * 86400000);
+      const end = req.query.end ? new Date(String(req.query.end)) : new Date();
+      const sellerId = user.role === "seller" ? user.id : user.id;
+      const summary = await storage.getPayoutSummary(sellerId, start, end);
+      res.json(summary);
+    } catch (error) {
+      handleApiError(res, error);
+    }
+  });
+
   // Seller application routes
   app.post("/api/seller-applications", isAuthenticated, async (req, res) => {
     try {
