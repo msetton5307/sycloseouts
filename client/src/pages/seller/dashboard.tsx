@@ -181,7 +181,7 @@ export default function SellerDashboard() {
               Welcome back, {user?.firstName}
             </p>
           </div>
-          <div className="flex items-center space-x-4">
+          <div className="grid grid-cols-2 sm:flex sm:space-x-4 gap-2">
             <Link href="/seller/products">
               <Button variant="outline" className="flex items-center">
                 <Package className="mr-2 h-4 w-4" />
@@ -278,7 +278,7 @@ export default function SellerDashboard() {
                   </div>
                 ) : sellerProducts.length > 0 ? (
                   <div className="space-y-4">
-                    <div className="overflow-x-auto">
+                    <div className="hidden md:block overflow-x-auto">
                       <table className="w-full text-sm">
                         <thead>
                           <tr className="border-b">
@@ -321,7 +321,35 @@ export default function SellerDashboard() {
                         </tbody>
                       </table>
                     </div>
-                    
+
+                    <div className="space-y-4 md:hidden">
+                      {sellerProducts.slice(0, 5).map((product) => (
+                        <div key={product.id} className="border rounded-md p-4 flex justify-between items-center">
+                          <div className="flex items-center gap-3">
+                            <img
+                              src={product.images[0]}
+                              alt={product.title}
+                              className="h-10 w-10 rounded object-cover"
+                            />
+                            <div>
+                              <p className="font-medium truncate w-36">{product.title}</p>
+                              <p className="text-xs text-gray-500">{formatCurrency(product.price)}</p>
+                            </div>
+                          </div>
+                          <div className="text-right text-sm space-y-1">
+                            <p>
+                              {product.availableUnits} / {product.totalUnits}
+                            </p>
+                            {product.availableUnits > 0 ? (
+                              <span className="px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">In Stock</span>
+                            ) : (
+                              <span className="px-2 py-1 rounded-full text-xs bg-red-100 text-red-800">Out of Stock</span>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
                     <div className="flex justify-center">
                       <Link href="/seller/products">
                         <Button variant="outline">View All Products</Button>
