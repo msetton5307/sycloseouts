@@ -173,11 +173,11 @@ export default function SellerProducts() {
           </Link>
         </div>
         
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4">
           <h1 className="text-3xl font-extrabold tracking-tight text-gray-900">
             My Products
           </h1>
-          <div className="flex space-x-2">
+          <div className="flex flex-wrap gap-2">
             <BulkUpload />
             <Button
               onClick={() => setShowNewProductForm(true)}
@@ -287,8 +287,9 @@ export default function SellerProducts() {
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
               </div>
             ) : filteredProducts.length > 0 ? (
-              <div className="overflow-x-auto">
-                <Table>
+              <div>
+                <div className="hidden md:block overflow-x-auto">
+                  <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead>Product</TableHead>
@@ -364,7 +365,61 @@ export default function SellerProducts() {
                       </TableRow>
                     ))}
                   </TableBody>
-                </Table>
+                  </Table>
+                </div>
+
+                <div className="space-y-4 md:hidden">
+                  {filteredProducts.map((product) => (
+                    <div key={product.id} className="border rounded-lg p-4 space-y-2">
+                      <div className="flex items-center gap-3">
+                        <img
+                          src={product.images[0]}
+                          alt={product.title}
+                          className="h-12 w-12 rounded object-cover"
+                        />
+                        <div>
+                          <p className="font-medium">{product.title}</p>
+                          <p className="text-xs text-gray-500">{product.category}</p>
+                        </div>
+                      </div>
+                      <div className="text-sm flex justify-between">
+                        <span>{formatCurrency(product.price)}</span>
+                        <span>{product.availableUnits} / {product.totalUnits}</span>
+                      </div>
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleEditProduct(product)}
+                          className="h-8 w-8 p-0"
+                        >
+                          <Edit className="h-4 w-4" />
+                          <span className="sr-only">Edit</span>
+                        </Button>
+                        {user?.role === "admin" && (
+                          <Button
+                            size="sm"
+                            variant={product.isBanner ? "default" : "outline"}
+                            onClick={() => handleToggleBanner(product)}
+                            className="h-8 w-8 p-0"
+                          >
+                            <Star className="h-4 w-4" fill={product.isBanner ? "currentColor" : "none"} />
+                            <span className="sr-only">Banner</span>
+                          </Button>
+                        )}
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleDeleteProduct(product)}
+                          className="h-8 w-8 p-0 hover:bg-red-50 hover:text-red-600 hover:border-red-200"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          <span className="sr-only">Delete</span>
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             ) : (
               <div className="text-center py-8">
