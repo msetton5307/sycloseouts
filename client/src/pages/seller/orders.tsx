@@ -81,7 +81,7 @@ export default function SellerOrdersPage() {
 
   function handleConfirmTracking() {
     if (trackingOrderId && trackingNum) {
-      updateOrder.mutate({ id: trackingOrderId, update: { trackingNumber: trackingNum } });
+      updateOrder.mutate({ id: trackingOrderId, update: { trackingNumber: trackingNum, status: "shipped" } });
     }
     setTrackingOrderId(null);
   }
