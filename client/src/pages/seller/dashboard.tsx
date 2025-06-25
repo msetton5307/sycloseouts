@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Link, useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Order, Product, Address, PaymentMethod } from "@shared/schema";
+import { Order, OrderItem, Product, Address, PaymentMethod } from "@shared/schema";
 import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
 import {
@@ -11,6 +11,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+} from "@/components/ui/accordion";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { apiRequest } from "@/lib/queryClient";
@@ -43,6 +49,16 @@ import {
 import { useAuth } from "@/hooks/use-auth";
 import { formatCurrency, formatDate, SERVICE_FEE_RATE } from "@/lib/utils";
 
+interface OrderItemWithProduct extends OrderItem {
+  productTitle: string;
+  productImages: string[];
+}
+
+interface OrderWithDetails extends Order {
+  previewImage?: string | null;
+  items: OrderItemWithProduct[];
+}
+
 export default function SellerDashboard() {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("overview");
@@ -60,7 +76,7 @@ export default function SellerDashboard() {
     enabled: !!user,
   });
   
-  const { data: orders = [], isLoading: isLoadingOrders } = useQuery<Order[]>({
+  const { data: orders = [], isLoading: isLoadingOrders } = useQuery<OrderWithDetails[]>({
     queryKey: ["/api/orders"],
     enabled: !!user,
   });
@@ -112,6 +128,7 @@ export default function SellerDashboard() {
 
   const [trackingOrderId, setTrackingOrderId] = useState<number | null>(null);
   const [trackingNum, setTrackingNum] = useState("");
+  const [showAllPayouts, setShowAllPayouts] = useState(false);
 
   function handleConfirmTracking() {
     if (trackingOrderId && trackingNum) {
@@ -154,7 +171,9 @@ export default function SellerDashboard() {
   const totalOrders = orders.length;
   const totalRevenue = orders.reduce((sum, order) => sum + order.totalAmount, 0);
 
-  const pendingPayouts = orders.filter(o => !o.sellerPaid);
+  const pendingPayouts = orders.filter(
+    o => !o.sellerPaid && o.status !== "cancelled",
+  );
   const pendingBalance = pendingPayouts.reduce(
     (sum, o) => sum + o.totalAmount * (1 - SERVICE_FEE_RATE),
     0,
@@ -170,6 +189,20 @@ export default function SellerDashboard() {
     payout.setDate(payout.getDate() + 7);
     return payout;
   };
+
+  const payoutGroups = useMemo(() => {
+    const map: Record<string, { date: Date; orders: OrderWithDetails[]; total: number }> = {};
+    for (const order of pendingPayouts) {
+      const date = getPayoutDate(order);
+      const key = date.toDateString();
+      if (!map[key]) {
+        map[key] = { date, orders: [], total: 0 };
+      }
+      map[key].orders.push(order);
+      map[key].total += order.totalAmount * (1 - SERVICE_FEE_RATE);
+    }
+    return Object.values(map).sort((a, b) => a.date.getTime() - b.date.getTime());
+  }, [pendingPayouts]);
   
   // Calculate inventory by category
   const inventoryByCategory = sellerProducts.reduce((acc, product) => {
@@ -290,29 +323,67 @@ export default function SellerDashboard() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {pendingPayouts.length > 0 ? (
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="border-b">
-                          <th className="py-2 px-4 text-left">Order</th>
-                          <th className="py-2 px-4 text-left">Status</th>
-                          <th className="py-2 px-4 text-right">Payout</th>
-                          <th className="py-2 px-4 text-right">Payout Date</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {pendingPayouts.map((order) => (
-                          <tr key={order.id} className="border-b">
-                            <td className="py-2 px-4">#{order.id}</td>
-                            <td className="py-2 px-4">{order.status}</td>
-                            <td className="py-2 px-4 text-right">{formatCurrency(order.totalAmount * (1 - SERVICE_FEE_RATE))}</td>
-                            <td className="py-2 px-4 text-right">{formatDate(getPayoutDate(order))}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                {payoutGroups.length > 0 ? (
+                  <>
+                    <Accordion type="multiple" className="w-full">
+                      {(showAllPayouts ? payoutGroups : payoutGroups.slice(0, 3)).map((group) => (
+                        <AccordionItem key={group.date.toISOString()} value={group.date.toISOString()}>
+                          <AccordionTrigger className="px-4">
+                            <div className="flex justify-between w-full">
+                              <span>{formatDate(group.date)}</span>
+                              <span className="font-medium">{formatCurrency(group.total)}</span>
+                            </div>
+                          </AccordionTrigger>
+                          <AccordionContent>
+                            <div className="overflow-x-auto">
+                              <table className="w-full text-sm">
+                                <thead>
+                                  <tr className="border-b">
+                                    <th className="py-2 px-4 text-left">Order</th>
+                                    <th className="py-2 px-4 text-left">Items</th>
+                                    <th className="py-2 px-4 text-left">Status</th>
+                                    <th className="py-2 px-4 text-right">Payout</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {group.orders.map((order) => (
+                                    <tr key={order.id} className="border-b align-top">
+                                      <td className="py-2 px-4 font-medium">#{order.id}</td>
+                                      <td className="py-2 px-4">
+                                        <ul className="space-y-1">
+                                          {order.items.map((item) => (
+                                            <li key={item.id} className="flex items-center gap-2">
+                                              <img
+                                                src={item.productImages[0]}
+                                                alt={item.productTitle}
+                                                className="w-6 h-6 object-cover rounded"
+                                              />
+                                              <span className="truncate">
+                                                {item.productTitle} x{item.quantity}
+                                              </span>
+                                            </li>
+                                          ))}
+                                        </ul>
+                                      </td>
+                                      <td className="py-2 px-4">{order.status}</td>
+                                      <td className="py-2 px-4 text-right">{formatCurrency(order.totalAmount * (1 - SERVICE_FEE_RATE))}</td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          </AccordionContent>
+                        </AccordionItem>
+                      ))}
+                    </Accordion>
+                    {payoutGroups.length > 3 && (
+                      <div className="text-center mt-2">
+                        <Button variant="outline" size="sm" onClick={() => setShowAllPayouts(!showAllPayouts)}>
+                          {showAllPayouts ? "Show Less" : "View All"}
+                        </Button>
+                      </div>
+                    )}
+                  </>
                 ) : (
                   <p className="text-sm text-gray-500">No upcoming payouts</p>
                 )}
