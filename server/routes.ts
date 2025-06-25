@@ -1511,6 +1511,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/support-tickets/:id/messages", isAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id, 10);
+      if (Number.isNaN(id)) return res.status(400).json({ message: "Invalid ticket ID" });
+      const user = req.user as Express.User;
+      const ticket = await storage.getSupportTicket(id);
+      if (!ticket) return res.status(404).json({ message: "Ticket not found" });
+      if (user.role !== "admin" && ticket.userId !== user.id) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+      const messages = await storage.getSupportTicketMessages(id);
+      res.json(messages);
+    } catch (error) {
+      handleApiError(res, error);
+    }
+  });
+
+  app.post("/api/support-tickets/:id/messages", isAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id, 10);
+      if (Number.isNaN(id)) return res.status(400).json({ message: "Invalid ticket ID" });
+      const user = req.user as Express.User;
+      const ticket = await storage.getSupportTicket(id);
+      if (!ticket) return res.status(404).json({ message: "Ticket not found" });
+      if (user.role !== "admin" && ticket.userId !== user.id) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+      const content = req.body.message;
+      if (!content) return res.status(400).json({ message: "Missing message" });
+      const msg = await storage.createSupportTicketMessage({
+        ticketId: id,
+        senderId: user.id,
+        message: content,
+      });
+      if (user.role === "admin") {
+        await storage.createNotification({
+          userId: ticket.userId,
+          type: 'support',
+          content: `Support ticket #${ticket.id} has a new response`,
+          link: '/help',
+        });
+      }
+      res.status(201).json(msg);
+    } catch (error) {
+      handleApiError(res, error);
+    }
+  });
+
   app.post("/api/support-tickets/:id/respond", isAuthenticated, isAdmin, async (req, res) => {
     try {
       const id = parseInt(req.params.id, 10);

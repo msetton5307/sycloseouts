@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { SupportTicket } from "@shared/schema";
+import { SupportTicket, SupportTicketMessage } from "@shared/schema";
 import { apiRequest, getQueryFn } from "@/lib/queryClient";
 
 export function useSupportTickets() {
@@ -33,5 +33,25 @@ export function useUpdateTicketStatus(id: number) {
     mutationFn: (status: string) =>
       apiRequest("POST", `/api/support-tickets/${id}/status`, { status }).then(r => r.json()),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["/api/support-tickets"] }),
+  });
+}
+
+export function useTicketMessages(id?: number) {
+  return useQuery<SupportTicketMessage[]>({
+    queryKey: ["/api/support-tickets/" + id + "/messages"],
+    queryFn: getQueryFn({ on401: "throw" }),
+    enabled: !!id,
+  });
+}
+
+export function useSendTicketMessage(id: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (message: string) =>
+      apiRequest("POST", `/api/support-tickets/${id}/messages`, { message }).then(r => r.json()),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/support-tickets/" + id + "/messages"] });
+      qc.invalidateQueries({ queryKey: ["/api/support-tickets"] });
+    },
   });
 }
