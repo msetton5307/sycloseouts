@@ -336,6 +336,25 @@ export const insertSupportTicketSchema = createInsertSchema(supportTickets)
     createdAt: true,
   });
 
+// Individual messages within a support ticket
+export const supportTicketMessages = pgTable("support_ticket_messages", {
+  id: serial("id").primaryKey(),
+  ticketId: integer("ticket_id").notNull(),
+  senderId: integer("sender_id").notNull(),
+  message: text("message").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const supportTicketMessagesRelations = relations(supportTicketMessages, ({ one }) => ({
+  ticket: one(supportTickets, { fields: [supportTicketMessages.ticketId], references: [supportTickets.id] }),
+  sender: one(users, { fields: [supportTicketMessages.senderId], references: [users.id] }),
+}));
+
+export const insertSupportTicketMessageSchema = createInsertSchema(supportTicketMessages).omit({
+  id: true,
+  createdAt: true,
+});
+
 // In-app notifications for users
 export const notifications = pgTable("notifications", {
   id: serial("id").primaryKey(),
@@ -390,6 +409,9 @@ export type InsertProductQuestion = z.infer<typeof insertProductQuestionSchema>;
 
 export type SupportTicket = typeof supportTickets.$inferSelect;
 export type InsertSupportTicket = z.infer<typeof insertSupportTicketSchema>;
+
+export type SupportTicketMessage = typeof supportTicketMessages.$inferSelect;
+export type InsertSupportTicketMessage = z.infer<typeof insertSupportTicketMessageSchema>;
 
 export type Notification = typeof notifications.$inferSelect;
 export type InsertNotification = z.infer<typeof insertNotificationSchema>;

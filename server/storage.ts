@@ -556,6 +556,11 @@ export class DatabaseStorage implements IStorage {
 
   async createSupportTicket(ticket: InsertSupportTicket): Promise<SupportTicket> {
     const [t] = await db.insert(supportTickets).values(ticket).returning();
+    await db.insert(supportTicketMessages).values({
+      ticketId: t.id,
+      senderId: ticket.userId,
+      message: ticket.message,
+    });
     return t;
   }
 
@@ -575,6 +580,19 @@ export class DatabaseStorage implements IStorage {
       .where(eq(supportTickets.id, id))
       .returning();
     return t;
+  }
+
+  async getSupportTicketMessages(ticketId: number): Promise<SupportTicketMessage[]> {
+    return await db
+      .select()
+      .from(supportTicketMessages)
+      .where(eq(supportTicketMessages.ticketId, ticketId))
+      .orderBy(supportTicketMessages.createdAt);
+  }
+
+  async createSupportTicketMessage(msg: InsertSupportTicketMessage): Promise<SupportTicketMessage> {
+    const [m] = await db.insert(supportTicketMessages).values(msg).returning();
+    return m;
   }
 
   // Notification methods
