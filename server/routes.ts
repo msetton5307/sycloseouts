@@ -952,6 +952,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/seller/best-sellers", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user as Express.User;
+      if (user.role !== "seller" && user.role !== "admin") {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+      const start = req.query.start ? new Date(String(req.query.start)) : new Date(Date.now() - 30 * 86400000);
+      const end = req.query.end ? new Date(String(req.query.end)) : new Date();
+      const sellerId = user.role === "seller" ? user.id : user.id;
+      const list = await storage.getBestSellingProducts(sellerId, start, end);
+      res.json(list);
+    } catch (error) {
+      handleApiError(res, error);
+    }
+  });
+
+  app.get("/api/seller/payout-summary", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user as Express.User;
+      if (user.role !== "seller" && user.role !== "admin") {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+      const start = req.query.start ? new Date(String(req.query.start)) : new Date(Date.now() - 30 * 86400000);
+      const end = req.query.end ? new Date(String(req.query.end)) : new Date();
+      const sellerId = user.role === "seller" ? user.id : user.id;
+      const summary = await storage.getPayoutSummary(sellerId, start, end);
+      res.json(summary);
+    } catch (error) {
+      handleApiError(res, error);
+    }
+  });
+
   // Seller application routes
   app.post("/api/seller-applications", isAuthenticated, async (req, res) => {
     try {
@@ -1506,6 +1538,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Forbidden" });
       }
       res.json(ticket);
+    } catch (error) {
+      handleApiError(res, error);
+    }
+  });
+
+  app.get("/api/support-tickets/:id/messages", isAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id, 10);
+      if (Number.isNaN(id)) return res.status(400).json({ message: "Invalid ticket ID" });
+      const user = req.user as Express.User;
+      const ticket = await storage.getSupportTicket(id);
+      if (!ticket) return res.status(404).json({ message: "Ticket not found" });
+      if (user.role !== "admin" && ticket.userId !== user.id) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+      const messages = await storage.getSupportTicketMessages(id);
+      res.json(messages);
+    } catch (error) {
+      handleApiError(res, error);
+    }
+  });
+
+  app.post("/api/support-tickets/:id/messages", isAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id, 10);
+      if (Number.isNaN(id)) return res.status(400).json({ message: "Invalid ticket ID" });
+      const user = req.user as Express.User;
+      const ticket = await storage.getSupportTicket(id);
+      if (!ticket) return res.status(404).json({ message: "Ticket not found" });
+      if (user.role !== "admin" && ticket.userId !== user.id) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+      const content = req.body.message;
+      if (!content) return res.status(400).json({ message: "Missing message" });
+      const msg = await storage.createSupportTicketMessage({
+        ticketId: id,
+        senderId: user.id,
+        message: content,
+      });
+      if (user.role === "admin") {
+        await storage.createNotification({
+          userId: ticket.userId,
+          type: 'support',
+          content: `Support ticket #${ticket.id} has a new response`,
+          link: '/help',
+        });
+      }
+      res.status(201).json(msg);
     } catch (error) {
       handleApiError(res, error);
     }

@@ -1,20 +1,16 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
 import { useAuth } from "@/hooks/use-auth";
-import { useSupportTickets, useCreateTicket } from "@/hooks/use-support-tickets";
+import { useSupportTickets, useCreateTicket, useTicketMessages, useSendTicketMessage } from "@/hooks/use-support-tickets";
+import { SupportTicket } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardContent,
-  CardFooter,
-} from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import ChatMessage from "@/components/messages/chat-message";
 
 export default function HelpPage() {
   const { user } = useAuth();
@@ -70,26 +66,7 @@ export default function HelpPage() {
             </form>
             <div className="space-y-4">
               {tickets.map(t => (
-                <Card key={t.id}>
-                  <CardHeader className="flex flex-row justify-between items-start">
-                    <div className="space-y-1">
-                      <CardTitle>{t.subject}</CardTitle>
-                      <Badge variant="secondary">{t.topic}</Badge>
-                    </div>
-                    <Badge className="self-center" variant={t.status === 'open' ? 'outline' : 'default'}>
-                      {t.status}
-                    </Badge>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="whitespace-pre-line">{t.message}</p>
-                  </CardContent>
-                  {t.response && (
-                    <CardFooter className="flex flex-col items-start space-y-1">
-                      <p className="text-sm font-medium">Admin Response:</p>
-                      <p className="whitespace-pre-line">{t.response}</p>
-                    </CardFooter>
-                  )}
-                </Card>
+                <TicketCard key={t.id} ticket={t} />
               ))}
             </div>
           </>
@@ -99,5 +76,43 @@ export default function HelpPage() {
       </main>
       <Footer />
     </>
+  );
+}
+
+function TicketCard({ ticket }: { ticket: SupportTicket }) {
+  const { user } = useAuth();
+  const { data: messages = [] } = useTicketMessages(ticket.id);
+  const sendMsg = useSendTicketMessage(ticket.id);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const bottomRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row justify-between items-start">
+        <div className="space-y-1">
+          <CardTitle>{ticket.subject}</CardTitle>
+          <Badge variant="secondary">{ticket.topic}</Badge>
+        </div>
+        <Badge className="self-center" variant={ticket.status === 'open' ? 'outline' : 'default'}>
+          {ticket.status}
+        </Badge>
+      </CardHeader>
+      <CardContent className="space-y-2">
+        {messages.map(m => (
+          <ChatMessage key={m.id} message={{ id: m.id, orderId: 0, senderId: m.senderId, receiverId: 0, content: m.message, isRead: true, createdAt: m.createdAt }} isOwn={m.senderId === user?.id} />
+        ))}
+        <div ref={bottomRef} />
+        {ticket.status === 'open' && (
+          <form onSubmit={e => { e.preventDefault(); const value = inputRef.current?.value.trim(); if (!value) return; sendMsg.mutate(value); if (inputRef.current) inputRef.current.value = ''; }} className="flex gap-2">
+            <input ref={inputRef} className="flex-1 border rounded-full px-3 py-2" placeholder="Type a message" />
+            <button type="submit" className="bg-primary text-white px-4 rounded-full" disabled={sendMsg.isPending}>Send</button>
+          </form>
+        )}
+      </CardContent>
+    </Card>
   );
 }
