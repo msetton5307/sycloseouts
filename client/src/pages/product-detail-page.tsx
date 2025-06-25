@@ -278,8 +278,17 @@ export default function ProductDetailPage() {
             </div>
 
             <div className="hidden md:block text-xl font-bold mb-2">Total: {formatCurrency(totalCost)}</div>
+<<<<<<< codex/fix-misaligned-add-to-cart-button-text
+            <Button
+              className="relative hidden md:block w-full mb-4 pl-8 gap-0"
+              onClick={handleAddToCart}
+              disabled={quantity < product.minOrderQuantity}
+            >
+              <ShoppingCart className="absolute left-3 h-4 w-4" aria-hidden="true" />
+=======
             <Button className="hidden md:block w-full mb-4" onClick={handleAddToCart} disabled={quantity < product.minOrderQuantity}>
               <ShoppingCart className="h-4 w-4" />
+>>>>>>> main
               Add to Cart
             </Button>
             {user?.role === "buyer" && (
@@ -370,9 +379,13 @@ export default function ProductDetailPage() {
               size="lg"
               onClick={handleAddToCart}
               disabled={quantity < product.minOrderQuantity}
-              className="w-full"
+              className="relative w-full pl-8 gap-0"
             >
+<<<<<<< codex/fix-misaligned-add-to-cart-button-text
+              <ShoppingCart className="absolute left-3 h-4 w-4" aria-hidden="true" />
+=======
               <ShoppingCart className="h-4 w-4" />
+>>>>>>> main
               Add to Cart
             </Button>
           </div>
