@@ -151,21 +151,21 @@ export default function ProductsPage() {
               viewMode === "grid" ? (
                 <ProductCard key={product.id} product={product} />
               ) : (
-                <div key={product.id} className="flex border rounded-lg overflow-hidden bg-white shadow-sm hover:shadow-md transition-shadow duration-300">
-                  <div className="w-1/3 flex-shrink-0">
+                <div
+                  key={product.id}
+                  className="flex p-2 border rounded-lg bg-white shadow-sm hover:shadow-md transition-shadow duration-300"
+                >
+                  <div className="w-24 h-24 flex-shrink-0">
                     <img
                       src={product.images[0]}
                       alt={product.title}
-                      className="w-full h-full object-cover object-center"
+                      className="w-full h-full object-contain"
                     />
                   </div>
-                  <div className="p-4 flex-1">
-                    <div className="flex justify-between mb-2">
-                      <h3 className="text-lg font-medium text-gray-900">{product.title}</h3>
-                      <p className="text-lg font-medium text-green-600">{formatCurrency((!user || user.role === 'buyer') ? product.price * (1 + SERVICE_FEE_RATE) : product.price)}/unit</p>
-                    </div>
-                    <p className="text-gray-500 mb-3">{product.description.slice(0, 150)}...</p>
-                    <div className="flex flex-wrap gap-2 mb-3">
+                  <div className="ml-4 flex flex-col flex-1">
+                    <h3 className="text-sm font-medium text-gray-900 line-clamp-2">{product.title}</h3>
+                    <p className="text-gray-500 mb-2 line-clamp-2">{product.description.slice(0, 150)}...</p>
+                    <div className="flex flex-wrap gap-2 mb-2">
                       <div className="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded">
                         {product.availableUnits} units available
                       </div>
@@ -176,8 +176,13 @@ export default function ProductsPage() {
                         {product.condition}
                       </div>
                     </div>
-                    <div className="flex gap-2">
-                      <Button 
+                    <p className="text-base font-semibold text-green-600">
+                      {formatCurrency((!user || user.role === 'buyer') ? product.price * (1 + SERVICE_FEE_RATE) : product.price)}
+                      /unit
+                    </p>
+                    <div className="mt-2 flex gap-2">
+                      <Button
+                        size="sm"
                         className="flex items-center"
                         onClick={() => {
                           const cartEvent = new CustomEvent('add-to-cart', { detail: product });
@@ -187,7 +192,7 @@ export default function ProductsPage() {
                         <ShoppingCart className="mr-1 h-4 w-4" /> Add to Cart
                       </Button>
                       <a href={`/products/${product.id}`}>
-                        <Button variant="outline">
+                        <Button size="sm" variant="outline">
                           Details
                         </Button>
                       </a>
