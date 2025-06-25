@@ -49,11 +49,11 @@ export default function BannerCarousel() {
 
   return (
     <section className="py-8 px-4 max-w-7xl mx-auto">
-      <div className="relative group">
+      <div className="relative group rounded-2xl overflow-hidden shadow-2xl">
         <Carousel
           opts={{ loop: true }}
           plugins={[Autoplay({ delay: 5000 })]}
-          className="relative h-80 md:h-[32rem] w-full overflow-hidden rounded-2xl shadow-2xl"
+          className="relative h-96 md:h-[32rem] w-full"
         >
           <CarouselContent className="h-full">
             {products.map((product) => {
@@ -69,25 +69,25 @@ export default function BannerCarousel() {
                       alt={product.title}
                       className="w-full h-full object-cover"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/40 to-black/10 md:bg-gradient-to-r" />
-                    <div className="absolute inset-0 flex flex-col justify-center p-8 md:p-16 text-white">
-                      <div className="max-w-lg ml-auto text-right">
-                        <span className="inline-block px-3 py-1 mb-2 text-xs font-semibold tracking-wider text-white bg-blue-500 rounded-full">
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent md:bg-gradient-to-r" />
+                    <div className="absolute inset-0 flex flex-col justify-end md:justify-center p-6 md:p-16 text-white">
+                      <div className="max-w-md mx-auto md:max-w-lg md:ml-auto space-y-3 text-center md:text-right">
+                        <span className="inline-block px-3 py-1 text-xs font-semibold tracking-wider text-white bg-blue-500 rounded-full">
                           NEW ARRIVAL
                         </span>
-                        <h3 className="text-3xl md:text-5xl font-bold mb-3 drop-shadow-lg">
+                        <h3 className="text-2xl md:text-5xl font-bold drop-shadow-lg">
                           {product.title}
                         </h3>
-                        <p className="text-sm md:text-base mb-6 drop-shadow-md">
+                        <p className="text-sm md:text-base drop-shadow-md line-clamp-3">
                           {product.description}
                         </p>
-                        <div className="inline-block px-4 py-2 mb-6 rounded-full bg-white/20 backdrop-blur-sm">
-                          <span className="text-xl md:text-2xl font-bold">
+                        <div className="inline-block px-4 py-2 rounded-full bg-white/20 backdrop-blur-sm">
+                          <span className="text-lg md:text-2xl font-bold">
                             {formatCurrency(price)}
                           </span>
                           <span className="text-sm opacity-80">/unit</span>
                         </div>
-                        <div className="flex justify-end space-x-4">
+                        <div className="flex flex-col md:flex-row md:justify-end items-center gap-2 md:gap-4">
                           <Button
                             asChild
                             className="bg-white text-gray-800 font-medium hover:bg-gray-100"
