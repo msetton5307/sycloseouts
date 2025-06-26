@@ -93,7 +93,7 @@ export const insertUserSchema = createInsertSchema(users)
   .extend({
     phone: z.string().optional(),
     address: z.string().optional(),
-    avatarUrl: z.string().url().optional(),
+    avatarUrl: z.string().optional(),
   })
   .refine((data) => data.password.length >= 6, {
     message: "Password must be at least 6 characters long",
