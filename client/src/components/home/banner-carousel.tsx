@@ -69,22 +69,22 @@ export default function BannerCarousel() {
                     <img
                       src={product.images[0]}
                       alt={product.title}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-contain object-center"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent md:bg-gradient-to-r" />
-                    <div className="absolute inset-0 flex flex-col justify-end md:justify-center p-6 md:p-16 text-white">
+                    <div className="absolute inset-0 flex flex-col justify-end md:justify-center p-4 md:p-12 text-white">
                       <div className="max-w-md mx-auto md:max-w-lg md:ml-auto space-y-3 text-center md:text-right">
                         <span className="inline-block px-3 py-1 text-xs font-semibold tracking-wider text-white bg-blue-500 rounded-full">
                           NEW ARRIVAL
                         </span>
-                        <h3 className="text-2xl md:text-4xl font-bold drop-shadow-lg">
+                        <h3 className="text-xl md:text-3xl font-bold drop-shadow-lg">
                           {product.title}
                         </h3>
                         <p className="text-sm md:text-base drop-shadow-md line-clamp-3">
                           {product.description}
                         </p>
                         <div className="inline-block px-4 py-2 rounded-full bg-white/20 backdrop-blur-sm">
-                          <span className="text-lg md:text-xl font-bold">
+                          <span className="text-base md:text-lg font-bold">
                             {formatCurrency(price)}
                           </span>
                           <span className="text-sm opacity-80">/unit</span>
