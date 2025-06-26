@@ -43,6 +43,7 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
   const [sizeOptions, setSizeOptions] = useState<string>(product?.variations?.size?.join(", ") || "");
   const [colorOptions, setColorOptions] = useState<string>(product?.variations?.color?.join(", ") || "");
   const [variationPrices, setVariationPrices] = useState<Record<string, number | undefined>>(product?.variationPrices || {});
+  const [variationStocks, setVariationStocks] = useState<Record<string, number | undefined>>(product?.variationStocks || {});
   const [comboKeys, setComboKeys] = useState<string[]>([]);
 
   useEffect(() => {
@@ -60,6 +61,18 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
     }
     setComboKeys(combos);
     setVariationPrices(prev => {
+      const updated: Record<string, number | undefined> = { ...prev };
+      combos.forEach(k => {
+        if (!(k in updated)) {
+          updated[k] = undefined;
+        }
+      });
+      Object.keys(updated).forEach(k => {
+        if (!combos.includes(k)) delete updated[k];
+      });
+      return updated;
+    });
+    setVariationStocks(prev => {
       const updated: Record<string, number | undefined> = { ...prev };
       combos.forEach(k => {
         if (!(k in updated)) {
@@ -108,6 +121,7 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
       upc: product.upc || '',
       variations: (product as any).variations || {},
       variationPrices: (product as any).variationPrices || {},
+      variationStocks: (product as any).variationStocks || {},
       isBanner: product.isBanner ?? false,
     } : {
       sellerId: 0, // Will be set by the server
@@ -126,6 +140,7 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
       upc: "",
       variations: {},
       variationPrices: {},
+      variationStocks: {},
       condition: "New",
       isBanner: false
     },
@@ -203,6 +218,9 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
       },
       variationPrices: Object.fromEntries(
         Object.entries(variationPrices).map(([k, v]) => [k, v])
+      ),
+      variationStocks: Object.fromEntries(
+        Object.entries(variationStocks).map(([k, v]) => [k, v])
       )
     };
     
@@ -217,6 +235,12 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
       const val = formattedData.variationPrices[key];
       if (val === undefined || isNaN(val)) {
         delete formattedData.variationPrices[key];
+      }
+    }
+    for (const key in formattedData.variationStocks) {
+      const val = formattedData.variationStocks[key];
+      if (val === undefined || isNaN(val)) {
+        delete formattedData.variationStocks[key];
       }
     }
     
@@ -574,6 +598,51 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
                       <datalist id={`price-options-${idx}`}>
                         {priceOptions.map(p => (
                           <option key={p} value={p.toFixed(2)} />
+                        ))}
+                      </datalist>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {comboKeys.length > 0 && (
+          <div>
+            <FormLabel className="block mb-2">Variation Stock</FormLabel>
+            <div className="space-y-2">
+              {comboKeys.map((key, idx) => {
+                const combo = JSON.parse(key) as Record<string, string>;
+                const label = Object.values(combo).join(' / ');
+                const stockOptions = Array.from(
+                  new Set(
+                    Object.values(variationStocks).filter(
+                      (s): s is number => typeof s === 'number' && !isNaN(s)
+                    )
+                  )
+                );
+                return (
+                  <div key={key} className="flex items-center space-x-2">
+                    <span className="flex-1 text-sm">{label}</span>
+                    <Input
+                      type="number"
+                      min="0"
+                      step="1"
+                      list={`stock-options-${idx}`}
+                      value={variationStocks[key] === undefined ? '' : variationStocks[key]}
+                      onChange={e => {
+                        const val = e.target.value;
+                        setVariationStocks(prev => ({
+                          ...prev,
+                          [key]: val === '' ? undefined : parseInt(val, 10)
+                        }));
+                      }}
+                    />
+                    {stockOptions.length > 0 && (
+                      <datalist id={`stock-options-${idx}`}>
+                        {stockOptions.map(s => (
+                          <option key={s} value={s} />
                         ))}
                       </datalist>
                     )}
