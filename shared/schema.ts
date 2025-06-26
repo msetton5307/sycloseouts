@@ -314,6 +314,29 @@ export const productQuestionsRelations = relations(productQuestions, ({ one }) =
 export const insertProductQuestionSchema = createInsertSchema(productQuestions)
   .omit({ id: true, createdAt: true });
 
+// Offers that buyers can send to sellers for a product
+export const offers = pgTable("offers", {
+  id: serial("id").primaryKey(),
+  productId: integer("product_id").notNull(),
+  buyerId: integer("buyer_id").notNull(),
+  sellerId: integer("seller_id").notNull(),
+  price: doublePrecision("price").notNull(),
+  quantity: integer("quantity").notNull(),
+  status: text("status").notNull().default("pending"), // pending, accepted, rejected
+  orderId: integer("order_id"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const offersRelations = relations(offers, ({ one }) => ({
+  product: one(products, { fields: [offers.productId], references: [products.id] }),
+  buyer: one(users, { fields: [offers.buyerId], references: [users.id] }),
+  seller: one(users, { fields: [offers.sellerId], references: [users.id] }),
+  order: one(orders, { fields: [offers.orderId], references: [orders.id] }),
+}));
+
+export const insertOfferSchema = createInsertSchema(offers)
+  .omit({ id: true, status: true, orderId: true, createdAt: true });
+
 // Support tickets that buyers and sellers can create
 export const supportTickets = pgTable("support_tickets", {
   id: serial("id").primaryKey(),
@@ -410,6 +433,9 @@ export type InsertMessage = z.infer<typeof insertMessageSchema>;
 
 export type ProductQuestion = typeof productQuestions.$inferSelect;
 export type InsertProductQuestion = z.infer<typeof insertProductQuestionSchema>;
+
+export type Offer = typeof offers.$inferSelect;
+export type InsertOffer = z.infer<typeof insertOfferSchema>;
 
 export type SupportTicket = typeof supportTickets.$inferSelect;
 export type InsertSupportTicket = z.infer<typeof insertSupportTicketSchema>;
