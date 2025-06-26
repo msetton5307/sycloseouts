@@ -55,17 +55,17 @@ export default function BannerCarousel() {
         <Carousel
           opts={{ loop: true }}
           plugins={[Autoplay({ delay: 5000 })]}
-          className="relative h-96 md:h-[32rem] w-full"
+          className="relative w-full"
         >
-          <CarouselContent className="h-full">
+          <CarouselContent>
             {inStockProducts.map((product) => {
               const price =
                 !user || user.role === "buyer"
                   ? product.price * (1 + SERVICE_FEE_RATE)
                   : product.price;
               return (
-                <CarouselItem key={product.id} className="basis-full h-full">
-                  <div className="relative w-full h-full">
+                <CarouselItem key={product.id} className="basis-full">
+                  <div className="relative w-full min-h-96 md:min-h-[32rem]">
                     <img
                       src={product.images[0]}
                       alt={product.title}
