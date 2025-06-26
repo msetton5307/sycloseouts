@@ -39,6 +39,7 @@ import { useToast } from "@/hooks/use-toast";
 import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
 import AskQuestionDialog from "@/components/products/ask-question-dialog";
+import MakeOfferDialog from "@/components/products/make-offer-dialog";
 
 export default function ProductDetailPage() {
   const { id } = useParams();
@@ -65,6 +66,16 @@ export default function ProductDetailPage() {
     },
     onError: (err: Error) =>
       toast({ title: "Failed to send question", description: err.message, variant: "destructive" }),
+  });
+
+  const offerMutation = useMutation({
+    mutationFn: (data: { price: number; quantity: number }) =>
+      apiRequest("POST", `/api/products/${productId}/offers`, data),
+    onSuccess: () => {
+      toast({ title: "Offer sent" });
+    },
+    onError: (err: Error) =>
+      toast({ title: "Failed to send offer", description: err.message, variant: "destructive" }),
   });
 
   const { data: product, isLoading, error } = useQuery<Product>({
@@ -284,7 +295,10 @@ export default function ProductDetailPage() {
             </Button>
 
             {user?.role === "buyer" && (
-              <AskQuestionDialog onSubmit={q => questionMutation.mutate(q)} />
+              <>
+                <MakeOfferDialog onSubmit={(p, q) => offerMutation.mutate({ price: p, quantity: q })} />
+                <AskQuestionDialog onSubmit={q => questionMutation.mutate(q)} />
+              </>
             )}
 
             {product.retailComparisonUrl && (

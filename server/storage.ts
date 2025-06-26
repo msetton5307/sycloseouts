@@ -9,6 +9,7 @@ import {
   paymentMethods, PaymentMethod, InsertPaymentMethod,
   messages, Message, InsertMessage,
   productQuestions, ProductQuestion, InsertProductQuestion,
+  offers, Offer, InsertOffer,
   supportTickets, SupportTicket, InsertSupportTicket,
   notifications, Notification, InsertNotification
 } from "@shared/schema";
@@ -95,6 +96,12 @@ export interface IStorage {
   // Product question methods
   createProductQuestion(question: InsertProductQuestion): Promise<ProductQuestion>;
   getProductQuestionsForSeller(sellerId: number): Promise<ProductQuestion[]>;
+
+  // Offer methods
+  createOffer(offer: InsertOffer): Promise<Offer>;
+  getOffer(id: number): Promise<Offer | undefined>;
+  getOffers(filter?: Partial<Offer>): Promise<Offer[]>;
+  updateOffer(id: number, offer: Partial<Offer>): Promise<Offer | undefined>;
 
   // Support ticket methods
   getSupportTickets(filter?: { userId?: number; status?: string }): Promise<SupportTicket[]>;
@@ -542,6 +549,40 @@ export class DatabaseStorage implements IStorage {
       .from(productQuestions)
       .where(eq(productQuestions.sellerId, sellerId))
       .orderBy(desc(productQuestions.createdAt));
+  }
+
+  // Offer methods
+  async createOffer(insertOffer: InsertOffer): Promise<Offer> {
+    const [o] = await db.insert(offers).values(insertOffer).returning();
+    return o;
+  }
+
+  async getOffer(id: number): Promise<Offer | undefined> {
+    const [o] = await db.select().from(offers).where(eq(offers.id, id));
+    return o;
+  }
+
+  async getOffers(filter?: Partial<Offer>): Promise<Offer[]> {
+    if (!filter) {
+      return await db.select().from(offers).orderBy(desc(offers.createdAt));
+    }
+    const conditions: SQL<unknown>[] = [];
+    if (filter.id !== undefined) conditions.push(eq(offers.id, filter.id));
+    if (filter.buyerId !== undefined) conditions.push(eq(offers.buyerId, filter.buyerId));
+    if (filter.sellerId !== undefined) conditions.push(eq(offers.sellerId, filter.sellerId));
+    if (filter.status !== undefined) conditions.push(eq(offers.status, filter.status));
+
+    let condition = conditions[0];
+    for (let i = 1; i < conditions.length; i++) {
+      condition = and(condition, conditions[i]);
+    }
+
+    return await db.select().from(offers).where(condition).orderBy(desc(offers.createdAt));
+  }
+
+  async updateOffer(id: number, offerData: Partial<Offer>): Promise<Offer | undefined> {
+    const [o] = await db.update(offers).set(offerData).where(eq(offers.id, id)).returning();
+    return o;
   }
 
   // Support ticket methods

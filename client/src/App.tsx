@@ -21,9 +21,11 @@ import BuyerOrdersPage from "@/pages/buyer/orders";
 import BuyerOrderDetailPage from "@/pages/buyer/order-detail";
 import BuyerProfilePage from "@/pages/buyer/profile";
 import BuyerMessagesPage from "@/pages/buyer/messages";
+import BuyerOffersPage from "@/pages/buyer/offers";
 import SellerDashboard from "@/pages/seller/dashboard";
 import SellerProducts from "@/pages/seller/products";
 import SellerOrdersPage from "@/pages/seller/orders";
+import SellerOffersPage from "@/pages/seller/offers";
 import SellerOrderDetailPage from "@/pages/seller/order-detail";
 import SellerMessagesPage from "@/pages/seller/messages";
 import SellerAnalyticsPage from "@/pages/seller/analytics";
@@ -72,12 +74,14 @@ function Router() {
       <ProtectedRoute path="/buyer/home" component={BuyerHomePage} allowedRoles={["buyer", "admin"]} />
       <ProtectedRoute path="/buyer/orders" component={BuyerOrdersPage} allowedRoles={["buyer", "admin"]} />
       <ProtectedRoute path="/buyer/messages" component={BuyerMessagesPage} allowedRoles={["buyer", "admin"]} />
+      <ProtectedRoute path="/buyer/offers" component={BuyerOffersPage} allowedRoles={["buyer", "admin"]} />
       <ProtectedRoute path="/buyer/orders/:id" component={BuyerOrderDetailPage} allowedRoles={["buyer", "admin"]} />
       <ProtectedRoute path="/buyer/profile" component={BuyerProfilePage} allowedRoles={["buyer", "admin"]} />
 
       {/* Seller routes */}
       <ProtectedRoute path="/seller/dashboard" component={SellerDashboard} allowedRoles={["seller"]} />
       <ProtectedRoute path="/seller/products" component={SellerProducts} allowedRoles={["seller"]} />
+      <ProtectedRoute path="/seller/offers" component={SellerOffersPage} allowedRoles={["seller"]} />
       <ProtectedRoute path="/seller/orders" component={SellerOrdersPage} allowedRoles={["seller"]} />
       <ProtectedRoute path="/seller/orders/:id" component={SellerOrderDetailPage} allowedRoles={["seller"]} />
       <ProtectedRoute path="/seller/messages" component={SellerMessagesPage} allowedRoles={["seller"]} />
