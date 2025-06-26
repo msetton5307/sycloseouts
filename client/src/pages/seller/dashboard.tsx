@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/button";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { ChangePasswordDialog } from "@/components/account/change-password-dialog";
+import { EditProfileDialog } from "@/components/account/edit-profile-dialog";
 import {
   Dialog,
   DialogContent,
@@ -602,7 +603,7 @@ export default function SellerDashboard() {
                 <CardContent>
                   <div className="flex flex-col items-center">
                     <Avatar className="h-24 w-24 mb-4">
-                      <AvatarImage src="https://github.com/shadcn.png" alt={user?.username} />
+                      <AvatarImage src={user?.avatarUrl || "https://github.com/shadcn.png"} alt={user?.username} />
                       <AvatarFallback className="text-lg">
                         {user?.firstName?.charAt(0)}{user?.lastName?.charAt(0)}
                       </AvatarFallback>
@@ -612,7 +613,9 @@ export default function SellerDashboard() {
                     <p className="text-gray-500 mb-1">{user?.email}</p>
                     <p className="text-primary font-medium mb-4">Verified Seller</p>
                     
-                    <Button className="w-full mb-2">Edit Profile</Button>
+                    <EditProfileDialog>
+                      <Button className="w-full mb-2">Edit Profile</Button>
+                    </EditProfileDialog>
                     <ChangePasswordDialog>
                       <Button variant="outline" className="w-full">Change Password</Button>
                     </ChangePasswordDialog>

@@ -1114,8 +1114,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Remove password from response
+      Object.assign(req.user, updatedUser);
       const { password, ...userWithoutPassword } = updatedUser;
-      res.json(userWithoutPassword);
+      req.session.save(() => {
+        res.json(userWithoutPassword);
+      });
     } catch (error) {
       handleApiError(res, error);
     }
@@ -1202,8 +1205,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const user = req.user as Express.User;
       const updatedUser = await storage.updateUser(user.id, {
+        firstName: req.body.firstName,
+        lastName: req.body.lastName,
+        company: req.body.company,
         phone: req.body.phone,
         address: req.body.address,
+        avatarUrl: req.body.avatarUrl,
       });
 
       if (!updatedUser) {
