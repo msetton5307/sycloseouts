@@ -116,6 +116,7 @@ export const products = pgTable("products", {
   images: text("images").array().notNull(),
   variations: jsonb("variations"),
   variationPrices: jsonb("variation_prices"),
+  variationStocks: jsonb("variation_stocks"),
   fobLocation: text("fob_location"),
   retailComparisonUrl: text("retail_comparison_url"),
   upc: text("upc"),
@@ -138,7 +139,8 @@ export const insertProductSchema = createInsertSchema(products, {
   upc: z.string().optional().nullable(),
   retailMsrp: z.coerce.number().optional().nullable(),
   variations: z.record(z.array(z.string())).optional().nullable(),
-  variationPrices: z.record(z.number()).optional().nullable()
+  variationPrices: z.record(z.number()).optional().nullable(),
+  variationStocks: z.record(z.number()).optional().nullable()
 })
   .omit({
     id: true,
