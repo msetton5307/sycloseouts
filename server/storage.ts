@@ -100,7 +100,7 @@ export interface IStorage {
   // Offer methods
   createOffer(offer: InsertOffer): Promise<Offer>;
   getOffer(id: number): Promise<Offer | undefined>;
-  getOffers(filter?: Partial<Offer>): Promise<Offer[]>;
+  getOffers(filter?: Partial<Offer>): Promise<(Offer & { productTitle: string })[]>;
   updateOffer(id: number, offer: Partial<Offer>): Promise<Offer | undefined>;
 
   // Support ticket methods
@@ -562,22 +562,43 @@ export class DatabaseStorage implements IStorage {
     return o;
   }
 
-  async getOffers(filter?: Partial<Offer>): Promise<Offer[]> {
+  async getOffers(filter?: Partial<Offer>): Promise<(Offer & { productTitle: string })[]> {
+    const baseQuery = db
+      .select({
+        id: offers.id,
+        productId: offers.productId,
+        buyerId: offers.buyerId,
+        sellerId: offers.sellerId,
+        price: offers.price,
+        quantity: offers.quantity,
+        selectedVariations: offers.selectedVariations,
+        status: offers.status,
+        orderId: offers.orderId,
+        createdAt: offers.createdAt,
+        productTitle: products.title,
+      })
+      .from(offers)
+      .innerJoin(products, eq(offers.productId, products.id));
+
     if (!filter) {
-      return await db.select().from(offers).orderBy(desc(offers.createdAt));
+      return await baseQuery.orderBy(desc(offers.createdAt));
     }
+
     const conditions: SQL<unknown>[] = [];
     if (filter.id !== undefined) conditions.push(eq(offers.id, filter.id));
     if (filter.buyerId !== undefined) conditions.push(eq(offers.buyerId, filter.buyerId));
     if (filter.sellerId !== undefined) conditions.push(eq(offers.sellerId, filter.sellerId));
     if (filter.status !== undefined) conditions.push(eq(offers.status, filter.status));
 
-    let condition = conditions[0];
-    for (let i = 1; i < conditions.length; i++) {
-      condition = and(condition, conditions[i]);
+    if (conditions.length > 0) {
+      let condition = conditions[0];
+      for (let i = 1; i < conditions.length; i++) {
+        condition = and(condition, conditions[i]);
+      }
+      return await baseQuery.where(condition).orderBy(desc(offers.createdAt));
     }
 
-    return await db.select().from(offers).where(condition).orderBy(desc(offers.createdAt));
+    return await baseQuery.orderBy(desc(offers.createdAt));
   }
 
   async updateOffer(id: number, offerData: Partial<Offer>): Promise<Offer | undefined> {

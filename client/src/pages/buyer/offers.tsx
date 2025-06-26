@@ -5,7 +5,9 @@ import Footer from "@/components/layout/footer";
 import { formatCurrency } from "@/lib/utils";
 
 export default function BuyerOffersPage() {
-  const { data: offers = [] } = useQuery<Offer[]>({
+  type OfferWithProduct = Offer & { productTitle: string };
+
+  const { data: offers = [] } = useQuery<OfferWithProduct[]>({
     queryKey: ["/api/offers"],
   });
 
@@ -19,7 +21,14 @@ export default function BuyerOffersPage() {
             <div key={o.id} className="border p-4 rounded">
               <div className="flex justify-between">
                 <div>
-                  <p className="font-medium">Offer #{o.id}</p>
+                  <p className="font-medium">{o.productTitle}</p>
+                  {o.selectedVariations && (
+                    <p className="text-sm text-gray-500">
+                      {Object.entries(o.selectedVariations)
+                        .map(([k, v]) => `${k}: ${v}`)
+                        .join(", ")}
+                    </p>
+                  )}
                   <p className="text-sm">Quantity: {o.quantity}</p>
                 </div>
                 <div className="text-right">

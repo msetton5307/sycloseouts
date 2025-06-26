@@ -11,7 +11,9 @@ export default function SellerOffersPage() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const { data: offers = [], isLoading } = useQuery<Offer[]>({
+  type OfferWithProduct = Offer & { productTitle: string };
+
+  const { data: offers = [], isLoading } = useQuery<OfferWithProduct[]>({
     queryKey: ["/api/offers"],
   });
 
@@ -60,8 +62,14 @@ export default function SellerOffersPage() {
           offers.map((o) => (
             <div key={o.id} className="border p-4 rounded flex justify-between">
               <div>
-                <p className="font-medium">Offer #{o.id} for product #{o.productId}</p>
-                <p className="text-sm">Buyer #{o.buyerId}</p>
+                <p className="font-medium">{o.productTitle}</p>
+                {o.selectedVariations && (
+                  <p className="text-sm text-gray-500">
+                    {Object.entries(o.selectedVariations)
+                      .map(([k, v]) => `${k}: ${v}`)
+                      .join(", ")}
+                  </p>
+                )}
                 <p className="text-sm">Quantity: {o.quantity}</p>
                 <p className="text-sm">Price: {formatCurrency(o.price)}</p>
                 <span className="text-xs capitalize">Status: {o.status}</span>
