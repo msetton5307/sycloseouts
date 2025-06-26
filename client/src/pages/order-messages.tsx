@@ -12,18 +12,12 @@ export default function OrderMessagesPage() {
   const { user } = useAuth();
   const { data: messages = [], isLoading, sendMessage, markRead } = useMessages(orderId);
   const inputRef = useRef<HTMLInputElement>(null);
-  const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (orderId) {
       markRead.mutate();
     }
   }, [orderId]);
-
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
-
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const value = inputRef.current?.value.trim();
@@ -45,7 +39,6 @@ export default function OrderMessagesPage() {
               <ChatMessage key={m.id} message={m} isOwn={m.senderId === user?.id} />
             ))
           )}
-          <div ref={bottomRef} />
         </div>
         <form onSubmit={handleSubmit} className="mt-2 flex gap-2">
           <input
