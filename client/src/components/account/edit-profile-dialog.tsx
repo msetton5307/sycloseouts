@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { ReactNode, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -19,7 +19,7 @@ import {
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
+import { Loader2, ImagePlus } from "lucide-react";
 
 const schema = z.object({
   firstName: z.string().min(1, "First name is required"),
@@ -27,7 +27,7 @@ const schema = z.object({
   company: z.string().optional(),
   phone: z.string().optional(),
   address: z.string().optional(),
-  avatarUrl: z.string().url("Invalid URL").optional().or(z.literal("")),
+  avatarUrl: z.string().optional().or(z.literal("")),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -35,6 +35,9 @@ type FormData = z.infer<typeof schema>;
 export function EditProfileDialog({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const { toast } = useToast();
+
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [uploading, setUploading] = useState(false);
 
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -65,6 +68,36 @@ export function EditProfileDialog({ children }: { children: ReactNode }) {
       });
     },
   });
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      if (event.target && event.target.result) {
+        form.setValue("avatarUrl", event.target.result.toString());
+      }
+      setUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    };
+    reader.onerror = () => {
+      setUploading(false);
+      toast({
+        title: "Upload Failed",
+        description: "There was a problem uploading your image.",
+        variant: "destructive",
+      });
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const triggerFileUpload = () => {
+    fileInputRef.current?.click();
+  };
 
   return (
     <Dialog>
@@ -146,14 +179,42 @@ export function EditProfileDialog({ children }: { children: ReactNode }) {
               name="avatarUrl"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Profile Picture URL</FormLabel>
+                  <FormLabel>Profile Picture</FormLabel>
                   <FormControl>
-                    <Input {...field} />
+                    <Input {...field} placeholder="Image URL or uploaded data" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
+            <div>
+              <input
+                type="file"
+                ref={fileInputRef}
+                className="hidden"
+                accept="image/*"
+                onChange={handleFileUpload}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                onClick={triggerFileUpload}
+                disabled={uploading}
+              >
+                {uploading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Uploading...
+                  </>
+                ) : (
+                  <>
+                    <ImagePlus className="mr-2 h-4 w-4" />
+                    Upload Image
+                  </>
+                )}
+              </Button>
+            </div>
             <DialogFooter>
               <DialogClose asChild>
                 <Button variant="outline" type="button">
