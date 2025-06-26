@@ -213,7 +213,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId: product.sellerId,
         type: 'offer',
         content: `New offer for ${product.title}`,
-        link: `/seller/orders`,
+        link: `/seller/offers`,
       });
 
       res.status(201).json(offer);
@@ -1059,6 +1059,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           quantity: offer.quantity,
           unitPrice: offer.price,
           totalPrice: offer.price * offer.quantity,
+          selectedVariations: offer.selectedVariations ?? null,
         });
 
         await tx.insert(orderItemsTable).values(orderItemData);
@@ -1071,6 +1072,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             quantity: offer.quantity,
             unitPrice: offer.price,
             totalPrice: offer.price * offer.quantity,
+            selectedVariations: offer.selectedVariations ?? undefined,
             image: product.images?.[0],
           });
         }

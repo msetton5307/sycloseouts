@@ -69,7 +69,7 @@ export default function ProductDetailPage() {
   });
 
   const offerMutation = useMutation({
-    mutationFn: (data: { price: number; quantity: number }) =>
+    mutationFn: (data: { price: number; quantity: number; selectedVariations?: Record<string, string> }) =>
       apiRequest("POST", `/api/products/${productId}/offers`, data),
     onSuccess: () => {
       toast({ title: "Offer sent" });
@@ -296,7 +296,7 @@ export default function ProductDetailPage() {
 
             {user?.role === "buyer" && (
               <>
-                <MakeOfferDialog onSubmit={(p, q) => offerMutation.mutate({ price: p, quantity: q })} />
+                <MakeOfferDialog onSubmit={(p, q) => offerMutation.mutate({ price: p, quantity: q, selectedVariations })} />
                 <AskQuestionDialog onSubmit={q => questionMutation.mutate(q)} />
               </>
             )}

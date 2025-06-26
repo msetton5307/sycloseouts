@@ -93,7 +93,7 @@ export const insertUserSchema = createInsertSchema(users)
   .extend({
     phone: z.string().optional(),
     address: z.string().optional(),
-    avatarUrl: z.string().url().optional(),
+    avatarUrl: z.string().optional(),
   })
   .refine((data) => data.password.length >= 6, {
     message: "Password must be at least 6 characters long",
@@ -116,6 +116,7 @@ export const products = pgTable("products", {
   images: text("images").array().notNull(),
   variations: jsonb("variations"),
   variationPrices: jsonb("variation_prices"),
+  variationStocks: jsonb("variation_stocks"),
   fobLocation: text("fob_location"),
   retailComparisonUrl: text("retail_comparison_url"),
   upc: text("upc"),
@@ -138,7 +139,8 @@ export const insertProductSchema = createInsertSchema(products, {
   upc: z.string().optional().nullable(),
   retailMsrp: z.coerce.number().optional().nullable(),
   variations: z.record(z.array(z.string())).optional().nullable(),
-  variationPrices: z.record(z.number()).optional().nullable()
+  variationPrices: z.record(z.number()).optional().nullable(),
+  variationStocks: z.record(z.number()).optional().nullable()
 })
   .omit({
     id: true,
@@ -322,6 +324,7 @@ export const offers = pgTable("offers", {
   sellerId: integer("seller_id").notNull(),
   price: doublePrecision("price").notNull(),
   quantity: integer("quantity").notNull(),
+  selectedVariations: jsonb("selected_variations"),
   status: text("status").notNull().default("pending"), // pending, accepted, rejected
   orderId: integer("order_id"),
   createdAt: timestamp("created_at").defaultNow(),
@@ -335,7 +338,8 @@ export const offersRelations = relations(offers, ({ one }) => ({
 }));
 
 export const insertOfferSchema = createInsertSchema(offers)
-  .omit({ id: true, status: true, orderId: true, createdAt: true });
+  .omit({ id: true, status: true, orderId: true, createdAt: true })
+  .extend({ selectedVariations: z.record(z.string()).optional().nullable() });
 
 // Support tickets that buyers and sellers can create
 export const supportTickets = pgTable("support_tickets", {

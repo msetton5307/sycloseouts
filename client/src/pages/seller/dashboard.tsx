@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { Link, useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Order, OrderItem, Product, Address, PaymentMethod } from "@shared/schema";
+import { Order, OrderItem, Product, Address, PaymentMethod, Offer } from "@shared/schema";
 import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
 import {
@@ -23,6 +23,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { ChangePasswordDialog } from "@/components/account/change-password-dialog";
 import { EditProfileDialog } from "@/components/account/edit-profile-dialog";
+import SendMessageDialog from "@/components/messages/send-message-dialog";
 import {
   Dialog,
   DialogContent,
@@ -92,6 +93,21 @@ export default function SellerDashboard() {
     enabled: !!user,
   });
 
+  type OfferWithProduct = Offer & { productTitle: string };
+
+  const { data: offers = [] } = useQuery<OfferWithProduct[]>({
+    queryKey: ["/api/offers"],
+    enabled: !!user,
+  });
+
+  const [offersOpen, setOffersOpen] = useState(false);
+
+  useEffect(() => {
+    if (offers.some((o) => o.status === "pending")) {
+      setOffersOpen(true);
+    }
+  }, [offers]);
+
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -157,11 +173,6 @@ export default function SellerDashboard() {
     }
   }
 
-  function handleContactBuyer(buyerId: number) {
-    const msg = window.prompt("Message to buyer");
-    if (!msg) return;
-    messageBuyer.mutate({ buyerId, message: msg });
-  }
   
   // Filter products for the current seller
   const sellerProducts = products.filter(product => product.sellerId === user?.id);
@@ -243,6 +254,12 @@ export default function SellerDashboard() {
               <Button variant="outline" className="flex items-center">
                 <ListOrdered className="mr-2 h-4 w-4" />
                 Orders
+              </Button>
+            </Link>
+            <Link href="/seller/offers">
+              <Button variant="outline" className="flex items-center">
+                <DollarSign className="mr-2 h-4 w-4" />
+                Offers
               </Button>
             </Link>
             <Link href="/seller/analytics">
@@ -349,7 +366,7 @@ export default function SellerDashboard() {
                                 <tbody>
                                   {group.orders.map((order) => (
                                     <tr key={order.id} className="border-b align-top">
-                                      <td className="py-2 px-4 font-medium">#{order.id}</td>
+                                      <td className="py-2 px-4 font-medium">#{order.code}</td>
                                       <td className="py-2 px-4">
                                         <ul className="space-y-1">
                                           {order.items.map((item) => (
@@ -533,7 +550,7 @@ export default function SellerDashboard() {
                       <div key={order.id} className="border rounded-lg p-4">
                         <div className="flex flex-col sm:flex-row sm:justify-between mb-4 gap-2">
                           <div>
-                            <h3 className="font-medium">Order #{order.id}</h3>
+                            <h3 className="font-medium">Order #{order.code}</h3>
                             <p className="text-sm text-gray-500 flex items-center">
                               <CalendarIcon className="h-3 w-3 mr-1" />
                               Placed on {formatDate(order.createdAt)}
@@ -566,9 +583,13 @@ export default function SellerDashboard() {
                           <Button variant="outline" size="sm" onClick={() => handleCancelOrder(order.id)}>
                             Cancel
                           </Button>
-                          <Button variant="outline" size="sm" onClick={() => handleContactBuyer(order.buyerId)}>
-                            Contact Buyer
-                          </Button>
+                          <SendMessageDialog
+                            trigger={<Button variant="outline" size="sm">Contact Buyer</Button>}
+                            onSubmit={(msg) =>
+                              messageBuyer.mutate({ buyerId: order.buyerId, message: msg })
+                            }
+                            title="Message Buyer"
+                          />
                         </div>
                       </div>
                     ))}
@@ -738,6 +759,70 @@ export default function SellerDashboard() {
               </DialogClose>
               <Button onClick={handleConfirmTracking} disabled={!trackingNum}>Confirm</Button>
             </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={offersOpen} onOpenChange={setOffersOpen}>
+          <DialogContent className="sm:max-w-[600px]">
+            <DialogHeader>
+              <DialogTitle>Recent Offers</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 max-h-96 overflow-y-auto">
+              {offers.length === 0 ? (
+                <p>No offers.</p>
+              ) : (
+                offers.map((o) => (
+                  <div key={o.id} className="border p-3 rounded flex justify-between">
+                    <div>
+                      <p className="font-medium">{o.productTitle}</p>
+                      {o.selectedVariations && (
+                        <p className="text-xs text-gray-500">
+                          {Object.entries(o.selectedVariations)
+                            .map(([k, v]) => `${k}: ${v}`)
+                            .join(", ")}
+                        </p>
+                      )}
+                      <p className="text-sm">Qty: {o.quantity}</p>
+                      <p className="text-sm">{formatCurrency(o.price)}</p>
+                    </div>
+                    {o.status === "pending" && (
+                      <div className="space-x-2 flex items-start">
+                        <Button
+                          size="sm"
+                          onClick={() =>
+                            apiRequest("POST", `/api/offers/${o.id}/accept`)
+                              .then(() => {
+                                queryClient.invalidateQueries({ queryKey: ["/api/offers"] });
+                                setOffersOpen(false);
+                                toast({ title: "Offer accepted" });
+                              })
+                          }
+                        >
+                          Accept
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() =>
+                            apiRequest("POST", `/api/offers/${o.id}/reject`)
+                              .then(() => {
+                                queryClient.invalidateQueries({ queryKey: ["/api/offers"] });
+                                setOffersOpen(false);
+                                toast({ title: "Offer rejected" });
+                              })
+                          }
+                        >
+                          Reject
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                ))
+              )}
+              <div className="text-right">
+                <Link href="/seller/offers">View All</Link>
+              </div>
+            </div>
           </DialogContent>
         </Dialog>
       </>

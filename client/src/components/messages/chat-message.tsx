@@ -1,5 +1,6 @@
 import { Message } from "@shared/schema";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
+import { utcToZonedTime } from "date-fns-tz";
 
 interface ChatMessageProps {
   message: Message;
@@ -18,7 +19,13 @@ export default function ChatMessage({ message, isOwn }: ChatMessageProps) {
       >
         {message.content}
         <div className="text-[10px] text-gray-500 mt-1 text-right">
-          {format(new Date(message.createdAt), "p")}
+          {format(
+            utcToZonedTime(
+              parseISO(message.createdAt as unknown as string),
+              Intl.DateTimeFormat().resolvedOptions().timeZone,
+            ),
+            "p",
+          )}
         </div>
       </div>
     </div>
