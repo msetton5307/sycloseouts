@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { Link, useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Order, OrderItem, Product, Address, PaymentMethod } from "@shared/schema";
+import { Order, OrderItem, Product, Address, PaymentMethod, Offer } from "@shared/schema";
 import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
 import {
@@ -92,6 +92,21 @@ export default function SellerDashboard() {
     queryKey: ["/api/payment-methods"],
     enabled: !!user,
   });
+
+  type OfferWithProduct = Offer & { productTitle: string };
+
+  const { data: offers = [] } = useQuery<OfferWithProduct[]>({
+    queryKey: ["/api/offers"],
+    enabled: !!user,
+  });
+
+  const [offersOpen, setOffersOpen] = useState(false);
+
+  useEffect(() => {
+    if (offers.some((o) => o.status === "pending")) {
+      setOffersOpen(true);
+    }
+  }, [offers]);
 
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -744,6 +759,70 @@ export default function SellerDashboard() {
               </DialogClose>
               <Button onClick={handleConfirmTracking} disabled={!trackingNum}>Confirm</Button>
             </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={offersOpen} onOpenChange={setOffersOpen}>
+          <DialogContent className="sm:max-w-[600px]">
+            <DialogHeader>
+              <DialogTitle>Recent Offers</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 max-h-96 overflow-y-auto">
+              {offers.length === 0 ? (
+                <p>No offers.</p>
+              ) : (
+                offers.map((o) => (
+                  <div key={o.id} className="border p-3 rounded flex justify-between">
+                    <div>
+                      <p className="font-medium">{o.productTitle}</p>
+                      {o.selectedVariations && (
+                        <p className="text-xs text-gray-500">
+                          {Object.entries(o.selectedVariations)
+                            .map(([k, v]) => `${k}: ${v}`)
+                            .join(", ")}
+                        </p>
+                      )}
+                      <p className="text-sm">Qty: {o.quantity}</p>
+                      <p className="text-sm">{formatCurrency(o.price)}</p>
+                    </div>
+                    {o.status === "pending" && (
+                      <div className="space-x-2 flex items-start">
+                        <Button
+                          size="sm"
+                          onClick={() =>
+                            apiRequest("POST", `/api/offers/${o.id}/accept`)
+                              .then(() => {
+                                queryClient.invalidateQueries({ queryKey: ["/api/offers"] });
+                                setOffersOpen(false);
+                                toast({ title: "Offer accepted" });
+                              })
+                          }
+                        >
+                          Accept
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() =>
+                            apiRequest("POST", `/api/offers/${o.id}/reject`)
+                              .then(() => {
+                                queryClient.invalidateQueries({ queryKey: ["/api/offers"] });
+                                setOffersOpen(false);
+                                toast({ title: "Offer rejected" });
+                              })
+                          }
+                        >
+                          Reject
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                ))
+              )}
+              <div className="text-right">
+                <Link href="/seller/offers">View All</Link>
+              </div>
+            </div>
           </DialogContent>
         </Dialog>
       </>
