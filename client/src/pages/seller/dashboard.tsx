@@ -23,6 +23,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { ChangePasswordDialog } from "@/components/account/change-password-dialog";
 import { EditProfileDialog } from "@/components/account/edit-profile-dialog";
+import SendMessageDialog from "@/components/messages/send-message-dialog";
 import {
   Dialog,
   DialogContent,
@@ -157,11 +158,6 @@ export default function SellerDashboard() {
     }
   }
 
-  function handleContactBuyer(buyerId: number) {
-    const msg = window.prompt("Message to buyer");
-    if (!msg) return;
-    messageBuyer.mutate({ buyerId, message: msg });
-  }
   
   // Filter products for the current seller
   const sellerProducts = products.filter(product => product.sellerId === user?.id);
@@ -572,9 +568,13 @@ export default function SellerDashboard() {
                           <Button variant="outline" size="sm" onClick={() => handleCancelOrder(order.id)}>
                             Cancel
                           </Button>
-                          <Button variant="outline" size="sm" onClick={() => handleContactBuyer(order.buyerId)}>
-                            Contact Buyer
-                          </Button>
+                          <SendMessageDialog
+                            trigger={<Button variant="outline" size="sm">Contact Buyer</Button>}
+                            onSubmit={(msg) =>
+                              messageBuyer.mutate({ buyerId: order.buyerId, message: msg })
+                            }
+                            title="Message Buyer"
+                          />
                         </div>
                       </div>
                     ))}
