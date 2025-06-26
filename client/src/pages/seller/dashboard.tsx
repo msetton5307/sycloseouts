@@ -245,6 +245,12 @@ export default function SellerDashboard() {
                 Orders
               </Button>
             </Link>
+            <Link href="/seller/offers">
+              <Button variant="outline" className="flex items-center">
+                <DollarSign className="mr-2 h-4 w-4" />
+                Offers
+              </Button>
+            </Link>
             <Link href="/seller/analytics">
               <Button variant="outline" className="flex items-center">
                 <BarChart4 className="mr-2 h-4 w-4" />
