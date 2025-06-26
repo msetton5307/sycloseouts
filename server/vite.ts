@@ -6,10 +6,46 @@ import { createServer as createViteServer, createLogger } from "vite";
 import { type Server } from "http";
 import viteConfig from "../vite.config";
 import { nanoid } from "nanoid";
+import { storage } from "./storage";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const viteLogger = createLogger();
+
+function escapeHtml(str: string) {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function injectMeta(template: string, meta: { title?: string; image?: string }) {
+  if (meta.title) {
+    const safeTitle = escapeHtml(meta.title);
+    template = template.replace(/<title>.*?<\/title>/, `<title>${safeTitle}<\/title>`);
+    template = template.replace(
+      /<meta property="og:title"[^>]*>/,
+      `<meta property="og:title" content="${safeTitle}" />`,
+    );
+  }
+  if (meta.image) {
+    const safeImg = escapeHtml(meta.image);
+    if (template.match(/<meta property="og:image"/)) {
+      template = template.replace(
+        /<meta property="og:image"[^>]*>/,
+        `<meta property="og:image" content="${safeImg}" />`,
+      );
+    } else {
+      template = template.replace(
+        /<meta property="og:type"[^>]*>/,
+        `$&\n    <meta property="og:image" content="${safeImg}" />`,
+      );
+    }
+  }
+  return template;
+}
 
 export function log(message: string, source = "express") {
   const formattedTime = new Date().toLocaleTimeString("en-US", {
@@ -44,6 +80,37 @@ export async function setupVite(app: Express, server: Server) {
   });
 
   app.use(vite.middlewares);
+
+  app.get("/products/:id", async (req, res, next) => {
+    const url = req.originalUrl;
+    const id = parseInt(req.params.id, 10);
+    if (Number.isNaN(id)) return next();
+    try {
+      const product = await storage.getProduct(id);
+      if (!product) return next();
+      const clientTemplate = path.resolve(
+        __dirname,
+        "..",
+        "client",
+        "index.html",
+      );
+      let template = await fs.promises.readFile(clientTemplate, "utf-8");
+      template = template.replace(
+        `src="/src/main.tsx"`,
+        `src="/src/main.tsx?v=${nanoid()}"`,
+      );
+      template = injectMeta(template, {
+        title: product.title,
+        image: product.images[0],
+      });
+      const page = await vite.transformIndexHtml(url, template);
+      res.status(200).set({ "Content-Type": "text/html" }).end(page);
+    } catch (e) {
+      vite.ssrFixStacktrace(e as Error);
+      next(e);
+    }
+  });
+
   app.use("*", async (req, res, next) => {
     const url = req.originalUrl;
 
@@ -78,6 +145,24 @@ export function serveStatic(app: Express) {
       `Could not find the build directory: ${distPath}, make sure to build the client first`,
     );
   }
+
+  app.get("/products/:id", async (req, res, next) => {
+    const id = parseInt(req.params.id, 10);
+    if (Number.isNaN(id)) return next();
+    try {
+      const product = await storage.getProduct(id);
+      if (!product) return next();
+      const templatePath = path.resolve(distPath, "index.html");
+      let template = await fs.promises.readFile(templatePath, "utf-8");
+      template = injectMeta(template, {
+        title: product.title,
+        image: product.images[0],
+      });
+      res.status(200).set({ "Content-Type": "text/html" }).end(template);
+    } catch (e) {
+      next(e);
+    }
+  });
 
   app.use(express.static(distPath));
 
