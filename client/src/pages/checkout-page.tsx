@@ -721,7 +721,7 @@ export default function CheckoutPage() {
       <div className="bg-gray-50 rounded-lg p-6 mb-6 text-left">
         <div className="flex justify-between mb-2">
           <span className="text-sm font-medium text-gray-600">Order Number:</span>
-          <span className="text-sm font-medium">{order?.id || "N/A"}</span>
+          <span className="text-sm font-medium">{order?.code || "N/A"}</span>
         </div>
         <div className="flex justify-between mb-2">
           <span className="text-sm font-medium text-gray-600">Order Date:</span>
