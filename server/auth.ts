@@ -20,6 +20,7 @@ declare global {
       company?: string | null;
       phone?: string | null;
       address?: string | null;
+      avatarUrl?: string | null;
       role: string;
       isSeller: boolean | null;
       isApproved: boolean | null;

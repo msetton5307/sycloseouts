@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useAuth } from "@/hooks/use-auth";
 import { ChangePasswordDialog } from "@/components/account/change-password-dialog";
+import { EditProfileDialog } from "@/components/account/edit-profile-dialog";
 import { formatDate } from "@/lib/utils";
 
 export default function BuyerProfilePage() {
@@ -36,7 +37,7 @@ export default function BuyerProfilePage() {
             <CardContent className="p-4 sm:p-6">
               <div className="flex flex-col items-center">
                 <Avatar className="h-24 w-24 mb-4">
-                  <AvatarImage src="https://github.com/shadcn.png" alt={user?.username} />
+                  <AvatarImage src={user?.avatarUrl || "https://github.com/shadcn.png"} alt={user?.username} />
                   <AvatarFallback className="text-lg">
                     {user?.firstName?.charAt(0)}{user?.lastName?.charAt(0)}
                   </AvatarFallback>
@@ -47,7 +48,9 @@ export default function BuyerProfilePage() {
                 </h3>
                 <p className="text-gray-500 mb-4">{user?.email}</p>
 
-                <Button className="w-full mb-2">Edit Profile</Button>
+                <EditProfileDialog>
+                  <Button className="w-full mb-2">Edit Profile</Button>
+                </EditProfileDialog>
                 <ChangePasswordDialog>
                   <Button variant="outline" className="w-full">Change Password</Button>
                 </ChangePasswordDialog>
