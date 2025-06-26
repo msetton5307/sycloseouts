@@ -100,7 +100,7 @@ export interface IStorage {
   // Offer methods
   createOffer(offer: InsertOffer): Promise<Offer>;
   getOffer(id: number): Promise<Offer | undefined>;
-  getOffers(filter?: Partial<Offer>): Promise<(Offer & { productTitle: string })[]>;
+  getOffers(filter?: Partial<Offer>): Promise<(Offer & { productTitle: string; productAvailableUnits: number })[]>;
   updateOffer(id: number, offer: Partial<Offer>): Promise<Offer | undefined>;
 
   // Support ticket methods
@@ -562,7 +562,7 @@ export class DatabaseStorage implements IStorage {
     return o;
   }
 
-  async getOffers(filter?: Partial<Offer>): Promise<(Offer & { productTitle: string })[]> {
+  async getOffers(filter?: Partial<Offer>): Promise<(Offer & { productTitle: string; productAvailableUnits: number })[]> {
     const baseQuery = db
       .select({
         id: offers.id,
@@ -576,6 +576,7 @@ export class DatabaseStorage implements IStorage {
         orderId: offers.orderId,
         createdAt: offers.createdAt,
         productTitle: products.title,
+        productAvailableUnits: products.availableUnits,
       })
       .from(offers)
       .innerJoin(products, eq(offers.productId, products.id));

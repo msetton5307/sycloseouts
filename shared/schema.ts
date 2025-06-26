@@ -325,7 +325,7 @@ export const offers = pgTable("offers", {
   price: doublePrecision("price").notNull(),
   quantity: integer("quantity").notNull(),
   selectedVariations: jsonb("selected_variations"),
-  status: text("status").notNull().default("pending"), // pending, accepted, rejected
+  status: text("status").notNull().default("pending"), // pending, accepted, rejected, countered
   orderId: integer("order_id"),
   createdAt: timestamp("created_at").defaultNow(),
 });

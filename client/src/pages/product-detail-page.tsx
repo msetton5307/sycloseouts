@@ -296,7 +296,12 @@ export default function ProductDetailPage() {
 
             {user?.role === "buyer" && (
               <>
-                <MakeOfferDialog onSubmit={(p, q) => offerMutation.mutate({ price: p, quantity: q, selectedVariations })} />
+                <MakeOfferDialog
+                  onSubmit={(p, q) =>
+                    offerMutation.mutate({ price: p, quantity: q, selectedVariations })
+                  }
+                  maxQuantity={product.availableUnits}
+                />
                 <AskQuestionDialog onSubmit={q => questionMutation.mutate(q)} />
               </>
             )}
