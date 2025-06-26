@@ -23,6 +23,7 @@ export default function ConversationPage() {
   const { data: messages = [], isLoading, sendMessage, markRead } = useConversation(otherId);
   const inputRef = useRef<HTMLInputElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const initialScroll = useRef(true);
 
   useEffect(() => {
     if (otherId) {
@@ -31,8 +32,16 @@ export default function ConversationPage() {
   }, [otherId]);
 
   useEffect(() => {
+    if (initialScroll.current) {
+      initialScroll.current = false;
+      return;
+    }
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  useEffect(() => {
+    initialScroll.current = true;
+  }, [otherId]);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
