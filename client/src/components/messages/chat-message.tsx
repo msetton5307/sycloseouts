@@ -1,5 +1,5 @@
 import { Message } from "@shared/schema";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 
 interface ChatMessageProps {
   message: Message;
@@ -18,7 +18,7 @@ export default function ChatMessage({ message, isOwn }: ChatMessageProps) {
       >
         {message.content}
         <div className="text-[10px] text-gray-500 mt-1 text-right">
-          {format(new Date(message.createdAt), "p")}
+          {format(parseISO(message.createdAt as unknown as string), "p")}
         </div>
       </div>
     </div>

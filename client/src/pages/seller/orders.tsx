@@ -26,6 +26,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { apiRequest } from "@/lib/queryClient";
 import { formatCurrency, formatDate } from "@/lib/utils";
+import SendMessageDialog from "@/components/messages/send-message-dialog";
 import {
   CalendarIcon,
   Loader2,
@@ -105,11 +106,6 @@ export default function SellerOrdersPage() {
     }
   }
 
-  function handleContactBuyer(buyerId: number) {
-    const msg = window.prompt("Message to buyer");
-    if (!msg) return;
-    messageBuyer.mutate({ buyerId, message: msg });
-  }
 
 
   return (
@@ -199,9 +195,13 @@ export default function SellerOrdersPage() {
                       <Button variant="outline" size="sm" onClick={() => handleCancelOrder(order.id)}>
                         Cancel Order
                       </Button>
-                      <Button variant="outline" size="sm" onClick={() => handleContactBuyer(order.buyerId)}>
-                        Contact Buyer
-                      </Button>
+                      <SendMessageDialog
+                        trigger={<Button variant="outline" size="sm">Contact Buyer</Button>}
+                        onSubmit={(msg) =>
+                          messageBuyer.mutate({ buyerId: order.buyerId, message: msg })
+                        }
+                        title="Message Buyer"
+                      />
                     </div>
                   </div>
                 ))}
