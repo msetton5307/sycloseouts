@@ -3,6 +3,7 @@ import { Offer } from "@shared/schema";
 import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
 import { Button } from "@/components/ui/button";
+import MakeOfferDialog from "@/components/products/make-offer-dialog";
 import { apiRequest } from "@/lib/queryClient";
 import { formatCurrency } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -11,11 +12,26 @@ export default function SellerOffersPage() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  type OfferWithProduct = Offer & { productTitle: string };
+  type OfferWithProduct = Offer & { productTitle: string; productAvailableUnits: number };
 
   const { data: offers = [], isLoading } = useQuery<OfferWithProduct[]>({
     queryKey: ["/api/offers"],
   });
+
+  const counterOffer = useMutation({
+    mutationFn: ({ id, price, quantity }: { id: number; price: number; quantity: number }) =>
+      apiRequest("POST", `/api/offers/${id}/counter`, { price, quantity }).then((r) => r.json()),
+    onSuccess: () => {
+      toast({ title: "Counter offer sent" });
+      queryClient.invalidateQueries({ queryKey: ["/api/offers"] });
+    },
+    onError: (err: Error) =>
+      toast({ title: "Failed", description: err.message, variant: "destructive" }),
+  });
+
+  function handleCounter(id: number, price: number, quantity: number) {
+    counterOffer.mutate({ id, price, quantity });
+  }
 
   const acceptOffer = useMutation({
     mutationFn: (id: number) =>
@@ -85,6 +101,12 @@ export default function SellerOffersPage() {
                   <Button size="sm" variant="outline" onClick={() => handleReject(o.id)}>
                     Reject
                   </Button>
+                  <MakeOfferDialog
+                    onSubmit={(p, q) => handleCounter(o.id, p, q)}
+                    maxQuantity={o.productAvailableUnits}
+                    label="Counter"
+                    className=""
+                  />
                 </div>
               )}
             </div>
