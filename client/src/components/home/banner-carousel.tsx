@@ -55,21 +55,21 @@ export default function BannerCarousel() {
         <Carousel
           opts={{ loop: true }}
           plugins={[Autoplay({ delay: 5000 })]}
-          className="relative w-full"
+          className="relative h-96 md:h-[32rem] w-full"
         >
-          <CarouselContent>
+          <CarouselContent className="h-full">
             {inStockProducts.map((product) => {
               const price =
                 !user || user.role === "buyer"
                   ? product.price * (1 + SERVICE_FEE_RATE)
                   : product.price;
               return (
-                <CarouselItem key={product.id} className="basis-full">
-                  <div className="relative w-full min-h-96 md:min-h-[32rem]">
+                <CarouselItem key={product.id} className="basis-full h-full">
+                  <div className="relative w-full h-full">
                     <img
                       src={product.images[0]}
                       alt={product.title}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-contain"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent md:bg-gradient-to-r" />
                     <div className="absolute inset-0 flex flex-col justify-end md:justify-center p-6 md:p-16 text-white">
@@ -77,14 +77,14 @@ export default function BannerCarousel() {
                         <span className="inline-block px-3 py-1 text-xs font-semibold tracking-wider text-white bg-blue-500 rounded-full">
                           NEW ARRIVAL
                         </span>
-                        <h3 className="text-2xl md:text-5xl font-bold drop-shadow-lg">
+                        <h3 className="text-xl md:text-4xl font-bold drop-shadow-lg">
                           {product.title}
                         </h3>
-                        <p className="text-sm md:text-base drop-shadow-md line-clamp-3">
+                        <p className="text-xs md:text-sm drop-shadow-md line-clamp-2">
                           {product.description}
                         </p>
                         <div className="inline-block px-4 py-2 rounded-full bg-white/20 backdrop-blur-sm">
-                          <span className="text-lg md:text-2xl font-bold">
+                          <span className="text-base md:text-xl font-bold">
                             {formatCurrency(price)}
                           </span>
                           <span className="text-sm opacity-80">/unit</span>
