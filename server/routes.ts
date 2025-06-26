@@ -20,6 +20,8 @@ import {
   insertOrderItemSchema,
   insertSellerApplicationSchema,
   insertSupportTicketSchema,
+  insertOfferSchema,
+  offers as offersTable,
   orders as ordersTable,
   orderItems as orderItemsTable,
   products as productsTable
@@ -178,6 +180,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       await sendProductQuestionEmail(seller.email, product.title, req.body.question);
       res.status(201).json(message);
+    } catch (error) {
+      handleApiError(res, error);
+    }
+  });
+
+  app.post("/api/products/:id/offers", isAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id, 10);
+      if (Number.isNaN(id)) {
+        return res.status(400).json({ message: "Invalid product ID" });
+      }
+      const user = req.user as Express.User;
+      if (user.role !== "buyer") {
+        return res.status(403).json({ message: "Only buyers can send offers" });
+      }
+      const product = await storage.getProduct(id);
+      if (!product) {
+        return res.status(404).json({ message: "Product not found" });
+      }
+
+      const offerData = insertOfferSchema.parse({
+        ...req.body,
+        productId: id,
+        buyerId: user.id,
+        sellerId: product.sellerId,
+      });
+
+      const offer = await storage.createOffer(offerData);
+
+      await storage.createNotification({
+        userId: product.sellerId,
+        type: 'offer',
+        content: `New offer for ${product.title}`,
+        link: `/seller/orders`,
+      });
+
+      res.status(201).json(offer);
     } catch (error) {
       handleApiError(res, error);
     }
@@ -955,6 +994,138 @@ export async function registerRoutes(app: Express): Promise<Server> {
         `attachment; filename=sales-${start.toISOString().slice(0, 10)}-${end.toISOString().slice(0, 10)}.pdf`,
       );
       res.send(pdf);
+    } catch (error) {
+      handleApiError(res, error);
+    }
+  });
+
+  // Offer routes
+  app.get("/api/offers", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user as Express.User;
+      const filter: any = {};
+      if (user.role === 'buyer') filter.buyerId = user.id;
+      else if (user.role === 'seller') filter.sellerId = user.id;
+      const offers = await storage.getOffers(filter);
+      res.json(offers);
+    } catch (error) {
+      handleApiError(res, error);
+    }
+  });
+
+  app.post("/api/offers/:id/accept", isAuthenticated, async (req, res) => {
+    try {
+      const offerId = parseInt(req.params.id, 10);
+      if (Number.isNaN(offerId)) {
+        return res.status(400).json({ message: "Invalid offer ID" });
+      }
+      const user = req.user as Express.User;
+      const offer = await storage.getOffer(offerId);
+      if (!offer) {
+        return res.status(404).json({ message: "Offer not found" });
+      }
+      if (user.role !== 'seller' || offer.sellerId !== user.id) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+
+      if (offer.status !== 'pending') {
+        return res.status(400).json({ message: "Offer already processed" });
+      }
+
+      // Create order based on offer
+      const orderData = insertOrderSchema.parse({
+        buyerId: offer.buyerId,
+        sellerId: offer.sellerId,
+        totalAmount: offer.price * offer.quantity,
+      });
+
+      const invoiceItems: {
+        title: string;
+        quantity: number;
+        unitPrice: number;
+        totalPrice: number;
+        selectedVariations?: Record<string, string>;
+        image?: string;
+      }[] = [];
+
+      const order = await db.transaction(async (tx) => {
+        const [createdOrder] = await tx.insert(ordersTable).values(orderData).returning();
+        const code = generateOrderCode(createdOrder.id);
+        const [withCode] = await tx.update(ordersTable).set({ code }).where(eq(ordersTable.id, createdOrder.id)).returning();
+
+        const orderItemData = insertOrderItemSchema.parse({
+          orderId: createdOrder.id,
+          productId: offer.productId,
+          quantity: offer.quantity,
+          unitPrice: offer.price,
+          totalPrice: offer.price * offer.quantity,
+        });
+
+        await tx.insert(orderItemsTable).values(orderItemData);
+
+        const [product] = await tx.select().from(productsTable).where(eq(productsTable.id, offer.productId));
+        if (product) {
+          await tx.update(productsTable).set({ availableUnits: product.availableUnits - offer.quantity }).where(eq(productsTable.id, offer.productId));
+          invoiceItems.push({
+            title: product.title,
+            quantity: offer.quantity,
+            unitPrice: offer.price,
+            totalPrice: offer.price * offer.quantity,
+            image: product.images?.[0],
+          });
+        }
+
+        return withCode;
+      });
+
+      await storage.updateOffer(offerId, { status: 'accepted', orderId: order.id });
+
+      await storage.createNotification({
+        userId: offer.buyerId,
+        type: 'offer',
+        content: `Your offer for order #${order.code} was accepted`,
+        link: `/buyer/orders/${order.id}`,
+      });
+
+      const buyer = await storage.getUser(offer.buyerId);
+      if (buyer) {
+        sendInvoiceEmail(buyer.email, order, invoiceItems, buyer).catch(console.error);
+      }
+
+      res.json(order);
+    } catch (error) {
+      handleApiError(res, error);
+    }
+  });
+
+  app.post("/api/offers/:id/reject", isAuthenticated, async (req, res) => {
+    try {
+      const offerId = parseInt(req.params.id, 10);
+      if (Number.isNaN(offerId)) {
+        return res.status(400).json({ message: "Invalid offer ID" });
+      }
+      const user = req.user as Express.User;
+      const offer = await storage.getOffer(offerId);
+      if (!offer) {
+        return res.status(404).json({ message: "Offer not found" });
+      }
+      if (user.role !== 'seller' || offer.sellerId !== user.id) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+      if (offer.status !== 'pending') {
+        return res.status(400).json({ message: "Offer already processed" });
+      }
+
+      await storage.updateOffer(offerId, { status: 'rejected' });
+
+      await storage.createNotification({
+        userId: offer.buyerId,
+        type: 'offer',
+        content: `Your offer for ${offer.quantity} units was rejected`,
+        link: `/buyer/home`,
+      });
+
+      res.sendStatus(204);
     } catch (error) {
       handleApiError(res, error);
     }
