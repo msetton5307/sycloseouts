@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
 import { useQuery } from "@tanstack/react-query";
@@ -23,6 +23,10 @@ export default function AdminMessagesPage() {
   );
 
   const { data: messages = [], isLoading } = useAdminUserMessages(selectedUser ?? 0);
+
+  useEffect(() => {
+    window.scrollTo({ top: 0 });
+  }, []);
 
   return (
     <>

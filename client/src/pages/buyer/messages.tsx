@@ -4,6 +4,7 @@ import Footer from "@/components/layout/footer";
 import { useAuth } from "@/hooks/use-auth";
 import { Order } from "@shared/schema";
 import ConversationPreview from "@/components/messages/conversation-preview";
+import { useEffect } from "react";
 
 export default function BuyerMessagesPage() {
   const { user } = useAuth();
@@ -11,6 +12,10 @@ export default function BuyerMessagesPage() {
     queryKey: ["/api/orders"],
     enabled: !!user,
   });
+
+  useEffect(() => {
+    window.scrollTo({ top: 0 });
+  }, []);
 
   const sellers = Array.from(new Set(orders.map(o => o.sellerId)));
 
