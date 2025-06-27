@@ -31,7 +31,7 @@ export default function ConversationPreview({ otherId, selected }: ConversationP
       className={`relative flex items-center gap-3 p-3 border-b hover:bg-gray-50 ${selected ? "bg-gray-50" : ""}`}
     >
       <Avatar>
-        <AvatarImage src={user?.avatarUrl || "https://github.com/shadcn.png"} alt={user?.username} />
+        <AvatarImage src={user?.avatarUrl || undefined} alt={user?.username} />
         <AvatarFallback>
           {user?.firstName?.charAt(0)}
           {user?.lastName?.charAt(0)}

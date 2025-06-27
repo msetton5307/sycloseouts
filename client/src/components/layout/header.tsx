@@ -160,7 +160,7 @@ export default function Header({ dashboardTabs, onProfileClick }: HeaderProps) {
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                       <Avatar className="h-8 w-8">
-                        <AvatarImage src={user.avatarUrl || "https://github.com/shadcn.png"} alt={user.username} />
+                        <AvatarImage src={user.avatarUrl || undefined} alt={user.username} />
                         <AvatarFallback>
                           {user.firstName.charAt(0)}
                           {user.lastName.charAt(0)}
@@ -258,7 +258,7 @@ export default function Header({ dashboardTabs, onProfileClick }: HeaderProps) {
                 <div className="flex items-center px-4">
                   <div className="flex-shrink-0">
                     <Avatar className="h-10 w-10">
-                      <AvatarImage src={user.avatarUrl || "https://github.com/shadcn.png"} alt={user.username} />
+                      <AvatarImage src={user.avatarUrl || undefined} alt={user.username} />
                       <AvatarFallback>
                         {user.firstName.charAt(0)}
                         {user.lastName.charAt(0)}
