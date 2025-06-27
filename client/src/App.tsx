@@ -13,6 +13,8 @@ import HomePage from "@/pages/home-page";
 import ProductsPage from "@/pages/products-page";
 import ProductDetailPage from "@/pages/product-detail-page";
 import AuthPage from "@/pages/auth-page";
+import RegisterChoicePage from "@/pages/register";
+import BuyerSignupPage from "@/pages/buyer/signup";
 import ForgotPasswordPage from "@/pages/forgot-password";
 import CartPage from "@/pages/cart-page";
 import CheckoutPage from "@/pages/checkout-page";
@@ -57,6 +59,8 @@ function Router() {
       <Route path="/products" component={ProductsPage} />
       <Route path="/products/:id" component={ProductDetailPage} />
       <Route path="/auth" component={AuthPage} />
+      <Route path="/register" component={RegisterChoicePage} />
+      <Route path="/buyer/signup" component={BuyerSignupPage} />
       <Route path="/forgot-password" component={ForgotPasswordPage} />
       <Route path="/suspended" component={SuspendedPage} />
       <Route path="/cart" component={CartPage} />
@@ -66,8 +70,8 @@ function Router() {
       <Route path="/help" component={HelpPage} />
       <ProtectedRoute path="/notifications" component={NotificationsPage} allowedRoles={["buyer", "seller", "admin"]} />
       
-      {/* Protected seller application route */}
-      <ProtectedRoute path="/seller/apply" component={SellerApply} allowedRoles={["buyer", "seller", "admin"]} />
+      {/* Public seller application route */}
+      <Route path="/seller/apply" component={SellerApply} />
 
       {/* Buyer routes */}
       <ProtectedRoute path="/checkout" component={CheckoutPage} allowedRoles={["buyer", "seller", "admin"]} />

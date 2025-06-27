@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { useLocation, useRoute } from "wouter";
-import { useAuth, loginSchema, registerSchema } from "@/hooks/use-auth";
+import { useAuth, loginSchema } from "@/hooks/use-auth";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -13,12 +13,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
-import {
   Form,
   FormControl,
   FormField,
@@ -28,7 +22,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Loader2, ImagePlus } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { Link } from "wouter";
 import Header from "@/components/layout/header-fixed";
 import Footer from "@/components/layout/footer-fixed";
@@ -36,11 +30,8 @@ import Footer from "@/components/layout/footer-fixed";
 export default function AuthPage() {
   const [, setLocation] = useLocation();
   const [, params] = useRoute("/auth");
-  const { user, loginMutation, registerMutation } = useAuth();
-  const [activeTab, setActiveTab] = useState<"login" | "register">("login");
+  const { user, loginMutation } = useAuth();
   
-  const searchParams = new URLSearchParams(window.location.search);
-  const defaultRole = searchParams.get("type") || "buyer";
   
   // If user is already logged in, redirect to dashboard
   useEffect(() => {
@@ -68,64 +59,12 @@ export default function AuthPage() {
     },
   });
   
-  // Register form setup
-  const registerForm = useForm<z.infer<typeof registerSchema>>({
-    resolver: zodResolver(registerSchema),
-    defaultValues: {
-      username: "",
-      password: "",
-      confirmPassword: "",
-      email: "",
-      firstName: "",
-      lastName: "",
-      company: "",
-      phone: "",
-      address: "",
-      city: "",
-      state: "",
-      zipCode: "",
-      country: "United States",
-      role: defaultRole,
-      resaleCertUrl: "",
-    },
-  });
-
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const [uploading, setUploading] = useState(false);
   
   // Handle login form submission
   function onLoginSubmit(values: z.infer<typeof loginSchema>) {
     loginMutation.mutate(values);
   }
   
-  // Handle register form submission
-  function onRegisterSubmit(values: z.infer<typeof registerSchema>) {
-    registerMutation.mutate(values);
-  }
-
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setUploading(true);
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      if (event.target && event.target.result) {
-        registerForm.setValue("resaleCertUrl", event.target.result.toString());
-      }
-      setUploading(false);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
-    };
-    reader.onerror = () => {
-      setUploading(false);
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const triggerFileUpload = () => {
-    fileInputRef.current?.click();
-  };
   
   // If the user is already logged in, don't show the auth page
   if (user) {
@@ -151,382 +90,69 @@ export default function AuthPage() {
               </p>
             </div>
             
-            <Tabs defaultValue={activeTab} onValueChange={(value) => setActiveTab(value as "login" | "register")}>
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="login">Login</TabsTrigger>
-                <TabsTrigger value="register">Register</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="login">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Login</CardTitle>
-                    <CardDescription>
-                      Enter your credentials to access your account
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <Form {...loginForm}>
-                      <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-4">
-                        <FormField
-                          control={loginForm.control}
-                          name="username"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Username</FormLabel>
-                              <FormControl>
-                                <Input placeholder="Enter your username" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={loginForm.control}
-                          name="password"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Password</FormLabel>
-                              <FormControl>
-                                <Input type="password" placeholder="••••••••" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <Button
-                          type="submit"
-                          className="w-full"
-                          disabled={loginMutation.isPending}
-                        >
-                          {loginMutation.isPending ? (
-                            <>
-                              <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 
-                              Logging in...
-                            </>
-                          ) : (
-                            "Login"
-                          )}
-                        </Button>
-                        <div className="text-sm text-right">
-                          <Link href="/forgot-password" className="text-primary hover:underline">
-                            Forgot password?
-                          </Link>
-                        </div>
-                      </form>
-                    </Form>
-                  </CardContent>
-                  <CardFooter className="flex justify-center border-t p-4">
-                    <div className="text-sm text-gray-600">
-                      Don't have an account?{" "}
-                      <button 
-                        onClick={() => setActiveTab("register")}
-                        className="text-primary hover:underline font-medium"
-                      >
-                        Register
-                      </button>
+            <Card>
+              <CardHeader>
+                <CardTitle>Login</CardTitle>
+                <CardDescription>
+                  Enter your credentials to access your account
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Form {...loginForm}>
+                  <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-4">
+                    <FormField
+                      control={loginForm.control}
+                      name="username"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Username</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Enter your username" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={loginForm.control}
+                      name="password"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Password</FormLabel>
+                          <FormControl>
+                            <Input type="password" placeholder="••••••••" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <Button type="submit" className="w-full" disabled={loginMutation.isPending}>
+                      {loginMutation.isPending ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Logging in...
+                        </>
+                      ) : (
+                        "Login"
+                      )}
+                    </Button>
+                    <div className="text-sm text-right">
+                      <Link href="/forgot-password" className="text-primary hover:underline">
+                        Forgot password?
+                      </Link>
                     </div>
-                  </CardFooter>
-                </Card>
-              </TabsContent>
-              
-              <TabsContent value="register">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Create an Account</CardTitle>
-                    <CardDescription>
-                      Sign up to start buying or selling wholesale products
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <Form {...registerForm}>
-                      <form onSubmit={registerForm.handleSubmit(onRegisterSubmit)} className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
-                          <FormField
-                            control={registerForm.control}
-                            name="firstName"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>First Name</FormLabel>
-                                <FormControl>
-                                  <Input placeholder="First name" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={registerForm.control}
-                            name="lastName"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Last Name</FormLabel>
-                                <FormControl>
-                                  <Input placeholder="Last name" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-                        
-                        <FormField
-                          control={registerForm.control}
-                          name="username"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Username</FormLabel>
-                              <FormControl>
-                                <Input placeholder="Choose a username" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        
-                        <FormField
-                          control={registerForm.control}
-                          name="email"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Email</FormLabel>
-                              <FormControl>
-                                <Input type="email" placeholder="you@example.com" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        
-                        <FormField
-                          control={registerForm.control}
-                          name="company"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Company (Optional)</FormLabel>
-                              <FormControl>
-                                <Input placeholder="Your company name" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <FormField
-                          control={registerForm.control}
-                          name="phone"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Phone</FormLabel>
-                              <FormControl>
-                                <Input placeholder="555-123-4567" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <FormField
-                          control={registerForm.control}
-                          name="address"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Street Address</FormLabel>
-                              <FormControl>
-                                <Input placeholder="123 Main St" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <div className="grid grid-cols-3 gap-4">
-                          <FormField
-                            control={registerForm.control}
-                            name="city"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>City</FormLabel>
-                                <FormControl>
-                                  <Input {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={registerForm.control}
-                            name="state"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>State</FormLabel>
-                                <FormControl>
-                                  <Input {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={registerForm.control}
-                            name="zipCode"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>ZIP</FormLabel>
-                                <FormControl>
-                                  <Input {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-
-                        <FormField
-                          control={registerForm.control}
-                          name="country"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Country</FormLabel>
-                              <FormControl>
-                                <Input {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        
-                        <FormField
-                          control={registerForm.control}
-                          name="role"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>I want to</FormLabel>
-                              <div className="grid grid-cols-2 gap-4 mt-1">
-                                <Button
-                                  type="button"
-                                  variant={field.value === "buyer" ? "default" : "outline"}
-                                  className="w-full"
-                                  onClick={() => registerForm.setValue("role", "buyer")}
-                                >
-                                  Buy Products
-                                </Button>
-                                <Button
-                                  type="button"
-                                  variant={field.value === "seller" ? "default" : "outline"}
-                                  className="w-full"
-                                  onClick={() => registerForm.setValue("role", "seller")}
-                                >
-                                  Sell Products
-                                </Button>
-                              </div>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <FormField
-                          control={registerForm.control}
-                          name="resaleCertUrl"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Resale Certificate (Optional)</FormLabel>
-                              <FormControl>
-                                <Input type="hidden" {...field} />
-                              </FormControl>
-                              <Button
-                                type="button"
-                                variant="outline"
-                                className="mt-2 w-full"
-                                onClick={triggerFileUpload}
-                                disabled={uploading}
-                              >
-                                {uploading ? (
-                                  <>
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                    Uploading...
-                                  </>
-                                ) : (
-                                  <>
-                                    <ImagePlus className="mr-2 h-4 w-4" />
-                                    {field.value ? "Replace File" : "Upload File"}
-                                  </>
-                                )}
-                              </Button>
-                              {field.value && (
-                                <p className="text-xs text-gray-500 mt-1">File attached</p>
-                              )}
-                              <input
-                                type="file"
-                                ref={fileInputRef}
-                                onChange={handleFileUpload}
-                                className="hidden"
-                                accept="application/pdf,image/*"
-                              />
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        
-                        <FormField
-                          control={registerForm.control}
-                          name="password"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Password</FormLabel>
-                              <FormControl>
-                                <Input type="password" placeholder="••••••••" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        
-                        <FormField
-                          control={registerForm.control}
-                          name="confirmPassword"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Confirm Password</FormLabel>
-                              <FormControl>
-                                <Input type="password" placeholder="••••••••" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        
-                        <Button 
-                          type="submit" 
-                          className="w-full" 
-                          disabled={registerMutation.isPending}
-                        >
-                          {registerMutation.isPending ? (
-                            <>
-                              <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 
-                              Creating account...
-                            </>
-                          ) : (
-                            "Create Account"
-                          )}
-                        </Button>
-                      </form>
-                    </Form>
-                  </CardContent>
-                  <CardFooter className="flex justify-center border-t p-4">
-                    <div className="text-sm text-gray-600">
-                      Already have an account?{" "}
-                      <button 
-                        onClick={() => setActiveTab("login")}
-                        className="text-primary hover:underline font-medium"
-                      >
-                        Login
-                      </button>
-                    </div>
-                  </CardFooter>
-                </Card>
-              </TabsContent>
-            </Tabs>
+                  </form>
+                </Form>
+              </CardContent>
+              <CardFooter className="flex justify-center border-t p-4">
+                <div className="text-sm text-gray-600">
+                  Don't have an account?{' '}
+                  <Link href="/register" className="text-primary hover:underline font-medium">
+                    Register
+                  </Link>
+                </div>
+              </CardFooter>
+            </Card>
           </div>
         </div>
         
