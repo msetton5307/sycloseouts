@@ -6,14 +6,20 @@ import { useAuth } from "@/hooks/use-auth";
 import { useEffect, useRef } from "react";
 import ChatMessage from "@/components/messages/chat-message";
 import { useQuery } from "@tanstack/react-query";
-import { Order } from "@shared/schema";
+import { Order, OrderItem } from "@shared/schema";
 import ConversationPreview from "@/components/messages/conversation-preview";
+import ListingBanner from "@/components/messages/listing-banner";
+
+interface OrderItemWithProduct extends OrderItem {
+  productTitle: string;
+  productImages: string[];
+}
 
 export default function ConversationPage() {
   const { id } = useParams();
   const otherId = parseInt(id);
   const { user } = useAuth();
-  const { data: orders = [] } = useQuery<Order[]>({
+  const { data: orders = [] } = useQuery<(Order & { items: OrderItemWithProduct[] })[]>({
     queryKey: ["/api/orders"],
     enabled: !!user,
   });
@@ -24,6 +30,11 @@ export default function ConversationPage() {
   const inputRef = useRef<HTMLInputElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const initialScroll = useRef(true);
+
+  const latestOrder = orders.find(o =>
+    (user?.role === "buyer" ? o.sellerId === otherId : o.buyerId === otherId)
+  );
+  const listing = latestOrder?.items?.[0];
 
   useEffect(() => {
     if (otherId) {
@@ -62,6 +73,13 @@ export default function ConversationPage() {
         </div>
         <div className="flex-1 flex flex-col">
           <h1 className="text-xl font-semibold mb-2">Conversation</h1>
+          {listing && (
+            <ListingBanner
+              productId={listing.productId}
+              title={listing.productTitle}
+              image={listing.productImages[0]}
+            />
+          )}
           <div className="flex-1 overflow-y-auto space-y-2 bg-gray-50 border rounded p-4">
             {isLoading ? (
               <p>Loading...</p>
