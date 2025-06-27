@@ -26,7 +26,7 @@ export default function Hero() {
             <Button
               size="lg"
               variant="secondary"
-              className="bg-white/80 text-primary hover:bg-white"
+              className="bg-white/90 text-primary hover:bg-white"
             >
               Become a Seller
             </Button>
