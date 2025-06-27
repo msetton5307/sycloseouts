@@ -102,6 +102,70 @@ export default function SellerDashboard() {
 
   const pendingOffers = offers.filter((o) => o.status === "pending");
 
+  const recentOffersCard = (
+    <Card>
+      <CardHeader>
+        <CardTitle>Recent Offers</CardTitle>
+        <CardDescription>Offers from buyers</CardDescription>
+      </CardHeader>
+      <CardContent>
+        {pendingOffers.length === 0 ? (
+          <p className="text-sm text-gray-500">No offers yet.</p>
+        ) : (
+          <div className="space-y-4">
+            {pendingOffers.slice(0, 5).map((o) => (
+              <div key={o.id} className="border rounded-lg p-4 flex justify-between">
+                <div>
+                  <p className="font-medium">{o.productTitle}</p>
+                  {o.selectedVariations && (
+                    <p className="text-xs text-gray-500">
+                      {Object.entries(o.selectedVariations)
+                        .map(([k, v]) => `${k}: ${v}`)
+                        .join(", ")}
+                    </p>
+                  )}
+                  <p className="text-sm">Qty: {o.quantity}</p>
+                  <p className="text-sm">{formatCurrency(o.price)}</p>
+                </div>
+                <div className="space-x-2 flex items-start">
+                  <Button
+                    size="sm"
+                    onClick={() =>
+                      apiRequest("POST", `/api/offers/${o.id}/accept`).then(() => {
+                        queryClient.invalidateQueries({ queryKey: ["/api/offers"] });
+                        toast({ title: "Offer accepted" });
+                      })
+                    }
+                  >
+                    Accept
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() =>
+                      apiRequest("POST", `/api/offers/${o.id}/reject`).then(() => {
+                        queryClient.invalidateQueries({ queryKey: ["/api/offers"] });
+                        toast({ title: "Offer rejected" });
+                      })
+                    }
+                  >
+                    Reject
+                  </Button>
+                </div>
+              </div>
+            ))}
+
+            <div className="flex justify-center">
+              <Link href="/seller/offers">
+                <Button variant="outline">View All Offers</Button>
+              </Link>
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -272,6 +336,7 @@ export default function SellerDashboard() {
         </div>
         
         <TabsContent value="overview" className="space-y-6">
+            {pendingOffers.length > 0 && recentOffersCard}
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               <Card>
@@ -607,67 +672,7 @@ export default function SellerDashboard() {
             </Card>
 
             {/* Recent Offers */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Recent Offers</CardTitle>
-                <CardDescription>Offers from buyers</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {pendingOffers.length === 0 ? (
-                  <p className="text-sm text-gray-500">No offers yet.</p>
-                ) : (
-                  <div className="space-y-4">
-                    {pendingOffers.slice(0, 5).map((o) => (
-                      <div key={o.id} className="border rounded-lg p-4 flex justify-between">
-                        <div>
-                          <p className="font-medium">{o.productTitle}</p>
-                          {o.selectedVariations && (
-                            <p className="text-xs text-gray-500">
-                              {Object.entries(o.selectedVariations)
-                                .map(([k, v]) => `${k}: ${v}`)
-                                .join(", ")}
-                            </p>
-                          )}
-                          <p className="text-sm">Qty: {o.quantity}</p>
-                          <p className="text-sm">{formatCurrency(o.price)}</p>
-                        </div>
-                        <div className="space-x-2 flex items-start">
-                          <Button
-                            size="sm"
-                            onClick={() =>
-                              apiRequest("POST", `/api/offers/${o.id}/accept`).then(() => {
-                                queryClient.invalidateQueries({ queryKey: ["/api/offers"] });
-                                toast({ title: "Offer accepted" });
-                              })
-                            }
-                          >
-                            Accept
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() =>
-                              apiRequest("POST", `/api/offers/${o.id}/reject`).then(() => {
-                                queryClient.invalidateQueries({ queryKey: ["/api/offers"] });
-                                toast({ title: "Offer rejected" });
-                              })
-                            }
-                          >
-                            Reject
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-
-                    <div className="flex justify-center">
-                      <Link href="/seller/offers">
-                        <Button variant="outline">View All Offers</Button>
-                      </Link>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            {pendingOffers.length === 0 && recentOffersCard}
           </TabsContent>
           
           

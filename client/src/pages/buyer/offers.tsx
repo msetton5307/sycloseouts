@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Offer } from "@shared/schema";
 import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, SERVICE_FEE_RATE } from "@/lib/utils";
 
 export default function BuyerOffersPage() {
   type OfferWithProduct = Offer & { productTitle: string };
@@ -32,7 +32,8 @@ export default function BuyerOffersPage() {
                   <p className="text-sm">Quantity: {o.quantity}</p>
                 </div>
                 <div className="text-right">
-                  <p>{formatCurrency(o.price)}</p>
+                  <p>{formatCurrency(o.price * (1 - SERVICE_FEE_RATE))}</p>
+                  <p className="text-xs text-gray-500">after 3.5% commission</p>
                   <span className="text-xs capitalize">{o.status}</span>
                 </div>
               </div>
