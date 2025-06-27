@@ -104,7 +104,7 @@ export default function ProductDetailPage() {
   };
 
   const handleIncrease = () => {
-    if (product && quantity + product.orderMultiple <= product.availableUnits) {
+    if (product && quantity + product.orderMultiple <= availableStock) {
       setQuantity(quantity + product.orderMultiple);
     }
   };
@@ -116,6 +116,10 @@ export default function ProductDetailPage() {
   };
 
   const varKey = JSON.stringify(selectedVariations);
+  const availableStock =
+    product?.variationStocks && product.variationStocks[varKey] !== undefined
+      ? product.variationStocks[varKey]
+      : product?.availableUnits ?? 0;
   const basePrice =
     product?.variationPrices && product.variationPrices[varKey] !== undefined
       ? product.variationPrices[varKey]
@@ -211,8 +215,8 @@ export default function ProductDetailPage() {
             <h1 className="text-3xl font-bold mb-2">{product.title}</h1>
             <div className="flex items-center mb-4">
               <Badge className="mr-2">{product.condition}</Badge>
-              <Badge className={product.availableUnits > 0 ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}>
-                {product.availableUnits > 0 ? "In Stock" : "Out of Stock"}
+              <Badge className={availableStock > 0 ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}>
+                {availableStock > 0 ? "In Stock" : "Out of Stock"}
               </Badge>
             </div>
 
@@ -220,7 +224,7 @@ export default function ProductDetailPage() {
             {product.retailMsrp && (
               <div className="text-sm text-gray-500 mb-2">Retail MSRP: {formatCurrency(product.retailMsrp)}</div>
             )}
-            <div className="text-sm text-gray-600 mb-1"><Package className="inline-block h-4 w-4 mr-1" />{product.availableUnits} units</div>
+            <div className="text-sm text-gray-600 mb-1"><Package className="inline-block h-4 w-4 mr-1" />{availableStock} units</div>
             <div className="text-sm text-gray-600 mb-1"><Layers className="inline-block h-4 w-4 mr-1" />Minimum {product.minOrderQuantity} (by {product.orderMultiple})</div>
             {product.fobLocation && (
               <div className="text-sm text-gray-600 mb-4"><Truck className="inline-block h-4 w-4 mr-1" />Ships from {product.fobLocation}</div>
@@ -269,7 +273,7 @@ export default function ProductDetailPage() {
                 className="w-20 text-center"
                 value={quantity}
                 min={product.minOrderQuantity}
-                max={product.availableUnits}
+                max={availableStock}
                 step={product.orderMultiple}
                 onChange={(e) => setQuantity(parseInt(e.target.value) || 0)}
                 onFocus={(e) => e.target.select()}
@@ -278,7 +282,7 @@ export default function ProductDetailPage() {
                 variant="outline"
                 size="icon"
                 onClick={handleIncrease}
-                disabled={quantity + product.orderMultiple > product.availableUnits}
+                disabled={quantity + product.orderMultiple > availableStock}
               >
                 <Plus className="h-4 w-4" />
               </Button>
@@ -300,9 +304,9 @@ export default function ProductDetailPage() {
                   onSubmit={(p, q) =>
                     offerMutation.mutate({ price: p, quantity: q, selectedVariations })
                   }
-                  maxQuantity={product.availableUnits}
+                  maxQuantity={availableStock}
                   currentPrice={unitPrice}
-                  currentStock={product.availableUnits}
+                  currentStock={availableStock}
                   selectedVariations={selectedVariations}
                 />
                 <AskQuestionDialog onSubmit={q => questionMutation.mutate(q)} />
@@ -351,7 +355,7 @@ export default function ProductDetailPage() {
 
         <Separator className="my-10" />
 
-        {product.availableUnits > 0 && (
+        {availableStock > 0 && (
           <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t p-4 md:hidden">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center space-x-2">
@@ -368,7 +372,7 @@ export default function ProductDetailPage() {
                   className="w-16 text-center"
                   value={quantity}
                   min={product.minOrderQuantity}
-                  max={product.availableUnits}
+                  max={availableStock}
                   step={product.orderMultiple}
                   onChange={(e) => setQuantity(parseInt(e.target.value) || 0)}
                 />
@@ -376,7 +380,7 @@ export default function ProductDetailPage() {
                   variant="outline"
                   size="icon"
                   onClick={handleIncrease}
-                  disabled={quantity + product.orderMultiple > product.availableUnits}
+                  disabled={quantity + product.orderMultiple > availableStock}
                 >
                   <Plus className="h-4 w-4" />
                 </Button>

@@ -88,17 +88,22 @@ export function CartProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    const varKey = JSON.stringify(variations);
+    const availableUnits =
+      product.variationStocks && product.variationStocks[varKey] !== undefined
+        ? product.variationStocks[varKey]
+        : product.availableUnits;
+
     // Check if we have enough inventory
-    if (quantity > product.availableUnits) {
+    if (quantity > availableUnits) {
       toast({
         title: "Not enough inventory",
-        description: `Only ${product.availableUnits} units are available.`,
+        description: `Only ${availableUnits} units are available.`,
         variant: "destructive",
       });
       return;
     }
 
-    const varKey = JSON.stringify(variations);
     const basePrice =
       product.variationPrices && product.variationPrices[varKey] !== undefined
         ? product.variationPrices[varKey]
@@ -117,12 +122,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
         // Update existing item
         const updatedItems = [...prevItems];
         const newQuantity = updatedItems[existingItemIndex].quantity + quantity;
-        
+
         // Check if the new quantity exceeds available units
-        if (newQuantity > product.availableUnits) {
+        if (newQuantity > availableUnits) {
           toast({
             title: "Not enough inventory",
-            description: `Only ${product.availableUnits} units are available.`,
+            description: `Only ${availableUnits} units are available.`,
             variant: "destructive",
           });
           return prevItems;
@@ -146,7 +151,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
             image: product.images[0],
             minOrderQuantity: product.minOrderQuantity,
             orderMultiple: product.orderMultiple,
-            availableUnits: product.availableUnits,
+            availableUnits,
             selectedVariations: variations,
             variationKey: varKey
           }

@@ -200,7 +200,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Product not found" });
       }
 
-      if (req.body.quantity > product.availableUnits) {
+      const varKey = JSON.stringify(req.body.selectedVariations || {});
+      const availableUnits =
+        product.variationStocks && product.variationStocks[varKey] !== undefined
+          ? product.variationStocks[varKey]
+          : product.availableUnits;
+
+      if (req.body.quantity > availableUnits) {
         return res.status(400).json({ message: "Quantity exceeds available stock" });
       }
 
