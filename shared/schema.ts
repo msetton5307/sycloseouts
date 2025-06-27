@@ -15,6 +15,8 @@ export const users = pgTable("users", {
   phone: text("phone"),
   address: text("address"),
   avatarUrl: text("avatar_url"),
+  resaleCertUrl: text("resale_cert_url"),
+  resaleCertStatus: text("resale_cert_status").default("none"),
   role: text("role").notNull().default("buyer"), // buyer, seller, admin
   isSeller: boolean("is_seller").default(false),
   isApproved: boolean("is_approved").default(false),
@@ -94,6 +96,8 @@ export const insertUserSchema = createInsertSchema(users)
     phone: z.string().optional(),
     address: z.string().optional(),
     avatarUrl: z.string().optional(),
+    resaleCertUrl: z.string().optional(),
+    resaleCertStatus: z.string().optional(),
   })
   .refine((data) => data.password.length >= 6, {
     message: "Password must be at least 6 characters long",
