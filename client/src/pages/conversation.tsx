@@ -9,6 +9,9 @@ import { useQuery } from "@tanstack/react-query";
 import { Order, OrderItem } from "@shared/schema";
 import ConversationPreview from "@/components/messages/conversation-preview";
 import ListingBanner from "@/components/messages/listing-banner";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 interface OrderItemWithProduct extends OrderItem {
   productTitle: string;
@@ -65,14 +68,13 @@ export default function ConversationPage() {
   return (
     <>
       <Header />
-      <main className="max-w-7xl mx-auto px-4 py-4 flex h-[calc(100vh-8rem)]">
-        <div className="hidden md:block w-64 border-r overflow-y-auto bg-white shadow-sm">
+      <main className="max-w-7xl mx-auto px-4 py-4 flex h-[calc(100vh-8rem)] gap-4">
+        <div className="hidden md:block w-64 border-r overflow-y-auto bg-white shadow-sm rounded-lg">
           {others.map(id => (
             <ConversationPreview key={id} otherId={id} selected={id === otherId} />
           ))}
         </div>
-        <div className="flex-1 flex flex-col">
-          <h1 className="text-xl font-semibold mb-2">Conversation</h1>
+        <div className="flex-1 flex flex-col gap-2">
           {listing && (
             <ListingBanner
               productId={listing.productId}
@@ -80,29 +82,22 @@ export default function ConversationPage() {
               image={listing.productImages[0]}
             />
           )}
-          <div className="flex-1 overflow-y-auto space-y-2 bg-gray-50 border rounded p-4">
-            {isLoading ? (
-              <p>Loading...</p>
-            ) : (
-              messages.map(m => (
-                <ChatMessage key={m.id} message={m} isOwn={m.senderId === user?.id} />
-              ))
-            )}
-            <div ref={bottomRef} />
-          </div>
-          <form onSubmit={handleSubmit} className="mt-2 flex gap-2">
-            <input
-              ref={inputRef}
-              className="flex-1 border rounded-full px-3 py-2"
-              placeholder="Type a message"
-            />
-            <button
-              type="submit"
-              className="bg-primary text-white px-4 rounded-full"
-            >
-              Send
-            </button>
-          </form>
+          <Card className="flex-1 flex flex-col overflow-hidden">
+            <CardContent className="flex-1 overflow-y-auto space-y-2 p-4 bg-muted">
+              {isLoading ? (
+                <p>Loading...</p>
+              ) : (
+                messages.map(m => (
+                  <ChatMessage key={m.id} message={m} isOwn={m.senderId === user?.id} />
+                ))
+              )}
+              <div ref={bottomRef} />
+            </CardContent>
+            <form onSubmit={handleSubmit} className="flex gap-2 p-4 border-t">
+              <Input ref={inputRef} placeholder="Type a message" />
+              <Button type="submit">Send</Button>
+            </form>
+          </Card>
         </div>
       </main>
       <Footer />
