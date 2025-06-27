@@ -17,8 +17,8 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Loader2, CheckCircle, CreditCard, Building, ShoppingCart } from "lucide-react";
-import { InsertOrder, InsertOrderItem, PaymentMethod } from "@shared/schema";
+import { Loader2, CheckCircle, Building, Banknote, ShoppingCart } from "lucide-react";
+import { InsertOrder, InsertOrderItem } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import Header from "@/components/layout/header";
@@ -52,18 +52,12 @@ export default function CheckoutPage() {
   });
 
   const [paymentInfo, setPaymentInfo] = useState({
-    cardNumber: "",
-    nameOnCard: user ? `${user.firstName} ${user.lastName}` : "",
-    expirationDate: "",
-    cvc: "",
     routingNumber: "",
     accountNumber: "",
-    paymentMethod: "credit_card",
-    billingAddressSameAsShipping: true
+    paymentMethod: "wire",
+    billingAddressSameAsShipping: true,
   });
 
-  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
-  const [selectedPaymentId, setSelectedPaymentId] = useState<string | number>("new");
 
   const [contactOption, setContactOption] = useState<"saved" | "new">(
     user?.phone || user?.email ? "saved" : "new"
@@ -91,29 +85,6 @@ export default function CheckoutPage() {
     fetchAddresses();
   }, [user]);
 
-  useEffect(() => {
-    const fetchPaymentMethods = async () => {
-      if (!user) return;
-      try {
-        const res = await apiRequest("GET", "/api/payment-methods");
-        const data = await res.json();
-        setPaymentMethods(data);
-        if (data.length > 0) {
-          setSelectedPaymentId(data[0].id);
-          setPaymentInfo((info) => ({
-            ...info,
-            cardNumber: "", // don't prefill sensitive data
-            nameOnCard: data[0].cardholderName,
-            expirationDate: `${data[0].expMonth}/${data[0].expYear}`,
-            paymentMethod: "credit_card",
-          }));
-        }
-      } catch (err) {
-        console.error("Failed to load payment methods", err);
-      }
-    };
-    fetchPaymentMethods();
-  }, [user]);
 
   useEffect(() => {
     if (selectedAddressId === "new") return;
@@ -126,19 +97,6 @@ export default function CheckoutPage() {
     }
   }, [selectedAddressId, addresses]);
 
-  useEffect(() => {
-    if (selectedPaymentId === "new") return;
-    const pm = paymentMethods.find(p => p.id === selectedPaymentId);
-    if (pm) {
-      setPaymentInfo(info => ({
-        ...info,
-        nameOnCard: pm.cardholderName,
-        expirationDate: `${pm.expMonth}/${pm.expYear}`,
-        cardNumber: "",
-        paymentMethod: "credit_card",
-      }));
-    }
-  }, [selectedPaymentId, paymentMethods]);
 
   useEffect(() => {
     if (contactOption === "saved" && user) {
@@ -170,7 +128,7 @@ export default function CheckoutPage() {
       return;
     }
 
-    if (paymentInfo.paymentMethod === "bank_transfer" && (!paymentInfo.routingNumber || !paymentInfo.accountNumber)) {
+    if (paymentInfo.paymentMethod === "ach" && (!paymentInfo.routingNumber || !paymentInfo.accountNumber)) {
       toast({
         title: "Bank details required",
         description: "Please enter your routing and account numbers",
@@ -216,33 +174,7 @@ export default function CheckoutPage() {
         console.error("Failed to save address", err);
       }
 
-      // Save or update payment method
-      try {
-        const [expMonth, expYear] = paymentInfo.expirationDate.split("/");
-        if (selectedPaymentId === "new") {
-          const createRes = await apiRequest("POST", "/api/payment-methods", {
-            cardLast4: paymentInfo.cardNumber.slice(-4),
-            cardholderName: paymentInfo.nameOnCard,
-            expMonth,
-            expYear,
-            brand: "card",
-          });
-          const created = await createRes.json();
-          setSelectedPaymentId(created.id);
-        } else {
-          await apiRequest("PUT", `/api/payment-methods/${selectedPaymentId}`, {
-            cardLast4: paymentInfo.cardNumber.slice(-4),
-            cardholderName: paymentInfo.nameOnCard,
-            expMonth,
-            expYear,
-            brand: "card",
-          });
-        }
-        const res = await apiRequest("GET", "/api/payment-methods");
-        setPaymentMethods(await res.json());
-      } catch (err) {
-        console.error("Failed to save payment method", err);
-      }
+
 
       // Group items by seller
       const itemsBySeller: Record<number, any[]> = {};
@@ -264,11 +196,6 @@ export default function CheckoutPage() {
         const estimatedDelivery = getEstimatedDeliveryDate();
         const sellerTotal = sellerItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
 
-        const last4 =
-          selectedPaymentId === "new"
-            ? paymentInfo.cardNumber.slice(-4)
-            : paymentMethods.find((pm) => pm.id === selectedPaymentId)?.cardLast4 || "";
-
         const orderData: InsertOrder = {
           buyerId: user.id,
           sellerId: parseInt(sellerId),
@@ -277,7 +204,6 @@ export default function CheckoutPage() {
           shippingDetails: shippingInfo,
           paymentDetails: {
             method: paymentInfo.paymentMethod,
-            last4,
             routingNumber: paymentInfo.routingNumber || undefined,
             accountNumber: paymentInfo.accountNumber || undefined,
           },
@@ -540,101 +466,31 @@ export default function CheckoutPage() {
       <div className="space-y-6">
         <div>
           <Label>Payment Method</Label>
-          {paymentMethods.length > 0 && (
-            <RadioGroup
-              value={String(selectedPaymentId)}
-              onValueChange={(value) => setSelectedPaymentId(value === "new" ? "new" : parseInt(value))}
-              className="space-y-2 mt-2"
-            >
-              {paymentMethods.map((pm) => (
-                <div key={pm.id} className="flex items-start space-x-2 border rounded-md p-3">
-                  <RadioGroupItem value={String(pm.id)} id={`pay-${pm.id}`} />
-                  <label htmlFor={`pay-${pm.id}`} className="text-sm leading-none cursor-pointer">
-                    {pm.brand} ending in {pm.cardLast4}
-                  </label>
-                </div>
-              ))}
-              <div className="flex items-start space-x-2 border rounded-md p-3">
-                <RadioGroupItem value="new" id="new-payment" />
-                <label htmlFor="new-payment" className="text-sm leading-none cursor-pointer">
-                  Add New Payment Method
-                </label>
-              </div>
-            </RadioGroup>
-          )}
           <RadioGroup
-            defaultValue="credit_card"
+            defaultValue="wire"
             value={paymentInfo.paymentMethod}
-            onValueChange={(value) => setPaymentInfo({ ...paymentInfo, paymentMethod: value })}
+            onValueChange={(value) => setPaymentInfo({ ...paymentInfo, paymentMethod: value as any })}
             className="grid grid-cols-2 gap-4 mt-2"
           >
             <div className="flex items-center space-x-2 border rounded-md p-4 cursor-pointer hover:bg-gray-50">
-              <RadioGroupItem value="credit_card" id="credit_card" />
-              <Label htmlFor="credit_card" className="flex items-center cursor-pointer">
-                <CreditCard className="h-5 w-5 mr-2 text-primary" />
-                Credit Card
+              <RadioGroupItem value="wire" id="wire" />
+              <Label htmlFor="wire" className="flex items-center cursor-pointer">
+                <Banknote className="h-5 w-5 mr-2 text-primary" />
+                Wire Transfer
               </Label>
             </div>
             <div className="flex items-center space-x-2 border rounded-md p-4 cursor-pointer hover:bg-gray-50">
-              <RadioGroupItem value="bank_transfer" id="bank_transfer" />
-              <Label htmlFor="bank_transfer" className="flex items-center cursor-pointer">
+              <RadioGroupItem value="ach" id="ach" />
+              <Label htmlFor="ach" className="flex items-center cursor-pointer">
                 <Building className="h-5 w-5 mr-2 text-primary" />
-                Bank Transfer
+                ACH Billing
               </Label>
             </div>
           </RadioGroup>
         </div>
 
-        {paymentInfo.paymentMethod === "credit_card" && selectedPaymentId === "new" && (
-          <>
-            <div>
-              <Label htmlFor="cardNumber">Card Number</Label>
-              <Input
-                id="cardNumber"
-                placeholder="1234 5678 9012 3456"
-                value={paymentInfo.cardNumber}
-                onChange={(e) => setPaymentInfo({ ...paymentInfo, cardNumber: e.target.value })}
-                required
-              />
-            </div>
 
-            <div>
-              <Label htmlFor="nameOnCard">Name on Card</Label>
-              <Input
-                id="nameOnCard"
-                placeholder="John Doe"
-                value={paymentInfo.nameOnCard}
-                onChange={(e) => setPaymentInfo({ ...paymentInfo, nameOnCard: e.target.value })}
-                required
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="expirationDate">Expiration Date</Label>
-                <Input
-                  id="expirationDate"
-                  placeholder="MM/YY"
-                  value={paymentInfo.expirationDate}
-                  onChange={(e) => setPaymentInfo({ ...paymentInfo, expirationDate: e.target.value })}
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor="cvc">CVC</Label>
-                <Input
-                  id="cvc"
-                  placeholder="123"
-                  value={paymentInfo.cvc}
-                  onChange={(e) => setPaymentInfo({ ...paymentInfo, cvc: e.target.value })}
-                  required
-                />
-              </div>
-            </div>
-          </>
-        )}
-
-        {paymentInfo.paymentMethod === "bank_transfer" && (
+        {paymentInfo.paymentMethod === "ach" && (
           <>
             <div>
               <Label htmlFor="routingNumber">Routing Number</Label>
@@ -660,11 +516,18 @@ export default function CheckoutPage() {
             </div>
             <div className="bg-blue-50 p-4 rounded-md">
               <p className="text-sm">
-                After placing your order, you will receive bank transfer information.
-                Your order will be processed once payment is received.
+                Your bank account will be charged after we process your order.
               </p>
             </div>
           </>
+        )}
+
+        {paymentInfo.paymentMethod === "wire" && (
+          <div className="bg-blue-50 p-4 rounded-md">
+            <p className="text-sm">
+              Wire instructions will be sent to your email after placing the order.
+            </p>
+          </div>
         )}
 
         <div className="flex items-center space-x-2">

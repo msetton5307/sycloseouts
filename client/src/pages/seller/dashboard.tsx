@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { Link, useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Order, OrderItem, Product, Address, PaymentMethod, Offer } from "@shared/schema";
+import { Order, OrderItem, Product, Address, Offer } from "@shared/schema";
 import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
 import {
@@ -88,10 +88,6 @@ export default function SellerDashboard() {
     enabled: !!user,
   });
 
-  const { data: paymentMethods = [] } = useQuery<PaymentMethod[]>({
-    queryKey: ["/api/payment-methods"],
-    enabled: !!user,
-  });
 
   type OfferWithProduct = Offer & { productTitle: string };
 
@@ -776,28 +772,6 @@ export default function SellerDashboard() {
                 </CardContent>
               </Card>
 
-              <Card className="md:col-span-3">
-                <CardHeader>
-                  <CardTitle>Saved Payment Methods</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {paymentMethods.length === 0 ? (
-                    <p className="text-sm text-gray-500">No saved payment methods</p>
-                  ) : (
-                    <RadioGroup className="space-y-4">
-                      {paymentMethods.map((pm) => (
-                        <div key={pm.id} className="flex items-start space-x-2 border rounded-md p-4">
-                          <RadioGroupItem value={String(pm.id)} id={`seller-pm-${pm.id}`} />
-                          <label htmlFor={`seller-pm-${pm.id}`} className="text-sm leading-none cursor-pointer">
-                            {pm.brand} ending in {pm.cardLast4}
-                          </label>
-                        </div>
-                      ))}
-                    </RadioGroup>
-                  )}
-                  <Button variant="outline" className="mt-4">Add New Payment Method</Button>
-                </CardContent>
-              </Card>
             </div>
           </TabsContent>
         </main>
