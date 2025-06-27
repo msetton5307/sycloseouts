@@ -12,6 +12,8 @@ import {
   sendAdminAlertEmail,
   sendAdminUserEmail,
   sendSuspensionEmail,
+  sendWireInstructionsEmail,
+  sendWireReminderEmail,
 } from "./email";
 import { generateInvoicePdf, generateSalesReportPdf } from "./pdf";
 import {
@@ -431,6 +433,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       orderData.totalAmount = totalAmount;
 
+      if (orderData.paymentDetails && orderData.paymentDetails.method === "wire") {
+        orderData.status = "awaiting_wire";
+      }
+
       const invoiceItems: {
         title: string;
         quantity: number;
@@ -503,6 +509,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // send invoice email asynchronously, do not block response
       sendInvoiceEmail(user.email, order, invoiceItems, user).catch(console.error);
+      if (order.paymentDetails?.method === "wire") {
+        sendWireInstructionsEmail(user.email, order.code).catch(console.error);
+      }
 
       // notify seller of the new order
       const seller = await storage.getUser(order.sellerId);
@@ -839,6 +848,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/admin/wire-orders", isAuthenticated, isAdmin, async (_req, res) => {
+    try {
+      const orders = await storage.getWireOrders();
+      res.json(orders);
+    } catch (error) {
+      handleApiError(res, error);
+    }
+  });
+
   app.post(
     "/api/admin/orders/:id/mark-charged",
     isAuthenticated,
@@ -869,6 +887,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
         const order = await storage.updateOrder(id, { sellerPaid: true });
         res.json(order);
+      } catch (error) {
+        handleApiError(res, error);
+      }
+    },
+  );
+
+  app.post(
+    "/api/admin/orders/:id/mark-wire-paid",
+    isAuthenticated,
+    isAdmin,
+    async (req, res) => {
+      try {
+        const id = parseInt(req.params.id, 10);
+        if (Number.isNaN(id)) {
+          return res.status(400).json({ message: "Invalid order ID" });
+        }
+        const order = await storage.updateOrder(id, { status: "ordered" });
+        res.json(order);
+      } catch (error) {
+        handleApiError(res, error);
+      }
+    },
+  );
+
+  app.post(
+    "/api/admin/orders/:id/send-wire-reminder",
+    isAuthenticated,
+    isAdmin,
+    async (req, res) => {
+      try {
+        const id = parseInt(req.params.id, 10);
+        if (Number.isNaN(id)) {
+          return res.status(400).json({ message: "Invalid order ID" });
+        }
+        const order = await storage.getOrder(id);
+        if (!order) {
+          return res.status(404).json({ message: "Order not found" });
+        }
+        const buyer = await storage.getUser(order.buyerId);
+        if (buyer) {
+          await sendWireReminderEmail(buyer.email, order.code);
+        }
+        res.sendStatus(204);
       } catch (error) {
         handleApiError(res, error);
       }

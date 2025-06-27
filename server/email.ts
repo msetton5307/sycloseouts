@@ -505,3 +505,49 @@ export async function sendAdminUserEmail(
     console.error("Failed to send admin user email", err);
   }
 }
+
+export async function sendWireInstructionsEmail(to: string, orderCode: string) {
+  if (!transporter) {
+    console.warn("Email transport not configured; skipping wire instructions email");
+    return;
+  }
+
+  const instructions = process.env.WIRE_INSTRUCTIONS ||
+    "Please wire the invoice total to the bank details provided by SY Closeouts.";
+
+  const mailOptions = {
+    from: process.env.SMTP_FROM || user,
+    to,
+    subject: `Wire Instructions for Order #${orderCode}`,
+    text: `${instructions}\n\nOrder #: ${orderCode}`,
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+  } catch (err) {
+    console.error("Failed to send wire instructions email", err);
+  }
+}
+
+export async function sendWireReminderEmail(to: string, orderCode: string) {
+  if (!transporter) {
+    console.warn("Email transport not configured; skipping wire reminder email");
+    return;
+  }
+
+  const instructions = process.env.WIRE_INSTRUCTIONS ||
+    "Please wire the invoice total to the bank details provided by SY Closeouts.";
+
+  const mailOptions = {
+    from: process.env.SMTP_FROM || user,
+    to,
+    subject: `Reminder: Wire Payment for Order #${orderCode}`,
+    text: `${instructions}\n\nOrder #: ${orderCode}`,
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+  } catch (err) {
+    console.error("Failed to send wire reminder email", err);
+  }
+}

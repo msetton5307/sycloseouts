@@ -17,6 +17,7 @@ export default function OrderStatus({ order }: OrderStatusProps) {
   const [currentStatus, setCurrentStatus] = useState(0);
   
   const statuses = [
+    { name: "Awaiting Wire", icon: Calendar, color: "bg-yellow-500", date: order.createdAt },
     { name: "Ordered", icon: Calendar, color: "bg-primary", date: order.createdAt },
     { name: "Shipped", icon: Package, color: "bg-blue-500", date: order.status === "shipped" || order.status === "out_for_delivery" || order.status === "delivered" ? new Date(new Date(order.createdAt).getTime() + 1 * 24 * 60 * 60 * 1000) : null },
     { name: "Out for Delivery", icon: Truck, color: "bg-purple-500", date: order.status === "out_for_delivery" || order.status === "delivered" ? new Date(new Date(order.createdAt).getTime() + 3 * 24 * 60 * 60 * 1000) : null },
@@ -26,10 +27,11 @@ export default function OrderStatus({ order }: OrderStatusProps) {
   useEffect(() => {
     // Map order status to index
     const statusMap: Record<string, number> = {
-      ordered: 0,
-      shipped: 1,
-      out_for_delivery: 2,
-      delivered: 3,
+      awaiting_wire: 0,
+      ordered: 1,
+      shipped: 2,
+      out_for_delivery: 3,
+      delivered: 4,
     };
 
     setCurrentStatus(statusMap[order.status] ?? 0);

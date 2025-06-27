@@ -92,6 +92,7 @@ export interface IStorage {
 
   // Billing methods
   getOrdersForBilling(): Promise<any[]>;
+  getWireOrders(): Promise<any[]>;
 
   // Product question methods
   createProductQuestion(question: InsertProductQuestion): Promise<ProductQuestion>;
@@ -703,12 +704,23 @@ export class DatabaseStorage implements IStorage {
 
   async getOrdersForBilling(): Promise<any[]> {
     const result = await pool.query(
-      `SELECT o.*, 
+      `SELECT o.*,
               b.first_name AS buyer_first_name, b.last_name AS buyer_last_name, b.email AS buyer_email,
               s.first_name AS seller_first_name, s.last_name AS seller_last_name, s.email AS seller_email
          FROM orders o
          JOIN users b ON b.id = o.buyer_id
          JOIN users s ON s.id = o.seller_id
+        ORDER BY o.created_at DESC`
+    );
+    return result.rows;
+  }
+
+  async getWireOrders(): Promise<any[]> {
+    const result = await pool.query(
+      `SELECT o.*, b.first_name AS buyer_first_name, b.last_name AS buyer_last_name, b.email AS buyer_email
+         FROM orders o
+         JOIN users b ON b.id = o.buyer_id
+        WHERE o.status = 'awaiting_wire'
         ORDER BY o.created_at DESC`
     );
     return result.rows;
