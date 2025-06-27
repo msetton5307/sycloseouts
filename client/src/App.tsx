@@ -70,8 +70,8 @@ function Router() {
       <Route path="/help" component={HelpPage} />
       <ProtectedRoute path="/notifications" component={NotificationsPage} allowedRoles={["buyer", "seller", "admin"]} />
       
-      {/* Protected seller application route */}
-      <ProtectedRoute path="/seller/apply" component={SellerApply} allowedRoles={["buyer", "seller", "admin"]} />
+      {/* Public seller application route */}
+      <Route path="/seller/apply" component={SellerApply} />
 
       {/* Buyer routes */}
       <ProtectedRoute path="/checkout" component={CheckoutPage} allowedRoles={["buyer", "seller", "admin"]} />

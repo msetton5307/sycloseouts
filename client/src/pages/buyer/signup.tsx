@@ -5,14 +5,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
   Form,
   FormControl,
   FormField,
@@ -22,7 +14,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Loader2, ImagePlus } from "lucide-react";
+import { Loader2, ImagePlus, ShoppingCart } from "lucide-react";
 import Header from "@/components/layout/header-fixed";
 import Footer from "@/components/layout/footer-fixed";
 
@@ -109,17 +101,62 @@ export default function BuyerSignupPage() {
   return (
     <>
       <Header />
-      <div className="flex min-h-screen bg-gray-50">
-        <div className="flex flex-col justify-center flex-1 px-4 py-12 sm:px-6 lg:flex-none lg:px-20 xl:px-24">
-          <div className="w-full max-w-md mx-auto">
-            <Card>
-              <CardHeader>
-                <CardTitle>Create a Buyer Account</CardTitle>
-                <CardDescription>Sign up to start buying wholesale products</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Left column - Pitch */}
+          <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white rounded-lg p-8 lg:p-12">
+            <div className="max-w-lg">
+              <ShoppingCart className="h-12 w-12 mb-6" />
+              <h1 className="text-3xl font-extrabold mb-6">Buy Wholesale Inventory</h1>
+              <p className="text-xl mb-8">Join our marketplace to access the best deals from verified sellers.</p>
+
+              <div className="space-y-6">
+                <div className="flex items-start">
+                  <div className="flex-shrink-0 bg-white/20 p-2 rounded-full mr-4">
+                    <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold mb-1">Verified Sellers</h3>
+                    <p className="text-blue-100">All sellers are vetted for quality and reliability.</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start">
+                  <div className="flex-shrink-0 bg-white/20 p-2 rounded-full mr-4">
+                    <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold mb-1">Exclusive Deals</h3>
+                    <p className="text-blue-100">Find liquidation lots you won't see anywhere else.</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start">
+                  <div className="flex-shrink-0 bg-white/20 p-2 rounded-full mr-4">
+                    <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold mb-1">Secure Transactions</h3>
+                    <p className="text-blue-100">Payments are protected for a worry-free experience.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Right column - Signup Form */}
+          <div className="bg-white rounded-lg shadow-lg p-8 lg:p-12">
+            <h2 className="text-2xl font-bold mb-6">Create a Buyer Account</h2>
+            <p className="text-gray-600 mb-8">Fill out the form below to start buying from verified sellers.</p>
+
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                       <FormField
                         control={form.control}
@@ -347,19 +384,15 @@ export default function BuyerSignupPage() {
                     </Button>
                   </form>
                 </Form>
-              </CardContent>
-              <CardFooter className="flex justify-center border-t p-4">
-                <div className="text-sm text-gray-600">
-                  Already have an account?{' '}
-                  <a href="/auth" className="text-primary hover:underline font-medium">
-                    Login
-                  </a>
-                </div>
-              </CardFooter>
-            </Card>
-          </div>
-        </div>
-      </div>
+              <div className="text-sm text-gray-600 text-center pt-4">
+                Already have an account?{' '}
+                <a href="/auth" className="text-primary hover:underline font-medium">
+                  Login
+                </a>
+              </div>
+              </div>
+            </div>
+          </main>
       <Footer />
     </>
   );
