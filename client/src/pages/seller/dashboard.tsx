@@ -100,13 +100,7 @@ export default function SellerDashboard() {
     enabled: !!user,
   });
 
-  const [offersOpen, setOffersOpen] = useState(false);
-
-  useEffect(() => {
-    if (offers.some((o) => o.status === "pending")) {
-      setOffersOpen(true);
-    }
-  }, [offers]);
+  const pendingOffers = offers.filter((o) => o.status === "pending");
 
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -611,6 +605,69 @@ export default function SellerDashboard() {
                 )}
               </CardContent>
             </Card>
+
+            {/* Recent Offers */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Recent Offers</CardTitle>
+                <CardDescription>Offers from buyers</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {pendingOffers.length === 0 ? (
+                  <p className="text-sm text-gray-500">No offers yet.</p>
+                ) : (
+                  <div className="space-y-4">
+                    {pendingOffers.slice(0, 5).map((o) => (
+                      <div key={o.id} className="border rounded-lg p-4 flex justify-between">
+                        <div>
+                          <p className="font-medium">{o.productTitle}</p>
+                          {o.selectedVariations && (
+                            <p className="text-xs text-gray-500">
+                              {Object.entries(o.selectedVariations)
+                                .map(([k, v]) => `${k}: ${v}`)
+                                .join(", ")}
+                            </p>
+                          )}
+                          <p className="text-sm">Qty: {o.quantity}</p>
+                          <p className="text-sm">{formatCurrency(o.price)}</p>
+                        </div>
+                        <div className="space-x-2 flex items-start">
+                          <Button
+                            size="sm"
+                            onClick={() =>
+                              apiRequest("POST", `/api/offers/${o.id}/accept`).then(() => {
+                                queryClient.invalidateQueries({ queryKey: ["/api/offers"] });
+                                toast({ title: "Offer accepted" });
+                              })
+                            }
+                          >
+                            Accept
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() =>
+                              apiRequest("POST", `/api/offers/${o.id}/reject`).then(() => {
+                                queryClient.invalidateQueries({ queryKey: ["/api/offers"] });
+                                toast({ title: "Offer rejected" });
+                              })
+                            }
+                          >
+                            Reject
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+
+                    <div className="flex justify-center">
+                      <Link href="/seller/offers">
+                        <Button variant="outline">View All Offers</Button>
+                      </Link>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
           
           
@@ -762,69 +819,6 @@ export default function SellerDashboard() {
           </DialogContent>
         </Dialog>
 
-        <Dialog open={offersOpen} onOpenChange={setOffersOpen}>
-          <DialogContent className="sm:max-w-[600px]">
-            <DialogHeader>
-              <DialogTitle>Recent Offers</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4 max-h-96 overflow-y-auto">
-              {offers.length === 0 ? (
-                <p>No offers.</p>
-              ) : (
-                offers.map((o) => (
-                  <div key={o.id} className="border p-3 rounded flex justify-between">
-                    <div>
-                      <p className="font-medium">{o.productTitle}</p>
-                      {o.selectedVariations && (
-                        <p className="text-xs text-gray-500">
-                          {Object.entries(o.selectedVariations)
-                            .map(([k, v]) => `${k}: ${v}`)
-                            .join(", ")}
-                        </p>
-                      )}
-                      <p className="text-sm">Qty: {o.quantity}</p>
-                      <p className="text-sm">{formatCurrency(o.price)}</p>
-                    </div>
-                    {o.status === "pending" && (
-                      <div className="space-x-2 flex items-start">
-                        <Button
-                          size="sm"
-                          onClick={() =>
-                            apiRequest("POST", `/api/offers/${o.id}/accept`)
-                              .then(() => {
-                                queryClient.invalidateQueries({ queryKey: ["/api/offers"] });
-                                setOffersOpen(false);
-                                toast({ title: "Offer accepted" });
-                              })
-                          }
-                        >
-                          Accept
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() =>
-                            apiRequest("POST", `/api/offers/${o.id}/reject`)
-                              .then(() => {
-                                queryClient.invalidateQueries({ queryKey: ["/api/offers"] });
-                                setOffersOpen(false);
-                                toast({ title: "Offer rejected" });
-                              })
-                          }
-                        >
-                          Reject
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                ))
-              )}
-              <div className="text-right">
-                <Link href="/seller/offers">View All</Link>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
       </>
   );
 }
