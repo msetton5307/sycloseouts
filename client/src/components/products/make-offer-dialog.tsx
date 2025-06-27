@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { formatCurrency } from "@/lib/utils";
 
 interface MakeOfferDialogProps {
   onSubmit: (price: number, quantity: number) => void;
@@ -17,9 +18,21 @@ interface MakeOfferDialogProps {
   label?: string;
   variant?: "outline" | "default";
   className?: string;
+  currentPrice?: number;
+  currentStock?: number;
+  selectedVariations?: Record<string, string>;
 }
 
-export default function MakeOfferDialog({ onSubmit, maxQuantity, label = "Make an Offer", variant = "outline", className }: MakeOfferDialogProps) {
+export default function MakeOfferDialog({
+  onSubmit,
+  maxQuantity,
+  label = "Make an Offer",
+  variant = "outline",
+  className,
+  currentPrice,
+  currentStock,
+  selectedVariations,
+}: MakeOfferDialogProps) {
   const [open, setOpen] = useState(false);
   const [price, setPrice] = useState("");
   const [quantity, setQuantity] = useState("");
@@ -45,6 +58,23 @@ export default function MakeOfferDialog({ onSubmit, maxQuantity, label = "Make a
           <DialogTitle>Make an Offer</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 mt-2">
+          {(currentPrice !== undefined || currentStock !== undefined) && (
+            <div className="text-sm text-gray-600">
+              {currentPrice !== undefined && (
+                <div>Current Price: {formatCurrency(currentPrice)}</div>
+              )}
+              {currentStock !== undefined && (
+                <div>In Stock: {currentStock}</div>
+              )}
+              {selectedVariations && Object.keys(selectedVariations).length > 0 && (
+                <div>
+                  {Object.entries(selectedVariations)
+                    .map(([k, v]) => `${k}: ${v}`)
+                    .join(', ')}
+                </div>
+              )}
+            </div>
+          )}
           <div>
             <label className="block text-sm font-medium mb-1">Offer Price</label>
               <Input
@@ -59,7 +89,17 @@ export default function MakeOfferDialog({ onSubmit, maxQuantity, label = "Make a
               <Input
               type="number"
               value={quantity}
-              onChange={e => setQuantity(e.target.value)}
+              onChange={(e) => {
+                let val = parseInt(e.target.value);
+                if (isNaN(val)) {
+                  setQuantity(e.target.value);
+                  return;
+                }
+                if (maxQuantity && val > maxQuantity) {
+                  val = maxQuantity;
+                }
+                setQuantity(val.toString());
+              }}
               min={1}
               {...(maxQuantity ? { max: maxQuantity } : {})}
             />

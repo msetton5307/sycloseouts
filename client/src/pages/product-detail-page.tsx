@@ -301,6 +301,9 @@ export default function ProductDetailPage() {
                     offerMutation.mutate({ price: p, quantity: q, selectedVariations })
                   }
                   maxQuantity={product.availableUnits}
+                  currentPrice={unitPrice}
+                  currentStock={product.availableUnits}
+                  selectedVariations={selectedVariations}
                 />
                 <AskQuestionDialog onSubmit={q => questionMutation.mutate(q)} />
               </>
