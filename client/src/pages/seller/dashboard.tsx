@@ -682,7 +682,7 @@ export default function SellerDashboard() {
                 <CardContent>
                   <div className="flex flex-col items-center">
                     <Avatar className="h-24 w-24 mb-4">
-                      <AvatarImage src={user?.avatarUrl || "https://github.com/shadcn.png"} alt={user?.username} />
+                      <AvatarImage src={user?.avatarUrl || undefined} alt={user?.username} />
                       <AvatarFallback className="text-lg">
                         {user?.firstName?.charAt(0)}{user?.lastName?.charAt(0)}
                       </AvatarFallback>

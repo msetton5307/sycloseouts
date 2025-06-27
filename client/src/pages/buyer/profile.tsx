@@ -33,7 +33,7 @@ export default function BuyerProfilePage() {
             <CardContent className="p-4 sm:p-6">
               <div className="flex flex-col items-center">
                 <Avatar className="h-24 w-24 mb-4">
-                  <AvatarImage src={user?.avatarUrl || "https://github.com/shadcn.png"} alt={user?.username} />
+                  <AvatarImage src={user?.avatarUrl || undefined} alt={user?.username} />
                   <AvatarFallback className="text-lg">
                     {user?.firstName?.charAt(0)}{user?.lastName?.charAt(0)}
                   </AvatarFallback>
