@@ -200,7 +200,7 @@ export default function CheckoutPage() {
           buyerId: user.id,
           sellerId: parseInt(sellerId),
           totalAmount: sellerTotal,
-          status: "ordered",
+          status: paymentInfo.paymentMethod === "wire" ? "awaiting_wire" : "ordered",
           shippingDetails: shippingInfo,
           paymentDetails: {
             method: paymentInfo.paymentMethod,

@@ -95,6 +95,7 @@ export default function BuyerOrdersPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Orders</SelectItem>
+                    <SelectItem value="awaiting_wire">Awaiting Wire</SelectItem>
                     <SelectItem value="ordered">Ordered</SelectItem>
                     <SelectItem value="shipped">Shipped</SelectItem>
                     <SelectItem value="out_for_delivery">Out for Delivery</SelectItem>
@@ -167,6 +168,12 @@ export default function BuyerOrdersPage() {
                           </Button>
                         )}
 
+                        {order.status === "awaiting_wire" && (
+                          <Button variant="outline" size="sm" asChild>
+                            <Link href="/wire-instructions">Wire Instructions</Link>
+                          </Button>
+                        )}
+
                         <Button variant="outline" size="sm" asChild>
                           <a href={`/api/orders/${order.id}/invoice.pdf`} target="_blank" download>
                             Download Invoice
@@ -221,6 +228,11 @@ export default function BuyerOrdersPage() {
                           {order.trackingNumber && (
                             <Button variant="outline" size="sm">
                               Track Package
+                            </Button>
+                          )}
+                          {order.status === "awaiting_wire" && (
+                            <Button variant="outline" size="sm" asChild>
+                              <Link href="/wire-instructions">Wire Instructions</Link>
                             </Button>
                           )}
                           <Button variant="outline" size="sm" asChild>

@@ -134,6 +134,14 @@ export default function BuyerOrderDetailPage() {
             </CardContent>
           </Card>
         )}
+
+        {order.status === "awaiting_wire" && (
+          <div className="flex justify-end">
+            <Button asChild>
+              <Link href="/wire-instructions">Wire Instructions</Link>
+            </Button>
+          </div>
+        )}
       </main>
       <Footer />
     </>

@@ -20,3 +20,4 @@ Any new address or card entered during checkout is saved to your profile automat
 
 ## Shipment Tracking
 To automatically update order statuses from tracking numbers, set the `TRACKTRY_API_KEY` environment variable with your Tracktry.com API key.
+For wire transfer payments, configure `WIRE_INSTRUCTIONS` with the bank details you want emailed to buyers.

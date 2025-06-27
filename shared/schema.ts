@@ -164,7 +164,7 @@ export const orders = pgTable("orders", {
   buyerId: integer("buyer_id").notNull(),
   sellerId: integer("seller_id").notNull(),
   totalAmount: doublePrecision("total_amount").notNull(),
-  status: text("status").notNull().default("ordered"), // ordered, shipped, out_for_delivery, delivered, cancelled
+  status: text("status").notNull().default("ordered"), // awaiting_wire, ordered, shipped, out_for_delivery, delivered, cancelled
   shippingDetails: jsonb("shipping_details"),
   paymentDetails: jsonb("payment_details"),
   estimatedDeliveryDate: timestamp("estimated_delivery_date"),

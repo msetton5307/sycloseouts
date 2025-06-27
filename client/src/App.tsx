@@ -38,6 +38,7 @@ import AdminDashboard from "@/pages/admin/dashboard";
 import FeaturedProductsPage from "@/pages/admin/featured-products";
 import AdminUsers from "@/pages/admin/users";
 import AdminBillingPage from "@/pages/admin/billing";
+import AdminWireOrdersPage from "@/pages/admin/wire-orders";
 import AdminOrderDetailPage from "@/pages/admin/order-detail";
 import AdminApplications from "@/pages/admin/applications";
 import HelpPage from "@/pages/help-page";
@@ -49,6 +50,7 @@ import SellerAgreementPage from "@/pages/seller-agreement";
 import BuyerAgreementPage from "@/pages/buyer-agreement";
 import NotificationsPage from "@/pages/notifications-page";
 import SuspendedPage from "@/pages/suspended";
+import WireInstructionsPage from "@/pages/wire-instructions";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -65,6 +67,7 @@ function Router() {
       <Route path="/suspended" component={SuspendedPage} />
       <Route path="/cart" component={CartPage} />
       <Route path="/about" component={AboutPage} />
+      <Route path="/wire-instructions" component={WireInstructionsPage} />
       <Route path="/seller-agreement" component={SellerAgreementPage} />
       <Route path="/buyer-agreement" component={BuyerAgreementPage} />
       <Route path="/help" component={HelpPage} />
@@ -99,6 +102,7 @@ function Router() {
       <ProtectedRoute path="/admin/users/:id" component={AdminUserProfilePage} allowedRoles={["admin"]} />
       <ProtectedRoute path="/admin/users" component={AdminUsers} allowedRoles={["admin"]} />
       <ProtectedRoute path="/admin/billing" component={AdminBillingPage} allowedRoles={["admin"]} />
+      <ProtectedRoute path="/admin/wire-orders" component={AdminWireOrdersPage} allowedRoles={["admin"]} />
       <ProtectedRoute path="/admin/orders/:id" component={AdminOrderDetailPage} allowedRoles={["admin"]} />
       <ProtectedRoute path="/admin/applications" component={AdminApplications} allowedRoles={["admin"]} />
       <ProtectedRoute path="/admin/featured" component={FeaturedProductsPage} allowedRoles={["admin"]} />
