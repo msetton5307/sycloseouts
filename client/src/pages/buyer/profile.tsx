@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Address, PaymentMethod } from "@shared/schema";
+import { Address } from "@shared/schema";
 import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,10 +19,6 @@ export default function BuyerProfilePage() {
     enabled: !!user,
   });
 
-  const { data: paymentMethods = [] } = useQuery<PaymentMethod[]>({
-    queryKey: ["/api/payment-methods"],
-    enabled: !!user,
-  });
 
   return (
     <>
@@ -111,28 +107,6 @@ export default function BuyerProfilePage() {
             </CardContent>
           </Card>
 
-          <Card className="md:col-span-3">
-            <CardHeader className="p-4 sm:p-6">
-              <CardTitle>Saved Payment Methods</CardTitle>
-            </CardHeader>
-            <CardContent className="p-4 sm:p-6">
-              {paymentMethods.length === 0 ? (
-                <p className="text-sm text-gray-500">No saved payment methods</p>
-              ) : (
-                <RadioGroup className="space-y-4">
-                  {paymentMethods.map((pm) => (
-                    <div key={pm.id} className="flex items-start space-x-2 border rounded-md p-4">
-                      <RadioGroupItem value={String(pm.id)} id={`pm-${pm.id}`} />
-                      <label htmlFor={`pm-${pm.id}`} className="text-sm leading-none cursor-pointer">
-                        {pm.brand} ending in {pm.cardLast4}
-                      </label>
-                    </div>
-                  ))}
-                </RadioGroup>
-              )}
-              <Button variant="outline" className="mt-4">Add New Payment Method</Button>
-            </CardContent>
-          </Card>
         </div>
       </main>
       <Footer />
