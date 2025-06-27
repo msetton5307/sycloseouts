@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLocation, useRoute } from "wouter";
 import { useAuth, loginSchema, registerSchema } from "@/hooks/use-auth";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -28,7 +28,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
+import { Loader2, ImagePlus } from "lucide-react";
 import { Link } from "wouter";
 import Header from "@/components/layout/header-fixed";
 import Footer from "@/components/layout/footer-fixed";
@@ -86,8 +86,12 @@ export default function AuthPage() {
       zipCode: "",
       country: "United States",
       role: defaultRole,
+      resaleCertUrl: "",
     },
   });
+
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [uploading, setUploading] = useState(false);
   
   // Handle login form submission
   function onLoginSubmit(values: z.infer<typeof loginSchema>) {
@@ -98,6 +102,30 @@ export default function AuthPage() {
   function onRegisterSubmit(values: z.infer<typeof registerSchema>) {
     registerMutation.mutate(values);
   }
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      if (event.target && event.target.result) {
+        registerForm.setValue("resaleCertUrl", event.target.result.toString());
+      }
+      setUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    };
+    reader.onerror = () => {
+      setUploading(false);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const triggerFileUpload = () => {
+    fileInputRef.current?.click();
+  };
   
   // If the user is already logged in, don't show the auth page
   if (user) {
@@ -392,6 +420,49 @@ export default function AuthPage() {
                                   Sell Products
                                 </Button>
                               </div>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={registerForm.control}
+                          name="resaleCertUrl"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Resale Certificate (Optional)</FormLabel>
+                              <FormControl>
+                                <Input type="hidden" {...field} />
+                              </FormControl>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                className="mt-2 w-full"
+                                onClick={triggerFileUpload}
+                                disabled={uploading}
+                              >
+                                {uploading ? (
+                                  <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    Uploading...
+                                  </>
+                                ) : (
+                                  <>
+                                    <ImagePlus className="mr-2 h-4 w-4" />
+                                    {field.value ? "Replace File" : "Upload File"}
+                                  </>
+                                )}
+                              </Button>
+                              {field.value && (
+                                <p className="text-xs text-gray-500 mt-1">File attached</p>
+                              )}
+                              <input
+                                type="file"
+                                ref={fileInputRef}
+                                onChange={handleFileUpload}
+                                className="hidden"
+                                accept="application/pdf,image/*"
+                              />
                               <FormMessage />
                             </FormItem>
                           )}

@@ -455,6 +455,37 @@ export default function AdminUsers() {
                     </div>
                   </div>
                 )}
+
+                {selectedUser.resaleCertUrl && (
+                  <div className="border rounded-lg p-4 bg-gray-50">
+                    <h4 className="font-medium mb-2">Resale Certificate</h4>
+                    <a
+                      href={selectedUser.resaleCertUrl}
+                      target="_blank"
+                      className="text-primary underline"
+                      rel="noreferrer"
+                    >
+                      View Uploaded File
+                    </a>
+                    <div className="mt-2">
+                      <Select
+                        value={selectedUser.resaleCertStatus}
+                        onValueChange={(value) =>
+                          setSelectedUser({ ...selectedUser, resaleCertStatus: value })
+                        }
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="pending">Pending</SelectItem>
+                          <SelectItem value="approved">Approved</SelectItem>
+                          <SelectItem value="denied">Denied</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
             
@@ -469,7 +500,8 @@ export default function AdminUsers() {
                       id: selectedUser.id,
                       userData: {
                         role: selectedUser.role,
-                        isApproved: selectedUser.isApproved
+                        isApproved: selectedUser.isApproved,
+                        resaleCertStatus: selectedUser.resaleCertStatus
                       }
                     });
                   }

@@ -404,10 +404,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Only buyers can create orders" });
       }
 
-      const orderData = insertOrderSchema.parse({
+      let orderData = insertOrderSchema.parse({
         ...req.body,
         buyerId: user.id
       });
+
+      let sellerTotal = 0;
+      if (req.body.items && Array.isArray(req.body.items)) {
+        for (const item of req.body.items) {
+          sellerTotal += Number(item.totalPrice) || 0;
+        }
+      }
+
+      const state = (orderData.shippingDetails as any)?.state as string | undefined;
+      const taxRates: Record<string, number> = { CA: 0.0725, NY: 0.08875 };
+      const taxRate = state ? taxRates[state] ?? 0.06 : 0;
+      let totalAmount = sellerTotal;
+      if (user.resaleCertStatus !== "approved") {
+        totalAmount += sellerTotal * taxRate;
+      }
+      orderData.totalAmount = totalAmount;
 
       const invoiceItems: {
         title: string;

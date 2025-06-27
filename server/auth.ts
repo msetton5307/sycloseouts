@@ -124,12 +124,24 @@ export function setupAuth(app: Express) {
         return res.status(400).json({ error: "Email already exists" });
       }
 
-      const { address, city, state, zipCode, country, phone, ...userFields } =
-        req.body;
+      const {
+        address,
+        city,
+        state,
+        zipCode,
+        country,
+        phone,
+        resaleCertUrl,
+        ...userFields
+      } = req.body;
+
+      const resaleCertStatus = resaleCertUrl ? "pending" : "none";
 
       const user = await storage.createUser({
         ...userFields,
         phone,
+        resaleCertUrl,
+        resaleCertStatus,
         password: await hashPassword(req.body.password),
       });
 
