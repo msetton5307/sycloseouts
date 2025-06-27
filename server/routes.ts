@@ -468,9 +468,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
               .where(eq(productsTable.id, item.productId));
 
             if (product) {
+              const updateData: any = {
+                availableUnits: product.availableUnits - item.quantity,
+              };
+
+              if (item.selectedVariations) {
+                const varKey = JSON.stringify(item.selectedVariations);
+                const stocks = (product.variationStocks || {}) as Record<string, number>;
+                if (stocks[varKey] !== undefined) {
+                  stocks[varKey] = stocks[varKey] - item.quantity;
+                  updateData.variationStocks = stocks;
+                }
+              }
+
               await tx
                 .update(productsTable)
-                .set({ availableUnits: product.availableUnits - item.quantity })
+                .set(updateData)
                 .where(eq(productsTable.id, item.productId));
 
               invoiceItems.push({
@@ -1090,9 +1103,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         await tx.insert(orderItemsTable).values(orderItemData);
 
-        const [product] = await tx.select().from(productsTable).where(eq(productsTable.id, offer.productId));
+        const [product] = await tx
+          .select()
+          .from(productsTable)
+          .where(eq(productsTable.id, offer.productId));
         if (product) {
-          await tx.update(productsTable).set({ availableUnits: product.availableUnits - offer.quantity }).where(eq(productsTable.id, offer.productId));
+          const updateData: any = {
+            availableUnits: product.availableUnits - offer.quantity,
+          };
+          if (offer.selectedVariations) {
+            const varKey = JSON.stringify(offer.selectedVariations);
+            const stocks = (product.variationStocks || {}) as Record<string, number>;
+            if (stocks[varKey] !== undefined) {
+              stocks[varKey] = stocks[varKey] - offer.quantity;
+              updateData.variationStocks = stocks;
+            }
+          }
+          await tx
+            .update(productsTable)
+            .set(updateData)
+            .where(eq(productsTable.id, offer.productId));
           invoiceItems.push({
             title: product.title,
             quantity: offer.quantity,
