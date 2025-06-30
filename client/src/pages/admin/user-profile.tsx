@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { useParams, Link } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -13,6 +13,13 @@ import Footer from "@/components/layout/footer";
 import { getQueryFn, apiRequest } from "@/lib/queryClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import ChatMessage from "@/components/messages/chat-message";
@@ -80,6 +87,21 @@ export default function AdminUserProfilePage() {
     },
   });
 
+  const [certStatus, setCertStatus] = useState<string>("pending");
+  const updateCertStatus = useMutation({
+    mutationFn: () =>
+      apiRequest("PUT", `/api/users/${userId}`, { resaleCertStatus: certStatus }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/users/" + userId] });
+    },
+  });
+
+  useEffect(() => {
+    if (user) {
+      setCertStatus(user.resaleCertStatus || "none");
+    }
+  }, [user]);
+
   return (
     <>
       <Header />
@@ -104,9 +126,45 @@ export default function AdminUserProfilePage() {
               ) : (
                 <p>Not suspended</p>
               )}
-            </CardContent>
-          </Card>
-        )}
+          </CardContent>
+        </Card>
+      )}
+
+      {user?.resaleCertUrl && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Resale Certificate</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <a
+              href={user.resaleCertUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="text-primary underline"
+            >
+              View Uploaded File
+            </a>
+            <div className="flex items-center space-x-2">
+              <Select value={certStatus} onValueChange={setCertStatus}>
+                <SelectTrigger className="w-[150px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="approved">Approved</SelectItem>
+                  <SelectItem value="denied">Denied</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button
+                onClick={() => updateCertStatus.mutate()}
+                disabled={updateCertStatus.isPending}
+              >
+                Update
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
         <Card>
           <CardHeader>
