@@ -3,11 +3,27 @@ import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
 import { useNotifications } from "@/hooks/use-notifications";
 import { Link } from "wouter";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
 export default function NotificationsPage() {
   const { data: notes = [], clearNotification } = useNotifications();
   const [removing, setRemoving] = useState<number | null>(null);
   const unreadCount = notes.filter(n => !n.isRead).length;
+
+  function titleFor(type: string) {
+    switch (type) {
+      case "order":
+        return "Order Update";
+      case "message":
+        return "New Message";
+      case "offer":
+        return "Offer Update";
+      case "support":
+        return "Support Ticket";
+      default:
+        return "Notification";
+    }
+  }
 
   return (
     <>
@@ -26,10 +42,10 @@ export default function NotificationsPage() {
         ) : (
           <div className="space-y-2">
             {notes.map(n => (
-              <div
+              <Alert
                 key={n.id}
                 data-removing={removing === n.id}
-                className={`relative border rounded p-4 bg-white shadow transition-transform duration-300 data-[removing=true]:translate-x-full data-[removing=true]:opacity-0`}
+                className="relative transition-transform duration-300 data-[removing=true]:translate-x-full data-[removing=true]:opacity-0"
               >
                 <button
                   onClick={() => {
@@ -40,14 +56,17 @@ export default function NotificationsPage() {
                 >
                   ×
                 </button>
-                {n.link ? (
-                  <Link href={n.link} className="text-primary underline">
-                    {n.content}
-                  </Link>
-                ) : (
-                  <p>{n.content}</p>
-                )}
-              </div>
+                <AlertTitle>{titleFor(n.type)}</AlertTitle>
+                <AlertDescription>
+                  {n.link ? (
+                    <Link href={n.link} className="text-primary underline">
+                      {n.content}
+                    </Link>
+                  ) : (
+                    <span>{n.content}</span>
+                  )}
+                </AlertDescription>
+              </Alert>
             ))}
           </div>
         )}
