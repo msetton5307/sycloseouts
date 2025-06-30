@@ -510,7 +510,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // send invoice email asynchronously, do not block response
       sendInvoiceEmail(user.email, order, invoiceItems, user).catch(console.error);
       if (order.paymentDetails?.method === "wire") {
-        sendWireInstructionsEmail(user.email, order.code).catch(console.error);
+        sendWireInstructionsEmail(user.email, order).catch(console.error);
       }
 
       // notify seller of the new order
