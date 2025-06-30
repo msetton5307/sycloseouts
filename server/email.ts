@@ -506,20 +506,62 @@ export async function sendAdminUserEmail(
   }
 }
 
-export async function sendWireInstructionsEmail(to: string, orderCode: string) {
+export async function sendWireInstructionsEmail(to: string, order: Order) {
   if (!transporter) {
     console.warn("Email transport not configured; skipping wire instructions email");
     return;
   }
 
-  const instructions = process.env.WIRE_INSTRUCTIONS ||
-    "Please wire the invoice total to the bank details provided by SY Closeouts.";
+  const instructions =
+    process.env.WIRE_INSTRUCTIONS ||
+    "Please wire the invoice total to account number 12345678 using routing number 12345678. " +
+      "Your order will not be processed until the wire is received. If payment is not received within 48 hours the order will be cancelled.";
+
+  const html = `<!DOCTYPE html>
+  <html lang="en">
+    <head>
+      <meta charset="UTF-8" />
+      <title>SY Closeouts Wire Instructions</title>
+    </head>
+    <body style="margin:0;padding:20px;background-color:#f7f7f7;font-family:Arial,sans-serif;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:auto;background-color:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 0 10px rgba(0,0,0,0.1);">
+        <tr>
+          <td style="background-color:#222222;padding:20px;text-align:center;">
+            <img src="cid:logo" alt="SY Closeouts" style="max-height:50px;margin-bottom:10px;" />
+            <h1 style="margin:0;color:#ffffff;font-size:24px;">SY Closeouts</h1>
+            <p style="margin:5px 0 0;color:#bbbbbb;">Wire Transfer Instructions</p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:20px;">
+            <p style="margin:0 0 20px;">${instructions}</p>
+            <p style="margin:0 0 10px;"><strong>Amount:</strong> $${order.totalAmount.toFixed(2)}</p>
+            <p style="margin:0;"><strong>Order #:</strong> ${order.code}</p>
+          </td>
+        </tr>
+        <tr>
+          <td style="text-align:center;font-size:12px;color:#999999;padding:15px;background-color:#f9f9f9;">
+            &copy; ${new Date().getFullYear()} SY Closeouts. All rights reserved.<br />
+            123 Wholesale Blvd, Brooklyn, NY 11201
+          </td>
+        </tr>
+      </table>
+    </body>
+  </html>`;
 
   const mailOptions = {
     from: process.env.SMTP_FROM || user,
     to,
-    subject: `Wire Instructions for Order #${orderCode}`,
-    text: `${instructions}\n\nOrder #: ${orderCode}`,
+    subject: `Wire Instructions for Order #${order.code}`,
+    text: `${instructions}\n\nAmount: $${order.totalAmount.toFixed(2)}\nOrder #: ${order.code}`,
+    html,
+    attachments: [
+      {
+        filename: "logo.png",
+        path: path.resolve(__dirname, "..", "generated-icon.png"),
+        cid: "logo",
+      },
+    ],
   };
 
   try {
