@@ -104,15 +104,7 @@ export default function AdminDashboard() {
     >
       <Header
         dashboardTabs={
-          <TabsList className="grid grid-cols-3 md:flex md:w-auto">
-            <TabsTrigger value="overview">
-              <LayoutDashboard className="h-4 w-4 mr-2" />
-              Overview
-            </TabsTrigger>
-            <TabsTrigger value="users">
-              <Users className="h-4 w-4 mr-2" />
-              Users
-            </TabsTrigger>
+          <TabsList className="grid grid-cols-1 md:flex md:w-auto">
             <TabsTrigger value="sales">
               <BarChart4 className="h-4 w-4 mr-2" />
               Sales
