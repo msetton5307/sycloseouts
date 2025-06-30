@@ -30,7 +30,8 @@ import {
   LayoutDashboard,
   Package,
   Star,
-  DollarSign
+  DollarSign,
+  Banknote
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { formatCurrency, SERVICE_FEE_RATE } from "@/lib/utils";
@@ -151,6 +152,12 @@ export default function AdminDashboard() {
               <Button variant="outline" className="flex items-center">
                 <DollarSign className="mr-2 h-4 w-4" />
                 Billing
+              </Button>
+            </Link>
+            <Link href="/admin/wire-orders">
+              <Button variant="outline" className="flex items-center">
+                <Banknote className="mr-2 h-4 w-4" />
+                Wire Orders
               </Button>
             </Link>
             <Link href="/admin/featured">
