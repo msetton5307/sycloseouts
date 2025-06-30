@@ -506,20 +506,110 @@ export async function sendAdminUserEmail(
   }
 }
 
-export async function sendWireInstructionsEmail(to: string, orderCode: string) {
+export async function sendWireInstructionsEmail(to: string, order: Order) {
   if (!transporter) {
     console.warn("Email transport not configured; skipping wire instructions email");
     return;
   }
 
-  const instructions = process.env.WIRE_INSTRUCTIONS ||
-    "Please wire the invoice total to the bank details provided by SY Closeouts.";
+  const instructions =
+    process.env.WIRE_INSTRUCTIONS ||
+    "Please wire the invoice total to account number 12345678 using routing number 12345678. " +
+      "Your order will not be processed until the wire is received. If payment is not received within 48 hours the order will be cancelled.";
+
+  const html = `<!DOCTYPE html>
+  <html>
+    <head>
+      <meta charset="UTF-8" />
+      <title>Order Confirmation &amp; Wire Instructions</title>
+    </head>
+    <body style="margin:0; padding:0; background-color:#f4f4f4;">
+      <table width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+          <td align="center">
+            <table width="600" cellpadding="0" cellspacing="0" style="background-color:#ffffff; padding:20px; font-family:Arial, sans-serif; color:#333333; border-radius:6px;">
+
+              <tr>
+                <td align="center" style="padding-bottom:20px;">
+                  <img src="cid:logo" alt="SY Closeouts" style="height:50px; margin-bottom:10px;" />
+                  <h1 style="margin:0; color:#333333;">Thank You for Your Order!</h1>
+                </td>
+              </tr>
+
+              <tr>
+                <td style="padding-bottom:20px;">
+                  <p style="margin:0;">Thank you for placing order <strong>#${order.code}</strong> with us. To complete your purchase, please send a wire transfer using the instructions below.</p>
+                </td>
+              </tr>
+
+              <tr>
+                <td style="padding-bottom:20px;">
+                  <h2 style="margin:0 0 10px 0; font-size:18px; color:#333333;">Order Summary</h2>
+                  <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
+                    <tr>
+                      <td style="padding:8px 0; font-size:16px;">Total Amount to Wire:</td>
+                      <td style="padding:8px 0; font-size:16px;" align="right"><strong>$${order.totalAmount.toFixed(2)}</strong></td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+
+              <tr>
+                <td style="padding-bottom:20px;">
+                  <h2 style="margin:0 0 10px 0; font-size:18px; color:#333333;">Wire Transfer Instructions</h2>
+                  <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #dddddd; border-radius:4px;">
+                    <tr>
+                      <td style="padding:15px; font-size:16px;">${instructions.replace(/\n/g, '<br>')}</td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+
+              <tr>
+                <td style="padding-bottom:20px;">
+                  <p style="margin:0 0 10px 0; color:#e74c3c; font-size:16px;"><strong>Please Note:</strong></p>
+                  <ul style="margin:0 0 10px 20px; padding:0; font-size:16px; color:#333333;">
+                    <li>Your order will not be processed until we receive your wire transfer.</li>
+                    <li>If we do not receive your wire within <strong>48 hours</strong> of placing your order, your order will be canceled.</li>
+                  </ul>
+                </td>
+              </tr>
+
+              <tr>
+                <td align="center" style="padding-bottom:20px;">
+                  <a href="https://sycloseouts.com/buyer/orders/${order.id}" style="background-color:#3498db; color:#ffffff; text-decoration:none; padding:12px 24px; border-radius:4px; font-size:16px; display:inline-block;">
+                    View Your Order
+                  </a>
+                </td>
+              </tr>
+
+              <tr>
+                <td style="border-top:1px solid #dddddd; padding-top:20px; font-size:12px; color:#888888;" align="center">
+                  <p style="margin:0;">If you have any questions, reply to this email or contact us at <a href="mailto:support@sycloseouts.com" style="color:#3498db; text-decoration:none;">support@sycloseouts.com</a>.</p>
+                  <p style="margin:5px 0 0 0;">&copy; ${new Date().getFullYear()} SY Closeouts. All rights reserved.</p>
+                </td>
+              </tr>
+
+            </table>
+          </td>
+        </tr>
+      </table>
+    </body>
+  </html>`;
 
   const mailOptions = {
     from: process.env.SMTP_FROM || user,
     to,
-    subject: `Wire Instructions for Order #${orderCode}`,
-    text: `${instructions}\n\nOrder #: ${orderCode}`,
+    subject: `Wire Instructions for Order #${order.code}`,
+    text: `${instructions}\n\nAmount: $${order.totalAmount.toFixed(2)}\nOrder #: ${order.code}`,
+    html,
+    attachments: [
+      {
+        filename: "logo.png",
+        path: path.resolve(__dirname, "..", "generated-icon.png"),
+        cid: "logo",
+      },
+    ],
   };
 
   try {
