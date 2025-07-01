@@ -124,6 +124,9 @@ export const products = pgTable("products", {
   fobLocation: text("fob_location"),
   retailComparisonUrl: text("retail_comparison_url"),
   upc: text("upc"),
+  shippingType: text("shipping_type"),
+  shippingResponsibility: text("shipping_responsibility"),
+  shippingFee: doublePrecision("shipping_fee"),
   isBanner: boolean("is_banner").default(false),
   condition: text("condition").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
@@ -154,7 +157,10 @@ export const insertProductSchema = createInsertSchema(products, {
     // Images are optional for testing but an empty array will be stored
     images: z.array(z.string()).default([]),
     isBanner: z.boolean().optional(),
-    orderMultiple: z.coerce.number().int().positive().default(1)
+    orderMultiple: z.coerce.number().int().positive().default(1),
+    shippingType: z.string(),
+    shippingResponsibility: z.string(),
+    shippingFee: z.coerce.number().optional().nullable()
   });
 
 // Order schema
@@ -169,6 +175,8 @@ export const orders = pgTable("orders", {
   paymentDetails: jsonb("payment_details"),
   estimatedDeliveryDate: timestamp("estimated_delivery_date"),
   trackingNumber: text("tracking_number"),
+  shippingChoice: text("shipping_choice"),
+  shippingCarrier: text("shipping_carrier"),
   buyerCharged: boolean("buyer_charged").default(false),
   sellerPaid: boolean("seller_paid").default(false),
   deliveredAt: timestamp("delivered_at"),
@@ -199,6 +207,8 @@ export const insertOrderSchema = createInsertSchema(orders)
   .extend({
     // Accept ISO date strings from the client
     estimatedDeliveryDate: z.coerce.date().optional(),
+    shippingChoice: z.string().optional(),
+    shippingCarrier: z.string().optional(),
   });
 
 // Order items schema
