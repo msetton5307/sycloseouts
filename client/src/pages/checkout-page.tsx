@@ -51,6 +51,14 @@ export default function CheckoutPage() {
     notes: ""
   });
 
+  const [shippingChoice, setShippingChoice] = useState<"seller" | "buyer">("seller");
+  const [shippingCarrier, setShippingCarrier] = useState("");
+  const [listingShipping, setListingShipping] = useState<{ responsibility: string; type: string; fee?: number } | null>(null);
+
+  const shippingCost = listingShipping && listingShipping.responsibility === "seller_fee" && shippingChoice === "seller"
+    ? listingShipping.fee || 0
+    : 0;
+
   const [paymentInfo, setPaymentInfo] = useState({
     routingNumber: "",
     accountNumber: "",
@@ -85,6 +93,27 @@ export default function CheckoutPage() {
     fetchAddresses();
   }, [user]);
 
+  useEffect(() => {
+    const fetchShipping = async () => {
+      if (items.length === 0) return;
+      try {
+        const res = await fetch(`/api/products/${items[0].productId}`);
+        if (res.ok) {
+          const data = await res.json();
+          setListingShipping({ responsibility: data.shippingResponsibility, type: data.shippingType, fee: data.shippingFee });
+          if (data.shippingResponsibility === "buyer") {
+            setShippingChoice("buyer");
+          } else {
+            setShippingChoice("seller");
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch product shipping", err);
+      }
+    };
+    fetchShipping();
+  }, [items]);
+
 
   useEffect(() => {
     if (selectedAddressId === "new") return;
@@ -110,6 +139,14 @@ export default function CheckoutPage() {
 
   const handleShippingSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (shippingChoice === "buyer" && !shippingCarrier) {
+      toast({
+        title: "Carrier required",
+        description: "Please specify who will handle shipping",
+        variant: "destructive"
+      });
+      return;
+    }
     setCurrentStep("payment");
     window.scrollTo(0, 0);
   };
@@ -202,6 +239,8 @@ export default function CheckoutPage() {
           totalAmount: sellerTotal,
           status: paymentInfo.paymentMethod === "wire" ? "awaiting_wire" : "ordered",
           shippingDetails: shippingInfo,
+          shippingChoice,
+          shippingCarrier: shippingChoice === "buyer" ? shippingCarrier : undefined,
           paymentDetails: {
             method: paymentInfo.paymentMethod,
             routingNumber: paymentInfo.routingNumber || undefined,
@@ -243,6 +282,52 @@ export default function CheckoutPage() {
   const renderShippingForm = () => (
     <form onSubmit={handleShippingSubmit}>
       <div className="space-y-6">
+        {listingShipping && (
+          <div>
+            {listingShipping.responsibility === "seller_free" && (
+              <p>Seller provides free {listingShipping.type} shipping.</p>
+            )}
+            {listingShipping.responsibility === "seller_fee" && (
+              <>
+                <p>
+                  Seller offers {listingShipping.type} shipping for a fee of {formatCurrency(listingShipping.fee || 0)}.
+                </p>
+                <RadioGroup
+                  value={shippingChoice}
+                  onValueChange={(val) => setShippingChoice(val as "seller" | "buyer")}
+                  className="space-y-2 mt-2"
+                >
+                  <div className="flex items-start space-x-2 border rounded-md p-3">
+                    <RadioGroupItem value="seller" id="ship-seller" />
+                    <label htmlFor="ship-seller" className="text-sm leading-none cursor-pointer">
+                      Use seller shipping
+                    </label>
+                  </div>
+                  <div className="flex items-start space-x-2 border rounded-md p-3">
+                    <RadioGroupItem value="buyer" id="ship-buyer" />
+                    <label htmlFor="ship-buyer" className="text-sm leading-none cursor-pointer">
+                      I'll arrange shipping
+                    </label>
+                  </div>
+                </RadioGroup>
+              </>
+            )}
+            {listingShipping.responsibility === "buyer" && (
+              <p>Buyer must arrange {listingShipping.type} shipping.</p>
+            )}
+            {(shippingChoice === "buyer" || listingShipping.responsibility === "buyer") && (
+              <div className="mt-4">
+                <Label htmlFor="carrier">Shipping Company</Label>
+                <Input
+                  id="carrier"
+                  value={shippingCarrier}
+                  onChange={(e) => setShippingCarrier(e.target.value)}
+                  required
+                />
+              </div>
+            )}
+          </div>
+        )}
         {addresses.length > 0 && (
           <div>
             <Label>Saved Addresses</Label>
@@ -717,14 +802,26 @@ export default function CheckoutPage() {
 
                   <div className="flex justify-between">
                     <div className="text-sm text-gray-600">Shipping</div>
-                    <div className="text-sm text-gray-900">Calculated at next step</div>
+                    <div className="text-sm text-gray-900">
+                      {listingShipping ? (
+                        listingShipping.responsibility === "seller_fee" ? (
+                          shippingChoice === "seller" ? formatCurrency(shippingCost) : "Buyer arranged"
+                        ) : listingShipping.responsibility === "seller_free" ? (
+                          "Free"
+                        ) : (
+                          "Buyer arranged"
+                        )
+                      ) : (
+                        "Calculated at next step"
+                      )}
+                    </div>
                   </div>
 
                   <Separator />
 
                   <div className="flex justify-between">
                     <div className="text-base font-medium text-gray-900">Order Total</div>
-                    <div className="text-base font-medium text-gray-900">{formatCurrency(cartTotal)}</div>
+                    <div className="text-base font-medium text-gray-900">{formatCurrency(cartTotal + shippingCost)}</div>
                   </div>
                 </div>
               </div>

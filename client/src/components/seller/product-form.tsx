@@ -40,6 +40,8 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
   const [newImageUrl, setNewImageUrl] = useState("");
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [shippingType, setShippingType] = useState<string>(product?.shippingType || "truckload");
+  const [shippingResponsibility, setShippingResponsibility] = useState<string>(product?.shippingResponsibility || "seller_free");
   const [sizeOptions, setSizeOptions] = useState<string>(product?.variations?.size?.join(", ") || "");
   const [colorOptions, setColorOptions] = useState<string>(product?.variations?.color?.join(", ") || "");
   const [variationPrices, setVariationPrices] = useState<Record<string, number | undefined>>(product?.variationPrices || {});
@@ -122,6 +124,9 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
       variations: (product as any).variations || {},
       variationPrices: (product as any).variationPrices || {},
       variationStocks: (product as any).variationStocks || {},
+      shippingType: product.shippingType || 'truckload',
+      shippingResponsibility: product.shippingResponsibility || 'seller_free',
+      shippingFee: product.shippingFee ?? undefined,
       isBanner: product.isBanner ?? false,
     } : {
       sellerId: 0, // Will be set by the server
@@ -142,6 +147,9 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
       variationPrices: {},
       variationStocks: {},
       condition: "New",
+      shippingType: 'truckload',
+      shippingResponsibility: 'seller_free',
+      shippingFee: undefined as unknown as number,
       isBanner: false
     },
   });
@@ -221,7 +229,10 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
       ),
       variationStocks: Object.fromEntries(
         Object.entries(variationStocks).map(([k, v]) => [k, v])
-      )
+      ),
+      shippingType,
+      shippingResponsibility,
+      shippingFee: data.shippingFee
     };
     
     // Check for NaN values and replace with defaults
@@ -231,6 +242,9 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
     if (isNaN(formattedData.availableUnits)) formattedData.availableUnits = 0;
     if (isNaN(formattedData.minOrderQuantity)) formattedData.minOrderQuantity = 1;
     if (isNaN((formattedData as any).orderMultiple)) (formattedData as any).orderMultiple = 1;
+    if (formattedData.shippingFee !== undefined && isNaN(formattedData.shippingFee)) {
+      formattedData.shippingFee = undefined as any;
+    }
     for (const key in formattedData.variationPrices) {
       const val = formattedData.variationPrices[key];
       if (val === undefined || isNaN(val)) {
@@ -368,6 +382,57 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
             </FormItem>
           )}
         />
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <FormLabel>Shipping Type</FormLabel>
+            <Select value={shippingType} onValueChange={setShippingType}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="truckload">Truckload</SelectItem>
+                <SelectItem value="ltl">LTL</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <FormLabel>Shipping Responsibility</FormLabel>
+            <Select value={shippingResponsibility} onValueChange={setShippingResponsibility}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select option" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="seller_free">Seller ships for free</SelectItem>
+                <SelectItem value="seller_fee">Seller ships for a fee</SelectItem>
+                <SelectItem value="buyer">Buyer arranges shipping</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        {shippingResponsibility === 'seller_fee' && (
+          <FormField
+            control={form.control}
+            name="shippingFee"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Shipping Fee</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    {...field}
+                    value={field.value === undefined ? '' : field.value}
+                    onChange={e => field.onChange(e.target.value === '' ? undefined : parseFloat(e.target.value))}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <FormField
