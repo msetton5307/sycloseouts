@@ -584,6 +584,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/orders/:id/shipping-label", isAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id, 10);
+      if (Number.isNaN(id)) {
+        return res.status(400).json({ message: "Invalid order ID" });
+      }
+      const user = req.user as Express.User;
+      const order = await storage.getOrder(id);
+
+      if (!order) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+
+      if (order.buyerId !== user.id && user.role !== "admin") {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+
+      const updatedOrder = await storage.updateOrder(id, {
+        shippingLabel: req.body.shippingLabel,
+      });
+      res.json(updatedOrder);
+
+      await storage.createNotification({
+        userId: order.sellerId,
+        type: 'order',
+        content: `Shipping label uploaded for order #${order.code}`,
+        link: `/seller/orders/${order.id}`,
+      });
+    } catch (error) {
+      handleApiError(res, error);
+    }
+  });
+
   app.put("/api/orders/:id", isAuthenticated, async (req, res) => {
     try {
       const id = parseInt(req.params.id, 10);

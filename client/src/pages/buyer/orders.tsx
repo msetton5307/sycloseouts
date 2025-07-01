@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState, useRef } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Order } from "@shared/schema";
 import Header from "@/components/layout/header";
@@ -34,6 +34,7 @@ import {
 import { useAuth } from "@/hooks/use-auth";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import OrderStatus from "@/components/buyer/order-status";
+import { apiRequest } from "@/lib/queryClient";
 
 interface OrderWithPreview extends Order {
   previewImage?: string | null;
@@ -41,6 +42,21 @@ interface OrderWithPreview extends Order {
 
 export default function BuyerOrdersPage() {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadingId, setUploadingId] = useState<number | null>(null);
+  const uploadLabel = useMutation({
+    mutationFn: ({ id, label }: { id: number; label: string }) =>
+      apiRequest("POST", `/api/orders/${id}/shipping-label`, {
+        shippingLabel: label,
+      }).then((r) => r.json()),
+    onSuccess: (_, vars) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+      setUploadingId(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    },
+    onError: () => setUploadingId(null),
+  });
   const [filter, setFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   
@@ -48,6 +64,23 @@ export default function BuyerOrdersPage() {
     queryKey: ["/api/orders"],
     enabled: !!user,
   });
+
+  const handleFileUpload = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    id: number,
+  ) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    setUploadingId(id);
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      if (evt.target && evt.target.result) {
+        uploadLabel.mutate({ id, label: evt.target.result.toString() });
+      }
+    };
+    reader.onerror = () => setUploadingId(null);
+    reader.readAsDataURL(files[0]);
+  };
   
   const filteredOrders = orders.filter(order => {
     if (filter !== "all" && order.status !== filter) {
@@ -62,6 +95,13 @@ export default function BuyerOrdersPage() {
   return (
     <>
       <Header />
+      <input
+        type="file"
+        accept="application/pdf,image/*"
+        ref={fileInputRef}
+        onChange={(e) => uploadingId && handleFileUpload(e, uploadingId)}
+        className="hidden"
+      />
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <h1 className="text-3xl font-extrabold tracking-tight text-gray-900 mb-8">
           My Orders
@@ -179,6 +219,27 @@ export default function BuyerOrdersPage() {
                             Download Invoice
                           </a>
                         </Button>
+                        {order.shippingChoice === "buyer" && (
+                          order.shippingLabel ? (
+                            <Button variant="outline" size="sm" asChild>
+                              <a href={order.shippingLabel} download>
+                                Download Label
+                              </a>
+                            </Button>
+                          ) : (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setUploadingId(order.id);
+                                fileInputRef.current?.click();
+                              }}
+                              disabled={uploadingId === order.id}
+                            >
+                              {uploadingId === order.id ? "Uploading..." : "Upload Label"}
+                            </Button>
+                          )
+                        )}
                       </div>
                     </div>
                   ))}
@@ -240,6 +301,27 @@ export default function BuyerOrdersPage() {
                               Download Invoice
                             </a>
                           </Button>
+                          {order.shippingChoice === "buyer" && (
+                            order.shippingLabel ? (
+                              <Button variant="outline" size="sm" asChild>
+                                <a href={order.shippingLabel} download>
+                                  Download Label
+                                </a>
+                              </Button>
+                            ) : (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  setUploadingId(order.id);
+                                  fileInputRef.current?.click();
+                                }}
+                                disabled={uploadingId === order.id}
+                              >
+                                {uploadingId === order.id ? "Uploading..." : "Upload Label"}
+                              </Button>
+                            )
+                          )}
                         </div>
                       </AccordionContent>
                     </AccordionItem>
