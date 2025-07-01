@@ -200,6 +200,31 @@ export default function SellerDashboard() {
   const [trackingOrderId, setTrackingOrderId] = useState<number | null>(null);
   const [trackingNum, setTrackingNum] = useState("");
   const [showAllPayouts, setShowAllPayouts] = useState(false);
+  const [bankInfo, setBankInfo] = useState<
+    | { bankName: string; accountNumber: string; routingNumber: string }
+    | null
+  >(null);
+  const [bankName, setBankName] = useState("");
+  const [accountNumber, setAccountNumber] = useState("");
+  const [routingNumber, setRoutingNumber] = useState("");
+
+  useEffect(() => {
+    const stored = localStorage.getItem("sellerBankInfo");
+    if (stored) {
+      try {
+        setBankInfo(JSON.parse(stored));
+      } catch {}
+    }
+  }, []);
+
+  function handleSaveBankInfo() {
+    const info = { bankName, accountNumber, routingNumber };
+    localStorage.setItem("sellerBankInfo", JSON.stringify(info));
+    setBankInfo(info);
+    setBankName("");
+    setAccountNumber("");
+    setRoutingNumber("");
+  }
 
   function handleConfirmTracking() {
     if (trackingOrderId && trackingNum) {
@@ -286,7 +311,12 @@ export default function SellerDashboard() {
       onValueChange={setActiveTab}
       className="space-y-6"
     >
-      <Header />
+      <Header
+        onProfileClick={() => {
+          setActiveTab("profile");
+          window.location.hash = "profile";
+        }}
+      />
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -751,6 +781,49 @@ export default function SellerDashboard() {
                       </div>
                     </div>
                   </div>
+                </CardContent>
+              </Card>
+
+              <Card className="md:col-span-2">
+                <CardHeader>
+                  <CardTitle>Payout Method</CardTitle>
+                  <CardDescription>
+                    Direct deposit information. Payouts are processed weekly.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {bankInfo ? (
+                    <div className="space-y-2">
+                      <p>
+                        Bank: <span className="font-medium">{bankInfo.bankName}</span>
+                      </p>
+                      <p>
+                        Account ending in {bankInfo.accountNumber.slice(-4)}
+                      </p>
+                      <Button variant="outline" onClick={() => setBankInfo(null)}>
+                        Edit
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <Input
+                        placeholder="Bank Name"
+                        value={bankName}
+                        onChange={(e) => setBankName(e.target.value)}
+                      />
+                      <Input
+                        placeholder="Account Number"
+                        value={accountNumber}
+                        onChange={(e) => setAccountNumber(e.target.value)}
+                      />
+                      <Input
+                        placeholder="Routing Number"
+                        value={routingNumber}
+                        onChange={(e) => setRoutingNumber(e.target.value)}
+                      />
+                      <Button onClick={handleSaveBankInfo}>Save</Button>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 
