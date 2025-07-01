@@ -90,7 +90,7 @@ export default function SellerDashboard() {
   });
 
 
-  type OfferWithProduct = Offer & { productTitle: string; productAvailableUnits: number };
+  type OfferWithProduct = Offer & { productTitle: string; productAvailableUnits: number; productImages: string[] };
 
   const { data: offers = [] } = useQuery<OfferWithProduct[]>({
     queryKey: ["/api/offers"],
@@ -111,8 +111,15 @@ export default function SellerDashboard() {
         ) : (
           <div className="space-y-4">
             {pendingOffers.slice(0, 5).map((o) => (
-              <div key={o.id} className="border rounded-lg p-4 flex justify-between">
-                <div>
+              <div key={o.id} className="border rounded-lg p-4 flex gap-4 justify-between">
+                {o.productImages?.[0] && (
+                  <img
+                    src={o.productImages[0]}
+                    alt={o.productTitle}
+                    className="w-16 h-16 object-cover rounded"
+                  />
+                )}
+                <div className="flex-1">
                   <p className="font-medium">{o.productTitle}</p>
                   {o.selectedVariations && (
                     <p className="text-xs text-gray-500">

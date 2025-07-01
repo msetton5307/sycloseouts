@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import MakeOfferDialog from "@/components/products/make-offer-dialog";
 
 export default function BuyerOffersPage() {
-  type OfferWithProduct = Offer & { productTitle: string };
+  type OfferWithProduct = Offer & { productTitle: string; productImages: string[] };
 
   const { data: offers = [], isLoading } = useQuery<OfferWithProduct[]>({
     queryKey: ["/api/offers"],
@@ -125,21 +125,30 @@ export default function BuyerOffersPage() {
                 ) : (
                   listMap[status].map((o) => (
                     <div key={o.id} className="border p-4 rounded space-y-2">
-                      <div className="flex justify-between">
-                        <div>
-                          <p className="font-medium">{o.productTitle}</p>
-                          {o.selectedVariations && (
-                            <p className="text-sm text-gray-500">
-                              {Object.entries(o.selectedVariations)
-                                .map(([k, v]) => `${k}: ${v}`)
-                                .join(", ")}
-                            </p>
-                          )}
-                          <p className="text-sm">Quantity: {o.quantity}</p>
-                        </div>
-                        <div className="text-right space-y-1">
-                          <p>{formatCurrency(o.price * (1 + SERVICE_FEE_RATE))}</p>
-                          <span className="text-xs capitalize">{o.status}</span>
+                      <div className="flex gap-4 justify-between">
+                        {o.productImages?.[0] && (
+                          <img
+                            src={o.productImages[0]}
+                            alt={o.productTitle}
+                            className="w-20 h-20 object-cover rounded"
+                          />
+                        )}
+                        <div className="flex-1 flex justify-between">
+                          <div>
+                            <p className="font-medium">{o.productTitle}</p>
+                            {o.selectedVariations && (
+                              <p className="text-sm text-gray-500">
+                                {Object.entries(o.selectedVariations)
+                                  .map(([k, v]) => `${k}: ${v}`)
+                                  .join(", ")}
+                              </p>
+                            )}
+                            <p className="text-sm">Quantity: {o.quantity}</p>
+                          </div>
+                          <div className="text-right space-y-1">
+                            <p>{formatCurrency(o.price * (1 + SERVICE_FEE_RATE))}</p>
+                            <span className="text-xs capitalize">{o.status}</span>
+                          </div>
                         </div>
                       </div>
                       {status === "countered" && (
