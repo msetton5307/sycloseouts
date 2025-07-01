@@ -1,5 +1,5 @@
 import { createContext, ReactNode, useContext, useState, useEffect } from "react";
-import { CartItem, Product } from "@shared/schema";
+import { CartItem, Product, Offer } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { addServiceFee } from "@/lib/utils";
@@ -10,13 +10,16 @@ interface CartContextType {
     product: Product,
     quantity: number,
     variations?: Record<string, string>,
-    priceOverride?: number
+    priceOverride?: number,
+    offerQuantity?: number,
+    offerId?: number
   ) => void;
-  removeFromCart: (productId: number, variationKey?: string) => void;
+  removeFromCart: (productId: number, variationKey?: string, offerId?: number) => void;
   updateQuantity: (
     productId: number,
     variationKey: string | undefined,
-    quantity: number
+    quantity: number,
+    offerId?: number
   ) => void;
   clearCart: () => void;
   cartTotal: number;
@@ -62,11 +65,43 @@ export function CartProvider({ children }: { children: ReactNode }) {
     localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
   }, [items]);
 
+  useEffect(() => {
+    async function loadAcceptedOffers() {
+      if (!user || user.role !== "buyer") return;
+      try {
+        const res = await fetch("/api/offers?status=accepted", {
+          credentials: "include",
+        });
+        if (!res.ok) return;
+        const offers: Offer[] = await res.json();
+        for (const o of offers) {
+          if (items.some((it) => it.offerId === o.id)) continue;
+          const prodRes = await fetch(`/api/products/${o.productId}`);
+          if (!prodRes.ok) continue;
+          const product = await prodRes.json();
+          addToCart(
+            product,
+            o.quantity,
+            o.selectedVariations ?? {},
+            o.price,
+            o.quantity,
+            o.id
+          );
+        }
+      } catch {
+        /* ignore */
+      }
+    }
+    loadAcceptedOffers();
+  }, [user]);
+
   const addToCart = (
     product: Product,
     quantity: number,
     variations: Record<string, string> = {},
-    priceOverride?: number
+    priceOverride?: number,
+    offerQuantity?: number,
+    offerId?: number
   ) => {
     if (quantity <= 0) return;
 
@@ -96,6 +131,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
         ? product.variationStocks[varKey]
         : product.availableUnits;
 
+    if (offerQuantity !== undefined && quantity > offerQuantity) {
+      toast({
+        title: "Offer limit",
+        description: `Only ${offerQuantity} units are available at the agreed price`,
+        variant: "destructive",
+      });
+      quantity = offerQuantity;
+    }
+
     // Check if we have enough inventory
     if (quantity > availableUnits) {
       toast({
@@ -119,7 +163,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
       setItems(prevItems => {
         const existingItemIndex = prevItems.findIndex(
-          item => item.productId === product.id && item.variationKey === varKey
+          item =>
+            item.productId === product.id &&
+            item.variationKey === varKey &&
+            item.offerId === offerId
         );
       
       if (existingItemIndex >= 0) {
@@ -137,9 +184,20 @@ export function CartProvider({ children }: { children: ReactNode }) {
           return prevItems;
         }
         
+        let finalQuantity = newQuantity;
+        const limit = updatedItems[existingItemIndex].offerQuantity;
+        if (limit !== undefined && newQuantity > limit) {
+          toast({
+            title: "Offer limit",
+            description: `Only ${limit} units are available at the agreed price`,
+            variant: "destructive",
+          });
+          finalQuantity = limit;
+        }
+
         updatedItems[existingItemIndex] = {
           ...updatedItems[existingItemIndex],
-          quantity: newQuantity
+          quantity: finalQuantity
         };
         
         return updatedItems;
@@ -157,7 +215,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
             orderMultiple: product.orderMultiple,
             availableUnits,
             selectedVariations: variations,
-            variationKey: varKey
+            variationKey: varKey,
+            offerId,
+            offerQuantity
           }
         ];
       }
@@ -173,10 +233,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setIsCartOpen(true);
   };
 
-  const removeFromCart = (productId: number, variationKey = "") => {
+  const removeFromCart = (productId: number, variationKey = "", offerId?: number) => {
     setItems(prevItems =>
       prevItems.filter(
-        item => !(item.productId === productId && (item.variationKey ?? "") === variationKey)
+        item =>
+          !(
+            item.productId === productId &&
+            (item.variationKey ?? "") === variationKey &&
+            (offerId === undefined || item.offerId === offerId)
+          )
       )
     );
     
@@ -189,16 +254,21 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const updateQuantity = (
     productId: number,
     variationKey: string | undefined,
-    quantity: number
+    quantity: number,
+    offerId?: number
   ) => {
     if (quantity <= 0) {
-      removeFromCart(productId, variationKey);
+      removeFromCart(productId, variationKey, offerId);
       return;
     }
 
     setItems(prevItems => {
       return prevItems.map(item => {
-        if (item.productId === productId && (item.variationKey ?? "") === (variationKey ?? "")) {
+        if (
+          item.productId === productId &&
+          (item.variationKey ?? "") === (variationKey ?? "") &&
+          (offerId === undefined || item.offerId === offerId)
+        ) {
           // Check if quantity meets MOQ
           if (quantity < item.minOrderQuantity) {
             toast({
@@ -228,7 +298,16 @@ export function CartProvider({ children }: { children: ReactNode }) {
             });
             return item;
           }
-          
+
+          if (item.offerQuantity !== undefined && quantity > item.offerQuantity) {
+            toast({
+              title: "Offer limit",
+              description: `Only ${item.offerQuantity} units are available at the agreed price`,
+              variant: "destructive",
+            });
+            return item;
+          }
+
           return { ...item, quantity };
         }
         return item;

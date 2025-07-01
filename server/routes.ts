@@ -36,6 +36,8 @@ import { generateOrderCode } from "./orderCode";
 import { ZodError } from "zod";
 import { containsContactInfo } from "./contactFilter";
 
+const SERVICE_FEE_RATE = 0.035;
+
 async function fetchTrackingStatus(trackingNumber: string): Promise<string | undefined> {
   try {
     const apiKey = process.env.TRACKTRY_API_KEY;
@@ -216,6 +218,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const offerData = insertOfferSchema.parse({
         ...req.body,
+        price: req.body.price * (1 - SERVICE_FEE_RATE),
         productId: id,
         buyerId: user.id,
         sellerId: product.sellerId,
@@ -1288,6 +1291,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const filter: any = {};
       if (user.role === 'buyer') filter.buyerId = user.id;
       else if (user.role === 'seller') filter.sellerId = user.id;
+      if (req.query.status) filter.status = String(req.query.status);
       const offers = await storage.getOffers(filter);
       res.json(offers);
     } catch (error) {
