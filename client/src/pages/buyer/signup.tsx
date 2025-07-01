@@ -110,7 +110,7 @@ export default function BuyerSignupPage() {
               <h1 className="text-3xl font-extrabold mb-6">Buy Wholesale Inventory</h1>
               <p className="text-xl mb-8">Join our marketplace to access the best deals from verified sellers.</p>
 
-              <div className="space-y-6">
+                <div className="space-y-6">
                 <div className="flex items-start">
                   <div className="flex-shrink-0 bg-white/20 p-2 rounded-full mr-4">
                     <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -135,19 +135,31 @@ export default function BuyerSignupPage() {
                   </div>
                 </div>
 
-                <div className="flex items-start">
-                  <div className="flex-shrink-0 bg-white/20 p-2 rounded-full mr-4">
-                    <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
+                  <div className="flex items-start">
+                    <div className="flex-shrink-0 bg-white/20 p-2 rounded-full mr-4">
+                      <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold mb-1">Secure Transactions</h3>
+                      <p className="text-blue-100">Payments are protected for a worry-free experience.</p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="text-lg font-semibold mb-1">Secure Transactions</h3>
-                    <p className="text-blue-100">Payments are protected for a worry-free experience.</p>
+
+                  <div className="flex items-start">
+                    <div className="flex-shrink-0 bg-white/20 p-2 rounded-full mr-4">
+                      <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold mb-1">No Hidden Fees</h3>
+                      <p className="text-blue-100">The price you see is the price you pay.</p>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
           </div>
 
           {/* Right column - Signup Form */}
