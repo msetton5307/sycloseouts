@@ -333,6 +333,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const previewImage = items[0]?.productImages[0] || null;
           const orderWithItems = { ...o, previewImage, items };
           if (user.role === "seller") {
+            if (o.shippingChoice === "seller") {
+              return orderWithItems;
+            }
             const { shippingDetails, ...rest } = orderWithItems as any;
             return rest;
           }
@@ -366,8 +369,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get order items with product info
       const orderItems = await storage.getOrderItemsWithProducts(id);
       if (user.role === "seller") {
-        const { shippingDetails, ...rest } = order as any;
-        res.json({ ...rest, items: orderItems });
+        if (order.shippingChoice === "seller") {
+          res.json({ ...order, items: orderItems });
+        } else {
+          const { shippingDetails, ...rest } = order as any;
+          res.json({ ...rest, items: orderItems });
+        }
       } else {
         res.json({ ...order, items: orderItems });
       }
