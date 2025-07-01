@@ -84,6 +84,8 @@ export async function sendInvoiceEmail(
     .join("\n");
 
   const subtotal = items.reduce((sum, i) => sum + i.totalPrice, 0);
+  const shipping = Math.max(order.totalAmount - subtotal, 0);
+  const shipping = Math.max(order.totalAmount - subtotal, 0);
 
   const buyerName = buyer ? `${buyer.firstName} ${buyer.lastName}`.trim() : "";
 
@@ -122,6 +124,7 @@ export async function sendInvoiceEmail(
                 <td colspan="2" align="right" style="padding-top:10px;"><strong>Subtotal:</strong></td>
                 <td align="right" style="padding-top:10px;">$${subtotal.toFixed(2)}</td>
               </tr>
+              ${shipping > 0 ? `<tr><td colspan="2" align="right">Shipping:</td><td align="right">$${shipping.toFixed(2)}</td></tr>` : ""}
               <tr>
                 <td colspan="2" align="right"><strong>Total:</strong></td>
                 <td align="right"><strong>$${order.totalAmount.toFixed(2)}</strong></td>
@@ -158,8 +161,9 @@ export async function sendInvoiceEmail(
     text:
       `Thank you for your order!\n\n` +
       `Order ID: ${order.code}\n` +
-      `Total: $${order.totalAmount.toFixed(2)}\n\n` +
-      `Items:\n${itemLines}\n\n` +
+      `Total: $${order.totalAmount.toFixed(2)}\n` +
+      (shipping > 0 ? `Shipping: $${shipping.toFixed(2)}\n` : "") +
+      `\nItems:\n${itemLines}\n\n` +
       `We appreciate your business!`,
     html,
     attachments: [
@@ -277,6 +281,7 @@ export async function sendSellerOrderEmail(
                 <td colspan="2" align="right" style="padding-top:10px;"><strong>Subtotal:</strong></td>
                 <td align="right" style="padding-top:10px;">$${subtotal.toFixed(2)}</td>
               </tr>
+              ${shipping > 0 ? `<tr><td colspan="2" align="right">Shipping:</td><td align="right">$${shipping.toFixed(2)}</td></tr>` : ""}
               <tr>
                 <td colspan="2" align="right"><strong>Total:</strong></td>
                 <td align="right"><strong>$${order.totalAmount.toFixed(2)}</strong></td>
@@ -315,8 +320,9 @@ export async function sendSellerOrderEmail(
     text:
       `You have a new order!\n\n` +
       `Order ID: ${order.code}\n` +
-      `Total: $${order.totalAmount.toFixed(2)}\n\n` +
-      `Items:\n${itemLines}\n`,
+      `Total: $${order.totalAmount.toFixed(2)}\n` +
+      (shipping > 0 ? `Shipping: $${shipping.toFixed(2)}\n` : "") +
+      `\nItems:\n${itemLines}\n`,
     html,
     attachments: [
       {

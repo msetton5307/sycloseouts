@@ -53,7 +53,11 @@ export default function CheckoutPage() {
 
   const [shippingChoice, setShippingChoice] = useState<"seller" | "buyer">("seller");
   const [shippingCarrier, setShippingCarrier] = useState("");
-  const [listingShipping, setListingShipping] = useState<{ responsibility: string; type: string } | null>(null);
+  const [listingShipping, setListingShipping] = useState<{ responsibility: string; type: string; fee?: number } | null>(null);
+
+  const shippingCost = listingShipping && listingShipping.responsibility === "seller_fee" && shippingChoice === "seller"
+    ? listingShipping.fee || 0
+    : 0;
 
   const [paymentInfo, setPaymentInfo] = useState({
     routingNumber: "",
@@ -96,7 +100,7 @@ export default function CheckoutPage() {
         const res = await fetch(`/api/products/${items[0].productId}`);
         if (res.ok) {
           const data = await res.json();
-          setListingShipping({ responsibility: data.shippingResponsibility, type: data.shippingType });
+          setListingShipping({ responsibility: data.shippingResponsibility, type: data.shippingType, fee: data.shippingFee });
           if (data.shippingResponsibility === "buyer") {
             setShippingChoice("buyer");
           } else {
@@ -285,7 +289,9 @@ export default function CheckoutPage() {
             )}
             {listingShipping.responsibility === "seller_fee" && (
               <>
-                <p>Seller offers {listingShipping.type} shipping for a fee.</p>
+                <p>
+                  Seller offers {listingShipping.type} shipping for a fee of {formatCurrency(listingShipping.fee || 0)}.
+                </p>
                 <RadioGroup
                   value={shippingChoice}
                   onValueChange={(val) => setShippingChoice(val as "seller" | "buyer")}
@@ -796,14 +802,26 @@ export default function CheckoutPage() {
 
                   <div className="flex justify-between">
                     <div className="text-sm text-gray-600">Shipping</div>
-                    <div className="text-sm text-gray-900">Calculated at next step</div>
+                    <div className="text-sm text-gray-900">
+                      {listingShipping ? (
+                        listingShipping.responsibility === "seller_fee" ? (
+                          shippingChoice === "seller" ? formatCurrency(shippingCost) : "Buyer arranged"
+                        ) : listingShipping.responsibility === "seller_free" ? (
+                          "Free"
+                        ) : (
+                          "Buyer arranged"
+                        )
+                      ) : (
+                        "Calculated at next step"
+                      )}
+                    </div>
                   </div>
 
                   <Separator />
 
                   <div className="flex justify-between">
                     <div className="text-base font-medium text-gray-900">Order Total</div>
-                    <div className="text-base font-medium text-gray-900">{formatCurrency(cartTotal)}</div>
+                    <div className="text-base font-medium text-gray-900">{formatCurrency(cartTotal + shippingCost)}</div>
                   </div>
                 </div>
               </div>

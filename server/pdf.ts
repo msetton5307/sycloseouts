@@ -44,6 +44,12 @@ export function generateInvoicePdf(order: Order, items: InvoiceItem[]): Buffer {
     y -= 15;
   }
   y -= 10;
+  const subtotal = items.reduce((sum, i) => sum + i.totalPrice, 0);
+  const shipping = Math.max(order.totalAmount - subtotal, 0);
+  if (shipping > 0) {
+    lines.push(textBlock(50, y, 12, `Shipping: $${shipping.toFixed(2)}`));
+    y -= 15;
+  }
   lines.push(textBlock(50, y, 12, `Total: $${order.totalAmount.toFixed(2)}`));
 
   const content = lines.join("\n");
