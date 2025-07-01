@@ -341,6 +341,8 @@ export class DatabaseStorage implements IStorage {
         unitPrice: orderItems.unitPrice,
         totalPrice: orderItems.totalPrice,
         selectedVariations: orderItems.selectedVariations,
+        shippingChoice: orderItems.shippingChoice,
+        shippingCarrier: orderItems.shippingCarrier,
         productTitle: products.title,
         productImages: products.images,
       })

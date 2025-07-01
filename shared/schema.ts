@@ -222,6 +222,8 @@ export const orderItems = pgTable("order_items", {
   unitPrice: doublePrecision("unit_price").notNull(),
   totalPrice: doublePrecision("total_price").notNull(),
   selectedVariations: jsonb("selected_variations"),
+  shippingChoice: text("shipping_choice"),
+  shippingCarrier: text("shipping_carrier"),
 });
 
 export const orderItemsRelations = relations(orderItems, ({ one }) => ({
@@ -241,6 +243,8 @@ export const insertOrderItemSchema = createInsertSchema(orderItems)
   })
   .extend({
     selectedVariations: z.record(z.string()).optional().nullable(),
+    shippingChoice: z.string().optional(),
+    shippingCarrier: z.string().optional(),
   });
 
 // Seller application schema

@@ -52,13 +52,25 @@ export default function CheckoutPage() {
     notes: ""
   });
 
-  const [shippingChoice, setShippingChoice] = useState<"seller" | "buyer">("seller");
-  const [shippingCarrier, setShippingCarrier] = useState("");
-  const [listingShipping, setListingShipping] = useState<{ responsibility: string; type: string; fee?: number } | null>(null);
+  const [itemShippings, setItemShippings] = useState<Record<number, { responsibility: string; type: string; fee?: number }>>({});
+  const [shippingChoices, setShippingChoices] = useState<Record<number, { choice: "seller" | "buyer"; carrier: string }>>({});
 
-  const shippingCost = listingShipping && listingShipping.responsibility === "seller_fee" && shippingChoice === "seller"
-    ? listingShipping.fee || 0
-    : 0;
+  const shippingCost = items.reduce((sum, item) => {
+    const info = itemShippings[item.productId];
+    const choice = shippingChoices[item.productId]?.choice;
+    if (info && info.responsibility === "seller_fee" && choice === "seller") {
+      return sum + (info.fee || 0);
+    }
+    return sum;
+  }, 0);
+
+  const allBuyerArranged = items.every(item => {
+    const info = itemShippings[item.productId];
+    const choice = shippingChoices[item.productId]?.choice;
+    return info && (info.responsibility === "buyer" || choice === "buyer");
+  });
+
+  const shippingLabel = shippingCost > 0 ? formatCurrency(shippingCost) : allBuyerArranged ? "Buyer arranged" : "Free";
 
   const orderSubtotal = orderedItems.reduce(
     (sum, item) => sum + item.price * item.quantity,
@@ -102,20 +114,22 @@ export default function CheckoutPage() {
   useEffect(() => {
     const fetchShipping = async () => {
       if (items.length === 0) return;
-      try {
-        const res = await fetch(`/api/products/${items[0].productId}`);
-        if (res.ok) {
-          const data = await res.json();
-          setListingShipping({ responsibility: data.shippingResponsibility, type: data.shippingType, fee: data.shippingFee });
-          if (data.shippingResponsibility === "buyer") {
-            setShippingChoice("buyer");
-          } else {
-            setShippingChoice("seller");
+      const shipData: Record<number, { responsibility: string; type: string; fee?: number }> = {};
+      const choiceData: Record<number, { choice: "seller" | "buyer"; carrier: string }> = {};
+      for (const item of items) {
+        try {
+          const res = await fetch(`/api/products/${item.productId}`);
+          if (res.ok) {
+            const data = await res.json();
+            shipData[item.productId] = { responsibility: data.shippingResponsibility, type: data.shippingType, fee: data.shippingFee };
+            choiceData[item.productId] = { choice: data.shippingResponsibility === "buyer" ? "buyer" : "seller", carrier: "" };
           }
+        } catch (err) {
+          console.error("Failed to fetch product shipping", err);
         }
-      } catch (err) {
-        console.error("Failed to fetch product shipping", err);
       }
+      setItemShippings(shipData);
+      setShippingChoices(prev => ({ ...prev, ...choiceData }));
     };
     fetchShipping();
   }, [items]);
@@ -145,13 +159,18 @@ export default function CheckoutPage() {
 
   const handleShippingSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (shippingChoice === "buyer" && !shippingCarrier) {
-      toast({
-        title: "Carrier required",
-        description: "Please specify who will handle shipping",
-        variant: "destructive"
-      });
-      return;
+    for (const item of items) {
+      const choice = shippingChoices[item.productId]?.choice;
+      const carrier = shippingChoices[item.productId]?.carrier;
+      const ship = itemShippings[item.productId];
+      if ((choice === "buyer" || ship?.responsibility === "buyer") && !carrier) {
+        toast({
+          title: "Carrier required",
+          description: `Please specify shipping company for ${item.title}`,
+          variant: "destructive"
+        });
+        return;
+      }
     }
     setCurrentStep("payment");
     window.scrollTo(0, 0);
@@ -239,14 +258,16 @@ export default function CheckoutPage() {
         const estimatedDelivery = getEstimatedDeliveryDate();
         const sellerTotal = sellerItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
 
+        const firstItem = sellerItems[0];
+        const firstChoice = shippingChoices[firstItem.productId];
         const orderData: InsertOrder = {
           buyerId: user.id,
           sellerId: parseInt(sellerId),
           totalAmount: sellerTotal,
           status: paymentInfo.paymentMethod === "wire" ? "awaiting_wire" : "ordered",
           shippingDetails: shippingInfo,
-          shippingChoice,
-          shippingCarrier: shippingChoice === "buyer" ? shippingCarrier : undefined,
+          shippingChoice: firstChoice?.choice,
+          shippingCarrier: firstChoice?.choice === "buyer" ? firstChoice?.carrier : undefined,
           paymentDetails: {
             method: paymentInfo.paymentMethod,
             routingNumber: paymentInfo.routingNumber || undefined,
@@ -262,7 +283,9 @@ export default function CheckoutPage() {
             quantity: i.quantity,
             unitPrice: i.price,
             totalPrice: i.price * i.quantity,
-            selectedVariations: i.selectedVariations
+            selectedVariations: i.selectedVariations,
+            shippingChoice: shippingChoices[i.productId]?.choice,
+            shippingCarrier: shippingChoices[i.productId]?.carrier,
           }))
         });
         if (!orderRes.ok) throw new Error("Failed to create order");
@@ -289,52 +312,70 @@ export default function CheckoutPage() {
   const renderShippingForm = () => (
     <form onSubmit={handleShippingSubmit}>
       <div className="space-y-6">
-        {listingShipping && (
-          <div>
-            {listingShipping.responsibility === "seller_free" && (
-              <p>Seller provides free {listingShipping.type.toUpperCase()} shipping.</p>
-            )}
-            {listingShipping.responsibility === "seller_fee" && (
-              <>
-                <p>
-                  Seller offers {listingShipping.type.toUpperCase()} shipping for a fee of {formatCurrency(listingShipping.fee || 0)}.
-                </p>
-                <RadioGroup
-                  value={shippingChoice}
-                  onValueChange={(val) => setShippingChoice(val as "seller" | "buyer")}
-                  className="space-y-2 mt-2"
-                >
-                  <div className="flex items-start space-x-2 border rounded-md p-3">
-                    <RadioGroupItem value="seller" id="ship-seller" />
-                    <label htmlFor="ship-seller" className="text-sm leading-none cursor-pointer">
-                      Use seller shipping
-                    </label>
-                  </div>
-                  <div className="flex items-start space-x-2 border rounded-md p-3">
-                    <RadioGroupItem value="buyer" id="ship-buyer" />
-                    <label htmlFor="ship-buyer" className="text-sm leading-none cursor-pointer">
-                      I'll arrange shipping
-                    </label>
-                  </div>
-                </RadioGroup>
-              </>
-            )}
-            {listingShipping.responsibility === "buyer" && (
-              <p>Buyer must arrange {listingShipping.type.toUpperCase()} shipping.</p>
-            )}
-            {(shippingChoice === "buyer" || listingShipping.responsibility === "buyer") && (
-              <div className="mt-4">
-                <Label htmlFor="carrier">Shipping Company</Label>
-                <Input
-                  id="carrier"
-                  value={shippingCarrier}
-                  onChange={(e) => setShippingCarrier(e.target.value)}
-                  required
-                />
-              </div>
-            )}
-          </div>
-        )}
+        {items.map((item, idx) => {
+          const ship = itemShippings[item.productId];
+          if (!ship) return null;
+          const choice = shippingChoices[item.productId]?.choice || "seller";
+          return (
+            <div key={item.productId} className="border-b pb-4">
+              <h3 className="font-semibold mb-2">
+                Shipment {idx + 1} of {items.length}: {item.title}
+              </h3>
+              {ship.responsibility === "seller_free" && (
+                <p>Seller provides free {ship.type.toUpperCase()} shipping.</p>
+              )}
+              {ship.responsibility === "seller_fee" && (
+                <>
+                  <p>
+                    Seller offers {ship.type.toUpperCase()} shipping for a fee of {formatCurrency(ship.fee || 0)}.
+                  </p>
+                  <RadioGroup
+                    value={choice}
+                    onValueChange={(val) =>
+                      setShippingChoices((prev) => ({
+                        ...prev,
+                        [item.productId]: { ...prev[item.productId], choice: val as "seller" | "buyer" },
+                      }))
+                    }
+                    className="space-y-2 mt-2"
+                  >
+                    <div className="flex items-start space-x-2 border rounded-md p-3">
+                      <RadioGroupItem value="seller" id={`ship-seller-${item.productId}`} />
+                      <label htmlFor={`ship-seller-${item.productId}`} className="text-sm leading-none cursor-pointer">
+                        Use seller shipping
+                      </label>
+                    </div>
+                    <div className="flex items-start space-x-2 border rounded-md p-3">
+                      <RadioGroupItem value="buyer" id={`ship-buyer-${item.productId}`} />
+                      <label htmlFor={`ship-buyer-${item.productId}`} className="text-sm leading-none cursor-pointer">
+                        I'll arrange shipping
+                      </label>
+                    </div>
+                  </RadioGroup>
+                </>
+              )}
+              {ship.responsibility === "buyer" && (
+                <p>Buyer must arrange {ship.type.toUpperCase()} shipping.</p>
+              )}
+              {(choice === "buyer" || ship.responsibility === "buyer") && (
+                <div className="mt-4">
+                  <Label htmlFor={`carrier-${item.productId}`}>Shipping Company</Label>
+                  <Input
+                    id={`carrier-${item.productId}`}
+                    value={shippingChoices[item.productId]?.carrier || ""}
+                    onChange={(e) =>
+                      setShippingChoices((prev) => ({
+                        ...prev,
+                        [item.productId]: { ...prev[item.productId], carrier: e.target.value },
+                      }))
+                    }
+                    required
+                  />
+                </div>
+              )}
+            </div>
+          );
+        })}
         {addresses.length > 0 && (
           <div>
             <Label>Saved Addresses</Label>
@@ -809,19 +850,7 @@ export default function CheckoutPage() {
 
                   <div className="flex justify-between">
                     <div className="text-sm text-gray-600">Shipping</div>
-                    <div className="text-sm text-gray-900">
-                      {listingShipping ? (
-                        listingShipping.responsibility === "seller_fee" ? (
-                          shippingChoice === "seller" ? formatCurrency(shippingCost) : "Buyer arranged"
-                        ) : listingShipping.responsibility === "seller_free" ? (
-                          "Free"
-                        ) : (
-                          "Buyer arranged"
-                        )
-                      ) : (
-                        "Calculated at next step"
-                      )}
-                    </div>
+                    <div className="text-sm text-gray-900">{shippingLabel}</div>
                   </div>
 
                   <Separator />
