@@ -85,7 +85,6 @@ export async function sendInvoiceEmail(
 
   const subtotal = items.reduce((sum, i) => sum + i.totalPrice, 0);
   const shipping = Math.max(order.totalAmount - subtotal, 0);
-  const shipping = Math.max(order.totalAmount - subtotal, 0);
 
   const buyerName = buyer ? `${buyer.firstName} ${buyer.lastName}`.trim() : "";
 
@@ -509,28 +508,6 @@ export async function sendAdminUserEmail(
     await transporter.sendMail(mailOptions);
   } catch (err) {
     console.error("Failed to send admin user email", err);
-  }
-}
-
-export async function sendHtmlEmail(to: string, subject: string, html: string) {
-  if (!transporter) {
-    console.warn("Email transport not configured; skipping html email");
-    return;
-  }
-
-  const text = html.replace(/<[^>]*>/g, "");
-  const mailOptions = {
-    from: process.env.SMTP_FROM || user,
-    to,
-    subject,
-    text,
-    html,
-  };
-
-  try {
-    await transporter.sendMail(mailOptions);
-  } catch (err) {
-    console.error("Failed to send html email", err);
   }
 }
 
