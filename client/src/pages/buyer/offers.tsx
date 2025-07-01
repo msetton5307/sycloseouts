@@ -2,7 +2,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { Offer } from "@shared/schema";
 import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
-import { formatCurrency, SERVICE_FEE_RATE } from "@/lib/utils";
+import { formatCurrency, SERVICE_FEE_RATE, cn } from "@/lib/utils";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useCart } from "@/hooks/use-cart";
@@ -97,7 +97,7 @@ export default function BuyerOffersPage() {
             <p>Loading...</p>
           ) : (
             <>
-              <div className="flex space-x-2 mb-4">
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 mb-4">
                 {([
                   { label: "Pending", key: "pending", color: "bg-yellow-600" },
                   { label: "Countered", key: "countered", color: "bg-blue-600" },
@@ -108,7 +108,7 @@ export default function BuyerOffersPage() {
                     <Button
                       key={key}
                       variant={status === key ? "default" : "outline"}
-                      className={status === key ? `${color} text-white` : ""}
+                      className={cn("w-full", status === key ? `${color} text-white` : "")}
                       onClick={() => setStatus(key)}
                     >
                       {label}
