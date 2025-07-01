@@ -306,11 +306,7 @@ export default function SellerDashboard() {
   
   return (
     <>
-    <Tabs
-      defaultValue={activeTab}
-      onValueChange={setActiveTab}
-      className="space-y-6"
-    >
+    <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
       <Header
         onProfileClick={() => {
           setActiveTab("profile");
