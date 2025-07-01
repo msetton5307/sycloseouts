@@ -122,20 +122,8 @@ export default function SellerOrderDetailPage() {
             <CardHeader>
               <CardTitle>Shipping Information</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-1">
-              <p className="font-medium">{order.shippingDetails.name}</p>
-              <p>{order.shippingDetails.address}</p>
-              <p>
-                {order.shippingDetails.city}, {order.shippingDetails.state}{" "}
-                {order.shippingDetails.zipCode}
-              </p>
-              <p>{order.shippingDetails.country}</p>
-              {order.shippingDetails.phone && (
-                <p>Phone: {order.shippingDetails.phone}</p>
-              )}
-              {order.shippingDetails.email && (
-                <p>Email: {order.shippingDetails.email}</p>
-              )}
+            <CardContent>
+              Buyer contact information is hidden for privacy.
             </CardContent>
           </Card>
         )}

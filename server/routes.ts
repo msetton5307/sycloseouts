@@ -328,7 +328,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         orders.map(async (o) => {
           const items = await storage.getOrderItemsWithProducts(o.id);
           const previewImage = items[0]?.productImages[0] || null;
-          return { ...o, previewImage, items };
+          const orderWithItems = { ...o, previewImage, items };
+          if (user.role === "seller") {
+            const { shippingDetails, ...rest } = orderWithItems as any;
+            return rest;
+          }
+          return orderWithItems;
         }),
       );
       res.json(ordersWithDetails);
@@ -357,8 +362,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Get order items with product info
       const orderItems = await storage.getOrderItemsWithProducts(id);
-
-      res.json({ ...order, items: orderItems });
+      if (user.role === "seller") {
+        const { shippingDetails, ...rest } = order as any;
+        res.json({ ...rest, items: orderItems });
+      } else {
+        res.json({ ...order, items: orderItems });
+      }
     } catch (error) {
       handleApiError(res, error);
     }
