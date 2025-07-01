@@ -238,12 +238,6 @@ export async function sendSellerOrderEmail(
   const sellerName = seller ? `${seller.firstName} ${seller.lastName}`.trim() : "";
 
   const shipping = order.shippingDetails as Record<string, any> | undefined;
-  const shippingLines = shipping
-    ? [`${shipping.name}`, `${shipping.address}`, `${shipping.city}, ${shipping.state} ${shipping.zipCode}`, `${shipping.country}`, shipping.phone ? `Phone: ${shipping.phone}` : null]
-        .filter(Boolean)
-        .map((l) => `<div>${l}</div>`)
-        .join("")
-    : "";
 
   const shippingMethod =
     order.shippingChoice === "buyer"
@@ -295,7 +289,6 @@ export async function sendSellerOrderEmail(
             </tbody>
           </table>
 
-          ${shippingLines ? `<div style="margin-top:20px;"><strong>Ship To:</strong>${shippingLines}</div>` : ""}
           <p style="margin-top:10px;">Shipping Method: ${shippingMethod}</p>
 
           <p style="margin-top:30px;">Order #: <strong>${order.code}</strong></p>
