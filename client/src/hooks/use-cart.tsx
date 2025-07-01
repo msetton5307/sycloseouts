@@ -257,6 +257,22 @@ export function CartProvider({ children }: { children: ReactNode }) {
     quantity: number,
     offerId?: number
   ) => {
+    const existing = items.find(
+      (it) =>
+        it.productId === productId &&
+        (it.variationKey ?? "") === (variationKey ?? "") &&
+        (offerId === undefined || it.offerId === offerId)
+    );
+
+    if (existing && existing.offerId !== undefined) {
+      toast({
+        title: "Offer quantity fixed",
+        description:
+          "You must purchase the full accepted offer quantity or remove it from your cart.",
+        variant: "destructive",
+      });
+      return;
+    }
     if (quantity <= 0) {
       removeFromCart(productId, variationKey, offerId);
       return;
