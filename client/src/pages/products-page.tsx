@@ -7,7 +7,7 @@ import ProductCard from "@/components/products/product-card";
 import ProductFilter from "@/components/products/product-filter";
 import { Button } from "@/components/ui/button";
 import { Loader2, Grid3X3, List, ShoppingCart } from "lucide-react";
-import { formatCurrency, SERVICE_FEE_RATE } from "@/lib/utils";
+import { formatCurrency, addServiceFee } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
 
 export default function ProductsPage() {
@@ -168,7 +168,7 @@ export default function ProductsPage() {
                   <div className="ml-4 flex flex-col flex-1">
                     <h3 className="text-sm font-medium text-gray-900 line-clamp-2">{product.title}</h3>
                     <p className="text-base font-semibold text-green-600">
-                      {formatCurrency((!user || user.role === 'buyer') ? product.price * (1 + SERVICE_FEE_RATE) : product.price)}
+                      {formatCurrency((!user || user.role === 'buyer') ? addServiceFee(product.price) : product.price)}
                       /unit
                     </p>
                     {product.retailMsrp && (

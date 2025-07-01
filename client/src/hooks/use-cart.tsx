@@ -2,7 +2,7 @@ import { createContext, ReactNode, useContext, useState, useEffect } from "react
 import { CartItem, Product } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
-import { SERVICE_FEE_RATE } from "@/lib/utils";
+import { addServiceFee } from "@/lib/utils";
 
 interface CartContextType {
   items: CartItem[];
@@ -28,39 +28,33 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 
 const CART_STORAGE_KEY = "sy-closeouts-cart";
 
-function loadSavedCart(): CartItem[] {
-  try {
-    const savedCart = typeof localStorage !== "undefined" &&
-      localStorage.getItem(CART_STORAGE_KEY);
-    if (savedCart) {
-      return JSON.parse(savedCart);
-    }
-  } catch (error) {
-    console.error("Failed to parse cart from localStorage", error);
-  }
-  return [];
-}
-
 export function CartProvider({ children }: { children: ReactNode }) {
-  const [items, setItems] = useState<CartItem[]>(loadSavedCart());
+  const [items, setItems] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
 
-  // Recalculate pricing when user changes
+  // Load cart from localStorage on initial render
   useEffect(() => {
-    const saved = loadSavedCart();
-    setItems(
-      saved.map(item => ({
-        ...item,
-        orderMultiple: item.orderMultiple ?? 1,
-        price:
-          !user || user.role === "buyer"
-            ? parseFloat((item.price * (1 + SERVICE_FEE_RATE)).toFixed(2))
-            : item.price,
-      }))
-    );
-  }, [user]);
+    const savedCart = localStorage.getItem(CART_STORAGE_KEY);
+    if (savedCart) {
+      try {
+        const parsed: CartItem[] = JSON.parse(savedCart);
+        setItems(
+          parsed.map(item => ({
+            ...item,
+            orderMultiple: item.orderMultiple ?? 1,
+            price:
+              !user || user.role === "buyer"
+                ? addServiceFee(item.price)
+                : item.price,
+          }))
+        );
+      } catch (error) {
+        console.error("Failed to parse cart from localStorage", error);
+      }
+    }
+  }, []);
 
   // Save cart to localStorage when it changes
   useEffect(() => {
@@ -116,7 +110,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         : product.price;
     const priceWithFee =
       !user || user.role === "buyer"
-        ? parseFloat((basePrice * (1 + SERVICE_FEE_RATE)).toFixed(2))
+        ? addServiceFee(basePrice)
         : basePrice;
 
       setItems(prevItems => {

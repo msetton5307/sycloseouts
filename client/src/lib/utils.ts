@@ -7,6 +7,16 @@ export function cn(...inputs: ClassValue[]) {
 
 export const SERVICE_FEE_RATE = 0.035;
 
+// Round a number up to the nearest cent
+export function roundUpToCent(amount: number): number {
+  return Math.ceil(amount * 100) / 100;
+}
+
+// Apply the service fee and round up to the nearest cent
+export function addServiceFee(basePrice: number): number {
+  return roundUpToCent(basePrice * (1 + SERVICE_FEE_RATE));
+}
+
 export function formatCurrency(amount: number): string {
   return new Intl.NumberFormat('en-US', {
     style: 'currency',

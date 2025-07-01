@@ -31,7 +31,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { formatCurrency, SERVICE_FEE_RATE } from "@/lib/utils";
+import { formatCurrency, addServiceFee } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
 import { useCart } from "@/hooks/use-cart";
 import { apiRequest } from "@/lib/queryClient";
@@ -126,7 +126,7 @@ export default function ProductDetailPage() {
       : product?.price ?? 0;
   const unitPrice =
     product && (!user || user.role === "buyer")
-      ? basePrice * (1 + SERVICE_FEE_RATE)
+      ? addServiceFee(basePrice)
       : basePrice;
   const totalCost = product ? unitPrice * quantity : 0;
 

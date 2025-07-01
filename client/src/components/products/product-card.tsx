@@ -4,7 +4,7 @@ import { ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { formatCurrency, SERVICE_FEE_RATE } from "@/lib/utils";
+import { formatCurrency, addServiceFee } from "@/lib/utils";
 import { useCart } from "@/hooks/use-cart";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -25,7 +25,7 @@ export default function ProductCard({ product }: ProductCardProps) {
   const { user } = useAuth();
   const displayPrice =
     !user || user.role === "buyer"
-      ? product.price * (1 + SERVICE_FEE_RATE)
+      ? addServiceFee(product.price)
       : product.price;
   
   const handleAddToCart = () => {
