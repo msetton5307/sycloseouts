@@ -85,3 +85,15 @@ export function getEstimatedDeliveryDate(): Date {
   return date;
 }
 
+
+export function calculateOrderCommission(order: { items: { totalPrice: number }[] }): number {
+  const productTotalWithFee = order.items.reduce((sum, i) => sum + i.totalPrice, 0);
+  const productTotalWithoutFee = removeServiceFee(productTotalWithFee);
+  return Math.round((productTotalWithFee - productTotalWithoutFee) * 100) / 100;
+}
+
+export function calculateSellerPayout(order: { items: { totalPrice: number }[]; totalAmount: number }): number {
+  const productTotalWithFee = order.items.reduce((sum, i) => sum + i.totalPrice, 0);
+  const shippingTotal = order.totalAmount - productTotalWithFee;
+  return Math.round((removeServiceFee(productTotalWithFee) + shippingTotal) * 100) / 100;
+}

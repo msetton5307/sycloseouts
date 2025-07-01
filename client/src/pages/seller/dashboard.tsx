@@ -50,7 +50,12 @@ import {
   ListOrdered
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
-import { formatCurrency, formatDate, SERVICE_FEE_RATE } from "@/lib/utils";
+import {
+  formatCurrency,
+  formatDate,
+  SERVICE_FEE_RATE,
+  calculateSellerPayout,
+} from "@/lib/utils";
 
 interface OrderItemWithProduct extends OrderItem {
   productTitle: string;
@@ -285,13 +290,13 @@ export default function SellerDashboard() {
   const totalProducts = sellerProducts.length;
   const totalInventory = sellerProducts.reduce((sum, product) => sum + product.availableUnits, 0);
   const totalOrders = orders.length;
-  const totalRevenue = orders.reduce((sum, order) => sum + order.totalAmount, 0);
+  const totalRevenue = orders.reduce((sum, order) => sum + calculateSellerPayout(order), 0);
 
   const pendingPayouts = orders.filter(
     o => !o.sellerPaid && o.status !== "cancelled",
   );
   const pendingBalance = pendingPayouts.reduce(
-    (sum, o) => sum + o.totalAmount * (1 - SERVICE_FEE_RATE),
+    (sum, o) => sum + calculateSellerPayout(o),
     0,
   );
 
@@ -315,7 +320,7 @@ export default function SellerDashboard() {
         map[key] = { date, orders: [], total: 0 };
       }
       map[key].orders.push(order);
-      map[key].total += order.totalAmount * (1 - SERVICE_FEE_RATE);
+      map[key].total += calculateSellerPayout(order);
     }
     return Object.values(map).sort((a, b) => a.date.getTime() - b.date.getTime());
   }, [pendingPayouts]);
@@ -496,7 +501,7 @@ export default function SellerDashboard() {
                                         </ul>
                                       </td>
                                       <td className="py-2 px-4">{order.status}</td>
-                                      <td className="py-2 px-4 text-right">{formatCurrency(order.totalAmount * (1 - SERVICE_FEE_RATE))}</td>
+                                      <td className="py-2 px-4 text-right">{formatCurrency(calculateSellerPayout(order))}</td>
                                     </tr>
                                   ))}
                                 </tbody>
