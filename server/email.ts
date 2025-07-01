@@ -512,6 +512,28 @@ export async function sendAdminUserEmail(
   }
 }
 
+export async function sendHtmlEmail(to: string, subject: string, html: string) {
+  if (!transporter) {
+    console.warn("Email transport not configured; skipping html email");
+    return;
+  }
+
+  const text = html.replace(/<[^>]*>/g, "");
+  const mailOptions = {
+    from: process.env.SMTP_FROM || user,
+    to,
+    subject,
+    text,
+    html,
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+  } catch (err) {
+    console.error("Failed to send html email", err);
+  }
+}
+
 export async function sendWireInstructionsEmail(to: string, order: Order) {
   if (!transporter) {
     console.warn("Email transport not configured; skipping wire instructions email");

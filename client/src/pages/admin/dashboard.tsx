@@ -31,7 +31,8 @@ import {
   Package,
   Star,
   DollarSign,
-  Banknote
+  Banknote,
+  Mail
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { formatCurrency, SERVICE_FEE_RATE } from "@/lib/utils";
@@ -156,6 +157,12 @@ export default function AdminDashboard() {
               <Button variant="outline" className="flex items-center">
                 <Star className="mr-2 h-4 w-4" />
                 Featured Products
+              </Button>
+            </Link>
+            <Link href="/admin/email-templates">
+              <Button variant="outline" className="flex items-center">
+                <Mail className="mr-2 h-4 w-4" />
+                Email Templates
               </Button>
             </Link>
           </div>
