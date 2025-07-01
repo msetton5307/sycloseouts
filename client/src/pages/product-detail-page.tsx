@@ -87,12 +87,42 @@ export default function ProductDetailPage() {
       setQuantity(product.minOrderQuantity);
     }
     if (product && product.variations) {
-      const init: Record<string, string> = {};
-      Object.entries(product.variations).forEach(([key, vals]) => {
-        if (Array.isArray(vals) && vals.length > 0) {
-          init[key] = vals[0] as string;
+      const varKeys = Object.keys(product.variations);
+      let found: Record<string, string> | null = null;
+
+      const search = (idx: number, combo: Record<string, string>) => {
+        if (idx === varKeys.length) {
+          const key = JSON.stringify(combo);
+          const stock =
+            product.variationStocks && product.variationStocks[key] !== undefined
+              ? product.variationStocks[key]
+              : product.availableUnits;
+          if (stock > 0) {
+            found = { ...combo };
+            return true;
+          }
+          return false;
         }
-      });
+        const name = varKeys[idx];
+        const options = product.variations?.[name] as string[];
+        for (const opt of options || []) {
+          combo[name] = opt;
+          if (search(idx + 1, combo)) return true;
+        }
+        return false;
+      };
+
+      search(0, {});
+
+      const init: Record<string, string> = found ?? {};
+      if (!found) {
+        Object.entries(product.variations).forEach(([key, vals]) => {
+          if (Array.isArray(vals) && vals.length > 0) {
+            init[key] = vals[0] as string;
+          }
+        });
+      }
+
       setSelectedVariations(init);
     }
   }, [product]);
