@@ -2,6 +2,10 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { useState } from "react";
 import { Order } from "@shared/schema";
+
+interface OrderWithPreview extends Order {
+  previewImage?: string | null;
+}
 import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
 import {
@@ -39,7 +43,7 @@ export default function SellerOrdersPage() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const { data: orders = [], isLoading } = useQuery<Order[]>({
+  const { data: orders = [], isLoading } = useQuery<OrderWithPreview[]>({
     queryKey: ["/api/orders"],
     enabled: !!user,
   });
@@ -135,26 +139,35 @@ export default function SellerOrdersPage() {
               <div className="space-y-6">
                 {orders.map((order) => (
                   <div key={order.id} className="border rounded-lg p-4">
-                    <div className="flex flex-col sm:flex-row sm:justify-between mb-4 gap-2">
-                      <div>
-                        <h3 className="font-medium">Order #{order.code}</h3>
-                        <p className="text-sm text-gray-500 flex items-center">
-                          <CalendarIcon className="h-3 w-3 mr-1" />
-                          Placed on {formatDate(order.createdAt)}
-                        </p>
-                        <p className="text-sm text-gray-500">Customer: Buyer #{order.buyerId}</p>
-                      </div>
-                      <div className="text-left sm:text-right">
-                        <p className="font-medium">{formatCurrency(order.totalAmount)}</p>
-                        <span className={`text-xs px-2 py-1 rounded-full ${
-                          order.status === "delivered"
-                            ? "bg-green-100 text-green-800"
-                            : order.status === "shipped" || order.status === "out_for_delivery"
-                            ? "bg-blue-100 text-blue-800"
-                            : "bg-yellow-100 text-yellow-800"
-                        }`}>
-                          {order.status.charAt(0).toUpperCase() + order.status.slice(1).replace("_", " ")}
-                        </span>
+                    <div className="flex gap-4">
+                      {order.previewImage && (
+                        <img
+                          src={order.previewImage}
+                          alt={`Order ${order.code} item`}
+                          className="w-20 h-20 object-cover rounded"
+                        />
+                      )}
+                      <div className="flex flex-col sm:flex-row sm:justify-between mb-4 gap-2 flex-1">
+                        <div>
+                          <h3 className="font-medium">Order #{order.code}</h3>
+                          <p className="text-sm text-gray-500 flex items-center">
+                            <CalendarIcon className="h-3 w-3 mr-1" />
+                            Placed on {formatDate(order.createdAt)}
+                          </p>
+                          <p className="text-sm text-gray-500">Customer: Buyer #{order.buyerId}</p>
+                        </div>
+                        <div className="text-left sm:text-right">
+                          <p className="font-medium">{formatCurrency(order.totalAmount)}</p>
+                          <span className={`text-xs px-2 py-1 rounded-full ${
+                            order.status === "delivered"
+                              ? "bg-green-100 text-green-800"
+                              : order.status === "shipped" || order.status === "out_for_delivery"
+                              ? "bg-blue-100 text-blue-800"
+                              : "bg-yellow-100 text-yellow-800"
+                          }`}>
+                            {order.status.charAt(0).toUpperCase() + order.status.slice(1).replace("_", " ")}
+                          </span>
+                        </div>
                       </div>
                     </div>
 
