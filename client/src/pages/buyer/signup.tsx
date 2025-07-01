@@ -309,7 +309,7 @@ export default function BuyerSignupPage() {
                       name="resaleCertUrl"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Resale Certificate (Optional)</FormLabel>
+                          <FormLabel>Resale Certificate</FormLabel>
                           <FormControl>
                             <Input type="hidden" {...field} />
                           </FormControl>

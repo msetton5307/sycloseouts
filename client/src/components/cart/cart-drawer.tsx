@@ -62,11 +62,6 @@ export default function CartDrawer() {
                 <p>Shipping</p>
                 <p>Calculated at checkout</p>
               </div>
-              <div className="flex justify-between text-sm text-gray-500 mb-4">
-                <p>Taxes</p>
-                <p>Calculated at checkout</p>
-              </div>
-              
               <SheetFooter>
                 <SheetClose asChild>
                   <Link href="/checkout">

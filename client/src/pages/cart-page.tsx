@@ -99,11 +99,6 @@ export default function CartPage() {
                     <div className="text-sm text-gray-900">Calculated at checkout</div>
                   </div>
                   
-                  <div className="flex justify-between">
-                    <div className="text-sm text-gray-600">Taxes</div>
-                    <div className="text-sm text-gray-900">Calculated at checkout</div>
-                  </div>
-                  
                   <Separator />
                   
                   <div className="flex justify-between">
