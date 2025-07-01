@@ -128,7 +128,21 @@ export default function SellerOrderDetailPage() {
               <CardTitle>Shipping Information</CardTitle>
             </CardHeader>
             <CardContent>
-              Buyer contact information is hidden for privacy.
+              {order.shippingChoice === "seller" ? (
+                <>
+                  <p className="font-medium">{order.shippingDetails.name}</p>
+                  <p>{order.shippingDetails.address}</p>
+                  <p>
+                    {order.shippingDetails.city}, {order.shippingDetails.state}{" "}
+                    {order.shippingDetails.zipCode}
+                  </p>
+                  <p>{order.shippingDetails.country}</p>
+                  {order.shippingDetails.phone && <p>{order.shippingDetails.phone}</p>}
+                  {order.shippingDetails.email && <p>{order.shippingDetails.email}</p>}
+                </>
+              ) : (
+                <>Buyer contact information is hidden for privacy.</>
+              )}
             </CardContent>
           </Card>
         )}
