@@ -177,6 +177,7 @@ export const orders = pgTable("orders", {
   trackingNumber: text("tracking_number"),
   shippingChoice: text("shipping_choice"),
   shippingCarrier: text("shipping_carrier"),
+  shippingLabel: text("shipping_label"),
   buyerCharged: boolean("buyer_charged").default(false),
   sellerPaid: boolean("seller_paid").default(false),
   deliveredAt: timestamp("delivered_at"),
@@ -209,6 +210,7 @@ export const insertOrderSchema = createInsertSchema(orders)
     estimatedDeliveryDate: z.coerce.date().optional(),
     shippingChoice: z.string().optional(),
     shippingCarrier: z.string().optional(),
+    shippingLabel: z.string().optional(),
   });
 
 // Order items schema

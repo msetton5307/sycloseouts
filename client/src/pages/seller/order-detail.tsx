@@ -139,6 +139,25 @@ export default function SellerOrderDetailPage() {
             </CardContent>
           </Card>
         )}
+
+        {order.shippingChoice === "buyer" && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Shipping Label</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {order.shippingLabel ? (
+                <Button asChild>
+                  <a href={order.shippingLabel} download>
+                    Download Label
+                  </a>
+                </Button>
+              ) : (
+                <p>No label uploaded</p>
+              )}
+            </CardContent>
+          </Card>
+        )}
       </main>
       <Footer />
     </>
