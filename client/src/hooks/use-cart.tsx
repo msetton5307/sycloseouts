@@ -9,7 +9,8 @@ interface CartContextType {
   addToCart: (
     product: Product,
     quantity: number,
-    variations?: Record<string, string>
+    variations?: Record<string, string>,
+    priceOverride?: number
   ) => void;
   removeFromCart: (productId: number, variationKey?: string) => void;
   updateQuantity: (
@@ -64,7 +65,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const addToCart = (
     product: Product,
     quantity: number,
-    variations: Record<string, string> = {}
+    variations: Record<string, string> = {},
+    priceOverride?: number
   ) => {
     if (quantity <= 0) return;
 
@@ -105,7 +107,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
 
     const basePrice =
-      product.variationPrices && product.variationPrices[varKey] !== undefined
+      priceOverride !== undefined
+        ? priceOverride
+        : product.variationPrices && product.variationPrices[varKey] !== undefined
         ? product.variationPrices[varKey]
         : product.price;
     const priceWithFee =

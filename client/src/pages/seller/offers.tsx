@@ -89,9 +89,6 @@ export default function SellerOffersPage() {
                 <p className="text-sm">Quantity: {o.quantity}</p>
                 <p className="text-sm">Price: {formatCurrency(o.price)}</p>
                 <span className="text-xs capitalize">Status: {o.status}</span>
-                {o.status === "accepted" && o.orderId && (
-                  <p className="text-xs">Order #{o.orderId}</p>
-                )}
               </div>
               {o.status === "pending" && (
                 <div className="space-x-2 flex items-start">

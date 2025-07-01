@@ -1276,86 +1276,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Offer already processed" });
       }
 
-      // Create order based on offer
-      const orderData = insertOrderSchema.parse({
-        buyerId: offer.buyerId,
-        sellerId: offer.sellerId,
-        totalAmount: offer.price * offer.quantity,
-      });
-
-      const invoiceItems: {
-        title: string;
-        quantity: number;
-        unitPrice: number;
-        totalPrice: number;
-        selectedVariations?: Record<string, string>;
-        image?: string;
-      }[] = [];
-
-      const order = await db.transaction(async (tx) => {
-        const [createdOrder] = await tx.insert(ordersTable).values(orderData).returning();
-        const code = generateOrderCode(createdOrder.id);
-        const [withCode] = await tx.update(ordersTable).set({ code }).where(eq(ordersTable.id, createdOrder.id)).returning();
-
-        const orderItemData = insertOrderItemSchema.parse({
-          orderId: createdOrder.id,
-          productId: offer.productId,
-          quantity: offer.quantity,
-          unitPrice: offer.price,
-          totalPrice: offer.price * offer.quantity,
-          selectedVariations: offer.selectedVariations ?? null,
-        });
-
-        await tx.insert(orderItemsTable).values(orderItemData);
-
-        const [product] = await tx
-          .select()
-          .from(productsTable)
-          .where(eq(productsTable.id, offer.productId));
-        if (product) {
-          const updateData: any = {
-            availableUnits: product.availableUnits - offer.quantity,
-          };
-          if (offer.selectedVariations) {
-            const varKey = JSON.stringify(offer.selectedVariations);
-            const stocks = (product.variationStocks || {}) as Record<string, number>;
-            if (stocks[varKey] !== undefined) {
-              stocks[varKey] = stocks[varKey] - offer.quantity;
-              updateData.variationStocks = stocks;
-            }
-          }
-          await tx
-            .update(productsTable)
-            .set(updateData)
-            .where(eq(productsTable.id, offer.productId));
-          invoiceItems.push({
-            title: product.title,
-            quantity: offer.quantity,
-            unitPrice: offer.price,
-            totalPrice: offer.price * offer.quantity,
-            selectedVariations: offer.selectedVariations ?? undefined,
-            image: product.images?.[0],
-          });
-        }
-
-        return withCode;
-      });
-
-      await storage.updateOffer(offerId, { status: 'accepted', orderId: order.id });
+      const updated = await storage.updateOffer(offerId, { status: 'accepted' });
 
       await storage.createNotification({
         userId: offer.buyerId,
         type: 'offer',
-        content: `Your offer for order #${order.code} was accepted`,
-        link: `/buyer/orders/${order.id}`,
+        content: `Your offer for ${offer.quantity} units was accepted`,
+        link: `/buyer/offers`,
       });
 
-      const buyer = await storage.getUser(offer.buyerId);
-      if (buyer) {
-        sendInvoiceEmail(buyer.email, order, invoiceItems, buyer).catch(console.error);
-      }
-
-      res.json(order);
+      res.json(updated);
     } catch (error) {
       handleApiError(res, error);
     }
@@ -1402,6 +1332,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
         type: 'offer',
         content: `Counter offer for ${product.title}`,
         link: `/buyer/offers`,
+      });
+
+      res.json(updated);
+    } catch (error) {
+      handleApiError(res, error);
+    }
+  });
+
+  app.post("/api/offers/:id/accept-counter", isAuthenticated, async (req, res) => {
+    try {
+      const offerId = parseInt(req.params.id, 10);
+      if (Number.isNaN(offerId)) {
+        return res.status(400).json({ message: "Invalid offer ID" });
+      }
+      const user = req.user as Express.User;
+      const offer = await storage.getOffer(offerId);
+      if (!offer) {
+        return res.status(404).json({ message: "Offer not found" });
+      }
+      if (user.role !== 'buyer' || offer.buyerId !== user.id) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+      if (offer.status !== 'countered') {
+        return res.status(400).json({ message: 'Offer is not countered' });
+      }
+
+      const updated = await storage.updateOffer(offerId, { status: 'accepted' });
+
+      await storage.createNotification({
+        userId: offer.sellerId,
+        type: 'offer',
+        content: `Counter offer accepted by buyer`,
+        link: `/seller/offers`,
       });
 
       res.json(updated);
