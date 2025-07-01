@@ -521,17 +521,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return withCode;
       });
 
-      // send invoice email asynchronously, do not block response
-      sendInvoiceEmail(user.email, order, invoiceItems, user).catch(console.error);
+      // Send appropriate emails asynchronously
       if (order.paymentDetails?.method === "wire") {
+        // Only wire instructions are sent until payment is received
         sendWireInstructionsEmail(user.email, order).catch(console.error);
+      } else {
+        // Non-wire orders send the invoice immediately and notify the seller
+        sendInvoiceEmail(user.email, order, invoiceItems, user).catch(console.error);
+        const seller = await storage.getUser(order.sellerId);
+        if (seller) {
+          sendSellerOrderEmail(seller.email, order, invoiceItems, user, seller).catch(console.error);
+        }
       }
 
-      // notify seller of the new order
-      const seller = await storage.getUser(order.sellerId);
-      if (seller) {
-        sendSellerOrderEmail(seller.email, order, invoiceItems, user, seller).catch(console.error);
-      }
+      // Seller notification for wire orders is sent when the wire is marked paid
 
       res.status(201).json(order);
     } catch (error) {
@@ -985,6 +988,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(400).json({ message: "Invalid order ID" });
         }
         const order = await storage.updateOrder(id, { status: "ordered" });
+        if (!order) {
+          return res.status(404).json({ message: "Order not found" });
+        }
+
+        // Gather order items for the invoice
+        const items = await storage.getOrderItemsWithProducts(order.id);
+        const invoiceItems = items.map((i) => ({
+          title: i.productTitle,
+          quantity: i.quantity,
+          unitPrice: i.unitPrice,
+          totalPrice: i.totalPrice,
+          selectedVariations: i.selectedVariations ?? undefined,
+          image: i.productImages?.[0],
+        }));
+
+        // Notify buyer with the invoice now that payment is received
+        const buyer = await storage.getUser(order.buyerId);
+        if (buyer) {
+          sendInvoiceEmail(buyer.email, order, invoiceItems, buyer).catch(console.error);
+        }
+
+        // Inform the seller of the finalized order
+        const seller = await storage.getUser(order.sellerId);
+        if (seller) {
+          sendSellerOrderEmail(seller.email, order, invoiceItems, buyer ?? undefined, seller).catch(console.error);
+        }
+
         res.json(order);
       } catch (error) {
         handleApiError(res, error);
