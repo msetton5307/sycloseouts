@@ -17,7 +17,7 @@ export default function SellerAgreementPage() {
           <h2>Listings</h2>
           <p>All listings must accurately describe inventory and comply with applicable laws. Misleading or prohibited items may be removed without notice.</p>
           <h2>Payments</h2>
-          <p>Payments are processed through our secure payment provider. Sellers are responsible for any applicable fees and taxes.</p>
+          <p>Payments are processed through our secure payment provider. Sellers are responsible for any applicable fees.</p>
           <h2>Disputes</h2>
           <p>Any disputes with buyers should be reported promptly. SY Closeouts reserves the right to mediate or suspend accounts that violate these terms.</p>
           <h2>Termination</h2>

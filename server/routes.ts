@@ -424,13 +424,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      const state = (orderData.shippingDetails as any)?.state as string | undefined;
-      const taxRates: Record<string, number> = { CA: 0.0725, NY: 0.08875 };
-      const taxRate = state ? taxRates[state] ?? 0.06 : 0;
       let totalAmount = sellerTotal;
-      if (user.resaleCertStatus !== "approved") {
-        totalAmount += sellerTotal * taxRate;
-      }
       orderData.totalAmount = totalAmount;
 
       if (orderData.paymentDetails && orderData.paymentDetails.method === "wire") {

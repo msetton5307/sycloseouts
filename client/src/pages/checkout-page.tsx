@@ -720,11 +720,6 @@ export default function CheckoutPage() {
                     <div className="text-sm text-gray-900">Calculated at next step</div>
                   </div>
 
-                  <div className="flex justify-between">
-                    <div className="text-sm text-gray-600">Taxes</div>
-                    <div className="text-sm text-gray-900">Calculated at next step</div>
-                  </div>
-
                   <Separator />
 
                   <div className="flex justify-between">
