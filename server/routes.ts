@@ -425,6 +425,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       let totalAmount = sellerTotal;
+      if (
+        orderData.shippingChoice === "seller" &&
+        req.body.items &&
+        Array.isArray(req.body.items) &&
+        req.body.items.length > 0
+      ) {
+        const [product] = await db
+          .select()
+          .from(productsTable)
+          .where(eq(productsTable.id, req.body.items[0].productId));
+        if (
+          product &&
+          product.shippingResponsibility === "seller_fee" &&
+          product.shippingFee
+        ) {
+          totalAmount += Number(product.shippingFee);
+        }
+      }
       orderData.totalAmount = totalAmount;
 
       if (orderData.paymentDetails && orderData.paymentDetails.method === "wire") {
