@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/accordion";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
+import MakeOfferDialog from "@/components/products/make-offer-dialog";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { ChangePasswordDialog } from "@/components/account/change-password-dialog";
@@ -89,7 +90,7 @@ export default function SellerDashboard() {
   });
 
 
-  type OfferWithProduct = Offer & { productTitle: string };
+  type OfferWithProduct = Offer & { productTitle: string; productAvailableUnits: number; productImages: string[] };
 
   const { data: offers = [] } = useQuery<OfferWithProduct[]>({
     queryKey: ["/api/offers"],
@@ -110,8 +111,15 @@ export default function SellerDashboard() {
         ) : (
           <div className="space-y-4">
             {pendingOffers.slice(0, 5).map((o) => (
-              <div key={o.id} className="border rounded-lg p-4 flex justify-between">
-                <div>
+              <div key={o.id} className="border rounded-lg p-4 flex gap-4 justify-between">
+                {o.productImages?.[0] && (
+                  <img
+                    src={o.productImages[0]}
+                    alt={o.productTitle}
+                    className="w-16 h-16 object-cover rounded"
+                  />
+                )}
+                <div className="flex-1">
                   <p className="font-medium">{o.productTitle}</p>
                   {o.selectedVariations && (
                     <p className="text-xs text-gray-500">
@@ -147,6 +155,12 @@ export default function SellerDashboard() {
                   >
                     Reject
                   </Button>
+                  <MakeOfferDialog
+                    onSubmit={(p, q) => counterOffer.mutate({ id: o.id, price: p, quantity: q })}
+                    maxQuantity={o.productAvailableUnits}
+                    label="Counter"
+                    className=""
+                  />
                 </div>
               </div>
             ))}
@@ -164,6 +178,17 @@ export default function SellerDashboard() {
 
   const queryClient = useQueryClient();
   const { toast } = useToast();
+
+  const counterOffer = useMutation({
+    mutationFn: ({ id, price, quantity }: { id: number; price: number; quantity: number }) =>
+      apiRequest("POST", `/api/offers/${id}/counter`, { price, quantity }).then((r) => r.json()),
+    onSuccess: () => {
+      toast({ title: "Counter offer sent" });
+      queryClient.invalidateQueries({ queryKey: ["/api/offers"] });
+    },
+    onError: (err: Error) =>
+      toast({ title: "Failed", description: err.message, variant: "destructive" }),
+  });
 
   const updateOrder = useMutation({
     mutationFn: ({ id, update }: { id: number; update: Partial<Order> }) =>
