@@ -241,9 +241,16 @@ export async function sendSellerOrderEmail(
   const shippingLines = shipping
     ? [`${shipping.name}`, `${shipping.address}`, `${shipping.city}, ${shipping.state} ${shipping.zipCode}`, `${shipping.country}`, shipping.phone ? `Phone: ${shipping.phone}` : null]
         .filter(Boolean)
-        .map((l) => `<div>${l}</div>`) 
+        .map((l) => `<div>${l}</div>`)
         .join("")
     : "";
+
+  const shippingMethod =
+    order.shippingChoice === "buyer"
+      ? order.shippingCarrier
+        ? `Buyer arranged (${order.shippingCarrier})`
+        : "Buyer arranged"
+      : "Seller shipping";
 
   const html = `<!DOCTYPE html>
 <html lang="en">
@@ -289,6 +296,7 @@ export async function sendSellerOrderEmail(
           </table>
 
           ${shippingLines ? `<div style="margin-top:20px;"><strong>Ship To:</strong>${shippingLines}</div>` : ""}
+          <p style="margin-top:10px;">Shipping Method: ${shippingMethod}</p>
 
           <p style="margin-top:30px;">Order #: <strong>${order.code}</strong></p>
           <p>Order Date: <strong>${new Date(order.createdAt || Date.now()).toDateString()}</strong></p>
@@ -321,6 +329,7 @@ export async function sendSellerOrderEmail(
       `Order ID: ${order.code}\n` +
       `Total: $${order.totalAmount.toFixed(2)}\n` +
       (shipping > 0 ? `Shipping: $${shipping.toFixed(2)}\n` : "") +
+      `Shipping Method: ${shippingMethod}\n` +
       `\nItems:\n${itemLines}\n`,
     html,
     attachments: [

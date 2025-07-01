@@ -18,7 +18,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Loader2, CheckCircle, Building, Banknote, ShoppingCart } from "lucide-react";
-import { InsertOrder, InsertOrderItem } from "@shared/schema";
+import { InsertOrder, InsertOrderItem, CartItem } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import Header from "@/components/layout/header";
@@ -33,6 +33,7 @@ export default function CheckoutPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [currentStep, setCurrentStep] = useState<"shipping" | "payment" | "confirmation">("shipping");
   const [order, setOrder] = useState<any | null>(null);
+  const [orderedItems, setOrderedItems] = useState<CartItem[]>([]);
 
   // Form states
   const [addresses, setAddresses] = useState<any[]>([]);
@@ -58,6 +59,11 @@ export default function CheckoutPage() {
   const shippingCost = listingShipping && listingShipping.responsibility === "seller_fee" && shippingChoice === "seller"
     ? listingShipping.fee || 0
     : 0;
+
+  const orderSubtotal = orderedItems.reduce(
+    (sum, item) => sum + item.price * item.quantity,
+    0,
+  );
 
   const [paymentInfo, setPaymentInfo] = useState({
     routingNumber: "",
@@ -263,6 +269,7 @@ export default function CheckoutPage() {
         orders.push(await orderRes.json());
       }
 
+      setOrderedItems(items);
       clearCart();
       setOrder(orders[0]);
       setCurrentStep("confirmation");
@@ -285,12 +292,12 @@ export default function CheckoutPage() {
         {listingShipping && (
           <div>
             {listingShipping.responsibility === "seller_free" && (
-              <p>Seller provides free {listingShipping.type} shipping.</p>
+              <p>Seller provides free {listingShipping.type.toUpperCase()} shipping.</p>
             )}
             {listingShipping.responsibility === "seller_fee" && (
               <>
                 <p>
-                  Seller offers {listingShipping.type} shipping for a fee of {formatCurrency(listingShipping.fee || 0)}.
+                  Seller offers {listingShipping.type.toUpperCase()} shipping for a fee of {formatCurrency(listingShipping.fee || 0)}.
                 </p>
                 <RadioGroup
                   value={shippingChoice}
@@ -313,7 +320,7 @@ export default function CheckoutPage() {
               </>
             )}
             {listingShipping.responsibility === "buyer" && (
-              <p>Buyer must arrange {listingShipping.type} shipping.</p>
+              <p>Buyer must arrange {listingShipping.type.toUpperCase()} shipping.</p>
             )}
             {(shippingChoice === "buyer" || listingShipping.responsibility === "buyer") && (
               <div className="mt-4">
@@ -769,7 +776,7 @@ export default function CheckoutPage() {
                 <h2 className="text-lg font-medium text-gray-900 mb-4">Order Summary</h2>
 
                 <ul className="divide-y divide-gray-200 mb-6">
-                  {items.map((item) => (
+                  {(currentStep === "confirmation" ? orderedItems : items).map((item) => (
                     <li key={item.productId + (item.variationKey || '')} className="py-4 flex">
                       <div className="flex-shrink-0 w-16 h-16 border border-gray-200 rounded-md overflow-hidden">
                         <img
@@ -797,7 +804,7 @@ export default function CheckoutPage() {
                 <div className="space-y-4">
                   <div className="flex justify-between">
                     <div className="text-sm text-gray-600">Subtotal</div>
-                    <div className="text-sm font-medium text-gray-900">{formatCurrency(cartTotal)}</div>
+                    <div className="text-sm font-medium text-gray-900">{formatCurrency(currentStep === "confirmation" ? orderSubtotal : cartTotal)}</div>
                   </div>
 
                   <div className="flex justify-between">
@@ -821,7 +828,7 @@ export default function CheckoutPage() {
 
                   <div className="flex justify-between">
                     <div className="text-base font-medium text-gray-900">Order Total</div>
-                    <div className="text-base font-medium text-gray-900">{formatCurrency(cartTotal + shippingCost)}</div>
+                    <div className="text-base font-medium text-gray-900">{formatCurrency((currentStep === "confirmation" ? orderSubtotal : cartTotal) + shippingCost)}</div>
                   </div>
                 </div>
               </div>
