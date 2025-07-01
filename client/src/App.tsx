@@ -31,6 +31,7 @@ import SellerOffersPage from "@/pages/seller/offers";
 import SellerOrderDetailPage from "@/pages/seller/order-detail";
 import SellerMessagesPage from "@/pages/seller/messages";
 import SellerAnalyticsPage from "@/pages/seller/analytics";
+import SellerPayoutPage from "@/pages/seller/payouts";
 import SellerApply from "@/pages/seller/apply";
 import OrderMessagesPage from "@/pages/order-messages";
 import ConversationPage from "@/pages/conversation";
@@ -94,6 +95,7 @@ function Router() {
       <ProtectedRoute path="/seller/orders/:id" component={SellerOrderDetailPage} allowedRoles={["seller"]} />
       <ProtectedRoute path="/seller/messages" component={SellerMessagesPage} allowedRoles={["seller"]} />
       <ProtectedRoute path="/seller/analytics" component={SellerAnalyticsPage} allowedRoles={["seller"]} />
+      <ProtectedRoute path="/seller/payouts" component={SellerPayoutPage} allowedRoles={["seller"]} />
 
       <ProtectedRoute path="/orders/:id/messages" component={OrderMessagesPage} allowedRoles={["buyer", "seller", "admin"]} />
       <ProtectedRoute path="/conversations/:id" component={ConversationPage} allowedRoles={["buyer", "seller", "admin"]} />

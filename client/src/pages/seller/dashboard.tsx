@@ -348,6 +348,12 @@ export default function SellerDashboard() {
                 Analytics
               </Button>
             </Link>
+            <Link href="/seller/payouts">
+              <Button variant="outline" className="flex items-center">
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                Payouts
+              </Button>
+            </Link>
             <Link href="/seller/products?action=new">
               <Button className="flex items-center">
                 <PlusCircle className="mr-2 h-4 w-4" />
