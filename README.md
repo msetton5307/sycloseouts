@@ -22,3 +22,6 @@ Any new address or card entered during checkout is saved to your profile automat
 To automatically update order statuses from tracking numbers, set the `TRACKTRY_API_KEY` environment variable with your Tracktry.com API key.
 For wire transfer payments, configure `WIRE_INSTRUCTIONS` with any additional instructions. Specify your bank details using `WIRE_ACCOUNT_NUMBER` and `WIRE_ROUTING_NUMBER`. If these are not set, the server defaults to account number `12345678` and routing number `12345678` in the wire instructions email.
 Buyers selecting this payment method receive a styled HTML email with the invoice total and a link to view their order.
+
+When paying via wire, the buyer initially receives only the wire transfer instructions.
+The invoice and seller notification emails are sent once the order status is updated to **ordered** after the wire is received.
