@@ -1,5 +1,6 @@
 import { Link, useParams } from "wouter";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useRef, useState } from "react";
 import { Order, OrderItem } from "@shared/schema";
 
 interface OrderItemWithProduct extends OrderItem {
@@ -8,6 +9,7 @@ interface OrderItemWithProduct extends OrderItem {
 }
 import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
+import { apiRequest } from "@/lib/queryClient";
 import {
   Card,
   CardContent,
@@ -22,6 +24,43 @@ import { formatCurrency, formatDate } from "@/lib/utils";
 export default function BuyerOrderDetailPage() {
   const { id } = useParams();
   const orderId = parseInt(id);
+
+  const queryClient = useQueryClient();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+
+  const uploadLabel = useMutation({
+    mutationFn: (label: string) =>
+      apiRequest("POST", `/api/orders/${orderId}/shipping-label`, {
+        shippingLabel: label,
+      }).then((r) => r.json()),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/orders/" + orderId] });
+    },
+  });
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    setUploading(true);
+    const file = files[0];
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      if (event.target && event.target.result) {
+        uploadLabel.mutate(event.target.result.toString());
+        setUploading(false);
+        if (fileInputRef.current) fileInputRef.current.value = "";
+      }
+    };
+    reader.onerror = () => {
+      setUploading(false);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const triggerUpload = () => {
+    fileInputRef.current?.click();
+  };
 
   const { data: order, isLoading } = useQuery<Order & { items: OrderItemWithProduct[] }>({
     queryKey: ["/api/orders/" + orderId],
@@ -131,6 +170,36 @@ export default function BuyerOrderDetailPage() {
               <p>{order.shippingDetails.country}</p>
               {order.shippingDetails.phone && <p>{order.shippingDetails.phone}</p>}
               {order.shippingDetails.email && <p>{order.shippingDetails.email}</p>}
+            </CardContent>
+          </Card>
+        )}
+
+        {order.shippingChoice === "buyer" && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Shipping Label</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {order.shippingLabel ? (
+                <Button asChild>
+                  <a href={order.shippingLabel} download>
+                    Download Label
+                  </a>
+                </Button>
+              ) : (
+                <>
+                  <input
+                    type="file"
+                    accept="application/pdf,image/*"
+                    ref={fileInputRef}
+                    onChange={handleFileUpload}
+                    className="hidden"
+                  />
+                  <Button onClick={triggerUpload} disabled={uploading}>
+                    {uploading ? "Uploading..." : "Upload Label"}
+                  </Button>
+                </>
+              )}
             </CardContent>
           </Card>
         )}
