@@ -306,11 +306,7 @@ export default function SellerDashboard() {
   
   return (
     <>
-    <Tabs
-      defaultValue={activeTab}
-      onValueChange={setActiveTab}
-      className="space-y-6"
-    >
+    <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
       <Header
         onProfileClick={() => {
           setActiveTab("profile");
@@ -350,6 +346,12 @@ export default function SellerDashboard() {
               <Button variant="outline" className="flex items-center">
                 <BarChart4 className="mr-2 h-4 w-4" />
                 Analytics
+              </Button>
+            </Link>
+            <Link href="/seller/payouts">
+              <Button variant="outline" className="flex items-center">
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                Payouts
               </Button>
             </Link>
             <Link href="/seller/products?action=new">

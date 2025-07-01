@@ -331,7 +331,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         orders.map(async (o) => {
           const items = await storage.getOrderItemsWithProducts(o.id);
           const previewImage = items[0]?.productImages[0] || null;
-          return { ...o, previewImage, items };
+          const orderWithItems = { ...o, previewImage, items };
+          if (user.role === "seller") {
+            const { shippingDetails, ...rest } = orderWithItems as any;
+            return rest;
+          }
+          return orderWithItems;
         }),
       );
       res.json(ordersWithDetails);
@@ -360,8 +365,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Get order items with product info
       const orderItems = await storage.getOrderItemsWithProducts(id);
-
-      res.json({ ...order, items: orderItems });
+      if (user.role === "seller") {
+        const { shippingDetails, ...rest } = order as any;
+        res.json({ ...rest, items: orderItems });
+      } else {
+        res.json({ ...order, items: orderItems });
+      }
     } catch (error) {
       handleApiError(res, error);
     }
@@ -963,6 +972,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const orders = await storage.getOrdersForBilling();
       res.json(orders);
+    } catch (error) {
+      handleApiError(res, error);
+    }
+  });
+
+  app.get("/api/admin/payouts", isAuthenticated, isAdmin, async (_req, res) => {
+    try {
+      const orders = await storage.getDeliveredUnpaidOrders();
+      const groups: Record<string, any> = {};
+      for (const o of orders) {
+        const base = o.delivered_at ? new Date(o.delivered_at) : new Date();
+        const payout = new Date(base);
+        payout.setDate(payout.getDate() + 7);
+        const key = `${o.seller_id}-${payout.toISOString().slice(0, 10)}`;
+        if (!groups[key]) {
+          groups[key] = {
+            seller_id: o.seller_id,
+            seller_first_name: o.seller_first_name,
+            seller_last_name: o.seller_last_name,
+            seller_email: o.seller_email,
+            payout_date: payout.toISOString(),
+            orders: [],
+            total: 0,
+          };
+        }
+        groups[key].orders.push({ id: o.id, code: o.code, total_amount: o.total_amount });
+        groups[key].total += Number(o.total_amount) * 0.965;
+      }
+      res.json(Object.values(groups));
     } catch (error) {
       handleApiError(res, error);
     }
