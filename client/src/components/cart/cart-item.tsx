@@ -14,12 +14,14 @@ interface CartItemProps {
 export default function CartItem({ item }: CartItemProps) {
   const { updateQuantity, removeFromCart } = useCart();
   const [inputQty, setInputQty] = useState(item.quantity);
+  const isOfferItem = item.offerId !== undefined;
 
   useEffect(() => {
     setInputQty(item.quantity);
   }, [item.quantity]);
 
   const handleDecrease = () => {
+    if (isOfferItem) return;
     if (item.quantity <= item.minOrderQuantity) {
       // If reducing would go below MOQ, remove the item
       removeFromCart(item.productId, item.variationKey, item.offerId);
@@ -34,14 +36,17 @@ export default function CartItem({ item }: CartItemProps) {
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (isOfferItem) return;
     setInputQty(parseInt(e.target.value) || 0);
   };
 
   const commitInput = () => {
+    if (isOfferItem) return;
     updateQuantity(item.productId, item.variationKey, inputQty, item.offerId);
   };
 
   const handleIncrease = () => {
+    if (isOfferItem) return;
     updateQuantity(
       item.productId,
       item.variationKey,
@@ -96,7 +101,7 @@ export default function CartItem({ item }: CartItemProps) {
               size="icon"
               className="h-7 w-7"
               onClick={handleDecrease}
-              disabled={item.quantity <= item.minOrderQuantity}
+              disabled={isOfferItem || item.quantity <= item.minOrderQuantity}
             >
               <Minus className="h-3 w-3" />
             </Button>
@@ -111,13 +116,17 @@ export default function CartItem({ item }: CartItemProps) {
               onBlur={commitInput}
               onFocus={(e) => e.target.select()}
               onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
+              disabled={isOfferItem}
             />
             <Button
               variant="outline"
               size="icon"
               className="h-7 w-7"
               onClick={handleIncrease}
-              disabled={item.quantity + item.orderMultiple > item.availableUnits}
+              disabled={
+                isOfferItem ||
+                item.quantity + item.orderMultiple > item.availableUnits
+              }
             >
               <Plus className="h-3 w-3" />
             </Button>
