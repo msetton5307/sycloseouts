@@ -11,7 +11,8 @@ import {
   productQuestions, ProductQuestion, InsertProductQuestion,
   offers, Offer, InsertOffer,
   supportTickets, SupportTicket, InsertSupportTicket,
-  notifications, Notification, InsertNotification
+  notifications, Notification, InsertNotification,
+  emailTemplates, EmailTemplate, InsertEmailTemplate
 } from "@shared/schema";
 import session from "express-session";
 import { db, pool } from "./db";
@@ -110,6 +111,13 @@ export interface IStorage {
   createSupportTicket(ticket: InsertSupportTicket): Promise<SupportTicket>;
   respondToSupportTicket(id: number, response: string): Promise<SupportTicket | undefined>;
   updateSupportTicketStatus(id: number, status: string): Promise<SupportTicket | undefined>;
+
+  // Email template methods
+  getEmailTemplates(): Promise<EmailTemplate[]>;
+  getEmailTemplate(id: number): Promise<EmailTemplate | undefined>;
+  createEmailTemplate(t: InsertEmailTemplate): Promise<EmailTemplate>;
+  updateEmailTemplate(id: number, t: Partial<EmailTemplate>): Promise<EmailTemplate | undefined>;
+  deleteEmailTemplate(id: number): Promise<void>;
 
   // Cart methods
   getCart(userId: number): Promise<Cart | undefined>;
@@ -724,6 +732,30 @@ export class DatabaseStorage implements IStorage {
         ORDER BY o.created_at DESC`
     );
     return result.rows;
+  }
+
+  // Email template methods
+  async getEmailTemplates(): Promise<EmailTemplate[]> {
+    return await db.select().from(emailTemplates).orderBy(desc(emailTemplates.createdAt));
+  }
+
+  async getEmailTemplate(id: number): Promise<EmailTemplate | undefined> {
+    const [t] = await db.select().from(emailTemplates).where(eq(emailTemplates.id, id));
+    return t;
+  }
+
+  async createEmailTemplate(t: InsertEmailTemplate): Promise<EmailTemplate> {
+    const [et] = await db.insert(emailTemplates).values(t).returning();
+    return et;
+  }
+
+  async updateEmailTemplate(id: number, t: Partial<EmailTemplate>): Promise<EmailTemplate | undefined> {
+    const [et] = await db.update(emailTemplates).set(t).where(eq(emailTemplates.id, id)).returning();
+    return et;
+  }
+
+  async deleteEmailTemplate(id: number): Promise<void> {
+    await db.delete(emailTemplates).where(eq(emailTemplates.id, id));
   }
 
   // Cart methods

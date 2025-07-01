@@ -11,6 +11,7 @@ import {
   sendProductQuestionEmail,
   sendAdminAlertEmail,
   sendAdminUserEmail,
+  sendHtmlEmail,
   sendSuspensionEmail,
   sendWireInstructionsEmail,
   sendWireReminderEmail,
@@ -22,6 +23,7 @@ import {
   insertOrderItemSchema,
   insertSellerApplicationSchema,
   insertSupportTicketSchema,
+  insertEmailTemplateSchema,
   insertOfferSchema,
   offers as offersTable,
   orders as ordersTable,
@@ -832,6 +834,73 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     },
   );
+
+  app.get("/api/admin/email-templates", isAuthenticated, isAdmin, async (_req, res) => {
+    try {
+      const templates = await storage.getEmailTemplates();
+      res.json(templates);
+    } catch (error) {
+      handleApiError(res, error);
+    }
+  });
+
+  app.post("/api/admin/email-templates", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const data = insertEmailTemplateSchema.parse(req.body);
+      const template = await storage.createEmailTemplate(data);
+      res.status(201).json(template);
+    } catch (error) {
+      handleApiError(res, error);
+    }
+  });
+
+  app.put("/api/admin/email-templates/:id", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id, 10);
+      if (Number.isNaN(id)) return res.status(400).json({ message: "Invalid template ID" });
+      const template = await storage.updateEmailTemplate(id, req.body);
+      if (!template) return res.status(404).json({ message: "Template not found" });
+      res.json(template);
+    } catch (error) {
+      handleApiError(res, error);
+    }
+  });
+
+  app.delete("/api/admin/email-templates/:id", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id, 10);
+      if (Number.isNaN(id)) return res.status(400).json({ message: "Invalid template ID" });
+      await storage.deleteEmailTemplate(id);
+      res.sendStatus(204);
+    } catch (error) {
+      handleApiError(res, error);
+    }
+  });
+
+  app.post("/api/admin/email-templates/:id/send", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id, 10);
+      const group = req.body.group as string;
+      if (Number.isNaN(id) || (group !== "buyers" && group !== "sellers")) {
+        return res.status(400).json({ message: "Invalid parameters" });
+      }
+      const template = await storage.getEmailTemplate(id);
+      if (!template) return res.status(404).json({ message: "Template not found" });
+      const users = await storage.getUsers();
+      const targets = users.filter(u => u.role === (group === "buyers" ? "buyer" : "seller"));
+      for (const u of targets) {
+        const html = template.body
+          .replace(/\[first_name\]/gi, u.firstName)
+          .replace(/\[last_name\]/gi, u.lastName)
+          .replace(/\[name\]/gi, `${u.firstName} ${u.lastName}`)
+          .replace(/\[company\]/gi, u.company || "");
+        await sendHtmlEmail(u.email, template.subject, html);
+      }
+      res.sendStatus(204);
+    } catch (error) {
+      handleApiError(res, error);
+    }
+  });
 
   app.get("/api/admin/billing", isAuthenticated, isAdmin, async (_req, res) => {
     try {
