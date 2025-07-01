@@ -1415,6 +1415,88 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/offers/:id/reject-counter", isAuthenticated, async (req, res) => {
+    try {
+      const offerId = parseInt(req.params.id, 10);
+      if (Number.isNaN(offerId)) {
+        return res.status(400).json({ message: "Invalid offer ID" });
+      }
+      const user = req.user as Express.User;
+      const offer = await storage.getOffer(offerId);
+      if (!offer) {
+        return res.status(404).json({ message: "Offer not found" });
+      }
+      if (user.role !== 'buyer' || offer.buyerId !== user.id) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+      if (offer.status !== 'countered') {
+        return res.status(400).json({ message: 'Offer is not countered' });
+      }
+
+      await storage.updateOffer(offerId, { status: 'rejected' });
+
+      await storage.createNotification({
+        userId: offer.sellerId,
+        type: 'offer',
+        content: `Counter offer rejected by buyer`,
+        link: `/seller/offers`,
+      });
+
+      res.sendStatus(204);
+    } catch (error) {
+      handleApiError(res, error);
+    }
+  });
+
+  app.post("/api/offers/:id/counter-buyer", isAuthenticated, async (req, res) => {
+    try {
+      const offerId = parseInt(req.params.id, 10);
+      if (Number.isNaN(offerId)) {
+        return res.status(400).json({ message: "Invalid offer ID" });
+      }
+      const user = req.user as Express.User;
+      const offer = await storage.getOffer(offerId);
+      if (!offer) {
+        return res.status(404).json({ message: "Offer not found" });
+      }
+      if (user.role !== 'buyer' || offer.buyerId !== user.id) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+      if (offer.status !== 'countered') {
+        return res.status(400).json({ message: 'Offer is not countered' });
+      }
+
+      const { price, quantity } = req.body as { price: number; quantity: number };
+      const product = await storage.getProduct(offer.productId);
+      if (!product) {
+        return res.status(404).json({ message: "Product not found" });
+      }
+      if (typeof price !== 'number' || price <= 0 || typeof quantity !== 'number' || quantity <= 0) {
+        return res.status(400).json({ message: 'Invalid counter offer data' });
+      }
+      if (quantity > product.availableUnits) {
+        return res.status(400).json({ message: 'Quantity exceeds available stock' });
+      }
+
+      const updated = await storage.updateOffer(offerId, {
+        price,
+        quantity,
+        status: 'countered',
+      });
+
+      await storage.createNotification({
+        userId: offer.sellerId,
+        type: 'offer',
+        content: `Counter offer from buyer for ${product.title}`,
+        link: `/seller/offers`,
+      });
+
+      res.json(updated);
+    } catch (error) {
+      handleApiError(res, error);
+    }
+  });
+
   app.post("/api/offers/:id/reject", isAuthenticated, async (req, res) => {
     try {
       const offerId = parseInt(req.params.id, 10);

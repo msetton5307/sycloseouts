@@ -7,6 +7,13 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useCart } from "@/hooks/use-cart";
 import { Button } from "@/components/ui/button";
+import MakeOfferDialog from "@/components/products/make-offer-dialog";
+import {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+} from "@/components/ui/accordion";
 
 export default function BuyerOffersPage() {
   type OfferWithProduct = Offer & { productTitle: string };
@@ -23,6 +30,28 @@ export default function BuyerOffersPage() {
       apiRequest("POST", `/api/offers/${id}/accept-counter`).then((r) => r.json()),
     onSuccess: () => {
       toast({ title: "Offer accepted" });
+      queryClient.invalidateQueries({ queryKey: ["/api/offers"] });
+    },
+    onError: (err: Error) =>
+      toast({ title: "Failed", description: err.message, variant: "destructive" }),
+  });
+
+  const rejectCounter = useMutation({
+    mutationFn: (id: number) =>
+      apiRequest("POST", `/api/offers/${id}/reject-counter`).then((r) => r.json()),
+    onSuccess: () => {
+      toast({ title: "Counter rejected" });
+      queryClient.invalidateQueries({ queryKey: ["/api/offers"] });
+    },
+    onError: (err: Error) =>
+      toast({ title: "Failed", description: err.message, variant: "destructive" }),
+  });
+
+  const counterBack = useMutation({
+    mutationFn: ({ id, price, quantity }: { id: number; price: number; quantity: number }) =>
+      apiRequest("POST", `/api/offers/${id}/counter-buyer`, { price, quantity }).then((r) => r.json()),
+    onSuccess: () => {
+      toast({ title: "Counter sent" });
       queryClient.invalidateQueries({ queryKey: ["/api/offers"] });
     },
     onError: (err: Error) =>
@@ -61,26 +90,11 @@ export default function BuyerOffersPage() {
           {isLoading ? (
             <p>Loading...</p>
           ) : (
-            <>
-              {[{
-                label: "Pending",
-                list: pending,
-              },
-              {
-                label: "Countered",
-                list: countered,
-              },
-              {
-                label: "Accepted",
-                list: accepted,
-              },
-              {
-                label: "Rejected",
-                list: rejected,
-              }].map(
-                ({ label, list }) => (
-                  <div key={label} className="space-y-2">
-                    <h2 className="font-medium text-lg">{label}</h2>
+            <Accordion type="multiple" className="w-full">
+              {[{ label: "Pending", list: pending }, { label: "Countered", list: countered }, { label: "Accepted", list: accepted }, { label: "Rejected", list: rejected }].map(({ label, list }) => (
+                <AccordionItem key={label} value={label}>
+                  <AccordionTrigger>{label}</AccordionTrigger>
+                  <AccordionContent>
                     {list.length === 0 ? (
                       <p className="text-sm text-gray-500">None</p>
                     ) : (
@@ -104,9 +118,16 @@ export default function BuyerOffersPage() {
                             </div>
                           </div>
                           {label === "Countered" && (
-                            <Button size="sm" onClick={() => acceptCounter.mutate(o.id)}>
-                              Accept Counter
-                            </Button>
+                            <div className="space-x-2">
+                              <Button size="sm" onClick={() => acceptCounter.mutate(o.id)}>Accept</Button>
+                              <Button size="sm" variant="outline" onClick={() => rejectCounter.mutate(o.id)}>Decline</Button>
+                              <MakeOfferDialog
+                                onSubmit={(p, q) => counterBack.mutate({ id: o.id, price: p, quantity: q })}
+                                maxQuantity={o.quantity}
+                                label="Counter"
+                                className=""
+                              />
+                            </div>
                           )}
                           {label === "Accepted" && (
                             <Button size="sm" onClick={() => handleAddToCart(o)} disabled={items.some(it => it.offerId === o.id)}>
@@ -116,10 +137,10 @@ export default function BuyerOffersPage() {
                         </div>
                       ))
                     )}
-                  </div>
-                )
-              )}
-            </>
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
           )}
         </div>
       </main>
