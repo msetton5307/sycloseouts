@@ -548,9 +548,11 @@ export async function sendWireInstructionsEmail(to: string, order: Order) {
     return;
   }
 
+  const accountNumber = process.env.WIRE_ACCOUNT_NUMBER || "12345678";
+  const routingNumber = process.env.WIRE_ROUTING_NUMBER || "12345678";
   const instructions =
     process.env.WIRE_INSTRUCTIONS ||
-    "Please wire the invoice total to account number 12345678 using routing number 12345678. " +
+    "Please wire the invoice total using the account details below. " +
       "Your order will not be processed until the wire is received. If payment is not received within 48 hours the order will be cancelled.";
 
   const html = `<!DOCTYPE html>
@@ -593,9 +595,13 @@ export async function sendWireInstructionsEmail(to: string, order: Order) {
               <tr>
                 <td style="padding-bottom:20px;">
                   <h2 style="margin:0 0 10px 0; font-size:18px; color:#333333;">Wire Transfer Instructions</h2>
-                  <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #dddddd; border-radius:4px;">
+                  <p style="margin:0 0 15px 0; font-size:16px;">${instructions.replace(/\n/g, '<br>')}</p>
+                  <table cellpadding="0" cellspacing="0" align="center" style="border:1px solid #dddddd; border-radius:4px; margin:0 auto;">
                     <tr>
-                      <td style="padding:15px; font-size:16px;">${instructions.replace(/\n/g, '<br>')}</td>
+                      <td style="padding:15px; font-size:16px; text-align:center;">
+                        <strong>Account Number:</strong> ${accountNumber}<br />
+                        <strong>Routing Number:</strong> ${routingNumber}
+                      </td>
                     </tr>
                   </table>
                 </td>
@@ -637,7 +643,7 @@ export async function sendWireInstructionsEmail(to: string, order: Order) {
     from: process.env.SMTP_FROM || user,
     to,
     subject: `Wire Instructions for Order #${order.code}`,
-    text: `${instructions}\n\nAmount: $${order.totalAmount.toFixed(2)}\nOrder #: ${order.code}`,
+    text: `${instructions}\nAccount Number: ${accountNumber}\nRouting Number: ${routingNumber}\n\nAmount: $${order.totalAmount.toFixed(2)}\nOrder #: ${order.code}`,
     html,
     attachments: [
       {
@@ -661,14 +667,16 @@ export async function sendWireReminderEmail(to: string, orderCode: string) {
     return;
   }
 
+  const accountNumber = process.env.WIRE_ACCOUNT_NUMBER || "12345678";
+  const routingNumber = process.env.WIRE_ROUTING_NUMBER || "12345678";
   const instructions = process.env.WIRE_INSTRUCTIONS ||
-    "Please wire the invoice total to the bank details provided by SY Closeouts.";
+    "Please wire the invoice total using the account details below.";
 
   const mailOptions = {
     from: process.env.SMTP_FROM || user,
     to,
     subject: `Reminder: Wire Payment for Order #${orderCode}`,
-    text: `${instructions}\n\nOrder #: ${orderCode}`,
+    text: `${instructions}\nAccount Number: ${accountNumber}\nRouting Number: ${routingNumber}\n\nOrder #: ${orderCode}`,
   };
 
   try {
