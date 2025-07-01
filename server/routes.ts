@@ -996,8 +996,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
             total: 0,
           };
         }
-        groups[key].orders.push({ id: o.id, code: o.code, total_amount: o.total_amount });
-        groups[key].total += Number(o.total_amount) * 0.965;
+        const items = await storage.getOrderItems(o.id);
+        const productTotalWithFee = items.reduce((sum, i) => sum + Number(i.totalPrice), 0);
+        const shippingTotal = Number(o.total_amount) - productTotalWithFee;
+        const payoutAmount = productTotalWithFee * (1 - SERVICE_FEE_RATE) + shippingTotal;
+        groups[key].orders.push({ id: o.id, code: o.code, total_amount: payoutAmount });
+        groups[key].total += payoutAmount;
       }
       res.json(Object.values(groups));
     } catch (error) {

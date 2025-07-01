@@ -4,7 +4,12 @@ import Footer from "@/components/layout/footer";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { Order, OrderItem } from "@shared/schema";
-import { formatCurrency, formatDate, SERVICE_FEE_RATE } from "@/lib/utils";
+import {
+  formatCurrency,
+  formatDate,
+  SERVICE_FEE_RATE,
+  calculateSellerPayout,
+} from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
@@ -43,7 +48,7 @@ export default function SellerPayoutPage() {
         map[key] = { date, orders: [], total: 0 };
       }
       map[key].orders.push(order);
-      map[key].total += order.totalAmount * (1 - SERVICE_FEE_RATE);
+      map[key].total += calculateSellerPayout(order);
     }
     const groups = Object.values(map).sort((a, b) => a.date.getTime() - b.date.getTime());
     return groups[0];
@@ -89,7 +94,7 @@ export default function SellerPayoutPage() {
                               ))}
                             </ul>
                           </td>
-                          <td className="py-2 px-4 text-right">{formatCurrency(o.totalAmount * (1 - SERVICE_FEE_RATE))}</td>
+                          <td className="py-2 px-4 text-right">{formatCurrency(calculateSellerPayout(o))}</td>
                         </tr>
                       ))}
                     </tbody>
