@@ -2,7 +2,7 @@ import { createContext, ReactNode, useContext, useState, useEffect } from "react
 import { CartItem, Product } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
-import { SERVICE_FEE_RATE } from "@/lib/utils";
+import { addServiceFee } from "@/lib/utils";
 
 interface CartContextType {
   items: CartItem[];
@@ -46,7 +46,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
             orderMultiple: item.orderMultiple ?? 1,
             price:
               !user || user.role === "buyer"
-                ? parseFloat((item.price * (1 + SERVICE_FEE_RATE)).toFixed(2))
+                ? addServiceFee(item.price)
                 : item.price,
           }))
         );
@@ -110,7 +110,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         : product.price;
     const priceWithFee =
       !user || user.role === "buyer"
-        ? parseFloat((basePrice * (1 + SERVICE_FEE_RATE)).toFixed(2))
+        ? addServiceFee(basePrice)
         : basePrice;
 
       setItems(prevItems => {

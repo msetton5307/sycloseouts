@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 
 import { Product } from "@shared/schema";
-import { formatCurrency, SERVICE_FEE_RATE } from "@/lib/utils";
+import { formatCurrency, addServiceFee } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
 import {
   Carousel,
@@ -61,7 +61,7 @@ export default function BannerCarousel() {
             {inStockProducts.map((product) => {
               const price =
                 !user || user.role === "buyer"
-                  ? product.price * (1 + SERVICE_FEE_RATE)
+                  ? addServiceFee(product.price)
                   : product.price;
               return (
                 <CarouselItem key={product.id} className="basis-full h-full">
