@@ -81,6 +81,17 @@ export default function MobileNav() {
             </Link>
           </li>
         )}
+        {user?.role === "buyer" && (
+          <li className="flex-1">
+            <Link
+              href="/buyer/offers"
+              className={`flex flex-col items-center py-2 text-xs ${isActive("/buyer/offers") ? "text-primary" : "text-gray-500"}`}
+            >
+              <DollarSign className="h-5 w-5" />
+              Offers
+            </Link>
+          </li>
+        )}
         {user?.role === "seller" && (
           <li className="flex-1">
             <Link
