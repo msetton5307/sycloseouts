@@ -390,6 +390,20 @@ export const insertSupportTicketMessageSchema = createInsertSchema(supportTicket
   createdAt: true,
 });
 
+// Saved email templates for admin communications
+export const emailTemplates = pgTable("email_templates", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  subject: text("subject").notNull(),
+  body: text("body").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertEmailTemplateSchema = createInsertSchema(emailTemplates).omit({
+  id: true,
+  createdAt: true,
+});
+
 // In-app notifications for users
 export const notifications = pgTable("notifications", {
   id: serial("id").primaryKey(),
@@ -453,6 +467,9 @@ export type InsertSupportTicketMessage = z.infer<typeof insertSupportTicketMessa
 
 export type Notification = typeof notifications.$inferSelect;
 export type InsertNotification = z.infer<typeof insertNotificationSchema>;
+
+export type EmailTemplate = typeof emailTemplates.$inferSelect;
+export type InsertEmailTemplate = z.infer<typeof insertEmailTemplateSchema>;
 
 // Cart item interface for the frontend
 export interface CartItem {
