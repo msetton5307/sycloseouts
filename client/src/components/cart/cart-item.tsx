@@ -22,12 +22,13 @@ export default function CartItem({ item }: CartItemProps) {
   const handleDecrease = () => {
     if (item.quantity <= item.minOrderQuantity) {
       // If reducing would go below MOQ, remove the item
-      removeFromCart(item.productId, item.variationKey);
+      removeFromCart(item.productId, item.variationKey, item.offerId);
     } else {
       updateQuantity(
         item.productId,
         item.variationKey,
-        item.quantity - item.orderMultiple
+        item.quantity - item.orderMultiple,
+        item.offerId
       );
     }
   };
@@ -37,14 +38,15 @@ export default function CartItem({ item }: CartItemProps) {
   };
 
   const commitInput = () => {
-    updateQuantity(item.productId, item.variationKey, inputQty);
+    updateQuantity(item.productId, item.variationKey, inputQty, item.offerId);
   };
 
   const handleIncrease = () => {
     updateQuantity(
       item.productId,
       item.variationKey,
-      item.quantity + item.orderMultiple
+      item.quantity + item.orderMultiple,
+      item.offerId
     );
   };
   
@@ -126,7 +128,7 @@ export default function CartItem({ item }: CartItemProps) {
               variant="ghost" 
               size="sm" 
               className="text-primary hover:text-primary-foreground hover:bg-primary font-medium flex items-center"
-              onClick={() => removeFromCart(item.productId, item.variationKey)}
+              onClick={() => removeFromCart(item.productId, item.variationKey, item.offerId)}
             >
               <Trash2 className="h-4 w-4 mr-1" />
               Remove
