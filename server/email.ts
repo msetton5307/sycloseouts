@@ -455,11 +455,28 @@ export async function sendPasswordResetEmail(to: string, code: string) {
     return;
   }
 
+  const html = `<!DOCTYPE html>
+  <html>
+    <head>
+      <meta charset="UTF-8" />
+      <title>Password Reset</title>
+    </head>
+    <body style="font-family:Arial, sans-serif; line-height:1.5; background:#f4f4f4; padding:20px;">
+      <div style="max-width:600px;margin:auto;background:#ffffff;padding:20px;border-radius:6px;">
+        <h2 style="margin-top:0;color:#333333;">Reset Your Password</h2>
+        <p>Use the verification code below to reset your password. This code will expire in 15 minutes.</p>
+        <p style="font-size:32px;font-weight:bold;letter-spacing:4px;margin:20px 0;text-align:center;">${code}</p>
+        <p style="margin-bottom:0;">If you did not request a password reset, you can safely ignore this email.</p>
+      </div>
+    </body>
+  </html>`;
+
   const mailOptions = {
     from: process.env.SMTP_FROM || user,
     to,
     subject: "Password Reset Verification Code",
     text: `Your password reset verification code is: ${code}`,
+    html,
   };
 
   try {

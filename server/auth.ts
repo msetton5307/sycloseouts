@@ -236,7 +236,25 @@ export function setupAuth(app: Express) {
     }
   });
 
-  app.post("/api/forgot-password/verify", async (req, res, next) => {
+  app.post("/api/forgot-password/check", async (req, res, next) => {
+    try {
+      const { email, code } = req.body as { email?: string; code?: string };
+      if (!email || !code) {
+        return res.status(400).json({ error: "Email and code required" });
+      }
+
+      const entry = passwordResetCodes.get(email);
+      if (!entry || entry.expires < Date.now() || entry.code !== code) {
+        return res.status(400).json({ error: "Invalid or expired code" });
+      }
+
+      res.sendStatus(200);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  async function handlePasswordReset(req: Request, res: Response, next: NextFunction) {
     try {
       const { email, code, password } = req.body as {
         email?: string;
@@ -272,7 +290,10 @@ export function setupAuth(app: Express) {
     } catch (error) {
       next(error);
     }
-  });
+  }
+
+  app.post("/api/forgot-password/reset", handlePasswordReset);
+  app.post("/api/forgot-password/verify", handlePasswordReset);
 
   app.post("/api/reset-password", isAuthenticated, async (req, res, next) => {
     try {

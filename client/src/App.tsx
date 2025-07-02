@@ -16,6 +16,7 @@ import AuthPage from "@/pages/auth-page";
 import RegisterChoicePage from "@/pages/register";
 import BuyerSignupPage from "@/pages/buyer/signup";
 import ForgotPasswordPage from "@/pages/forgot-password";
+import ResetPasswordPage from "@/pages/reset-password";
 import CartPage from "@/pages/cart-page";
 import CheckoutPage from "@/pages/checkout-page";
 import BuyerHomePage from "@/pages/buyer/home";
@@ -66,6 +67,7 @@ function Router() {
       <Route path="/register" component={RegisterChoicePage} />
       <Route path="/buyer/signup" component={BuyerSignupPage} />
       <Route path="/forgot-password" component={ForgotPasswordPage} />
+      <Route path="/reset-password" component={ResetPasswordPage} />
       <Route path="/suspended" component={SuspendedPage} />
       <Route path="/cart" component={CartPage} />
       <Route path="/about" component={AboutPage} />
