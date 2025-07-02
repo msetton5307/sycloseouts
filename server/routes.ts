@@ -425,7 +425,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         "Content-Disposition",
         `attachment; filename=invoice-${order.code}.pdf`
       );
-      res.send(pdf);
+      res.end(pdf);
     } catch (error) {
       handleApiError(res, error);
     }
