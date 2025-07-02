@@ -41,6 +41,7 @@ import AdminUsers from "@/pages/admin/users";
 import AdminBillingPage from "@/pages/admin/billing";
 import AdminWireOrdersPage from "@/pages/admin/wire-orders";
 import AdminOrderDetailPage from "@/pages/admin/order-detail";
+import AdminOrdersPage from "@/pages/admin/orders";
 import AdminApplications from "@/pages/admin/applications";
 import HelpPage from "@/pages/help-page";
 import AdminTicketsPage from "@/pages/admin/tickets";
@@ -106,6 +107,7 @@ function Router() {
       <ProtectedRoute path="/admin/users" component={AdminUsers} allowedRoles={["admin"]} />
       <ProtectedRoute path="/admin/billing" component={AdminBillingPage} allowedRoles={["admin"]} />
       <ProtectedRoute path="/admin/wire-orders" component={AdminWireOrdersPage} allowedRoles={["admin"]} />
+      <ProtectedRoute path="/admin/orders" component={AdminOrdersPage} allowedRoles={["admin"]} />
       <ProtectedRoute path="/admin/orders/:id" component={AdminOrderDetailPage} allowedRoles={["admin"]} />
       <ProtectedRoute path="/admin/applications" component={AdminApplications} allowedRoles={["admin"]} />
       <ProtectedRoute path="/admin/featured" component={FeaturedProductsPage} allowedRoles={["admin"]} />
