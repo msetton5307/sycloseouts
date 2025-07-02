@@ -678,3 +678,102 @@ export async function sendWireReminderEmail(to: string, orderCode: string) {
     console.error("Failed to send wire reminder email", err);
   }
 }
+export async function sendSellerPayoutEmail(
+  to: string,
+  amount: number,
+  orders: { code: string; total: number }[],
+  bankLast4: string,
+) {
+  if (!transporter) {
+    console.warn("Email transport not configured; skipping seller payout email");
+    return;
+  }
+
+  const orderLines = orders
+    .map(o => `#${o.code} - $${o.total.toFixed(2)}`)
+    .join("\n");
+
+  const orderRows = orders
+    .map(o => `
+              <tr>
+                <td>Order #${o.code}</td>
+                <td align="right">$${o.total.toFixed(2)}</td>
+              </tr>`)
+    .join("\n");
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>SY Closeouts Payout Processed</title>
+  </head>
+  <body style="margin:0; padding:20px; background-color:#f7f7f7; font-family:Arial, sans-serif;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:auto; background-color:#ffffff; border-radius:8px; overflow:hidden; box-shadow:0 0 10px rgba(0,0,0,0.1);">
+      <tr>
+        <td style="background-color:#222222; padding:20px; text-align:center;">
+          <img src="cid:logo" alt="SY Closeouts" style="max-height:50px; margin-bottom:10px;" />
+          <h1 style="margin:0; color:#ffffff; font-size:24px;">SY Closeouts</h1>
+          <p style="margin:5px 0 0; color:#bbbbbb;">Payout Processed</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td style="padding:20px;">
+          <p style="margin:0 0 10px;">Hello Seller,</p>
+          <p style="margin:0 0 20px;">We have processed your payout of <strong>$${amount.toFixed(2)}</strong> for the following orders:</p>
+
+          <table width="100%" cellpadding="8" cellspacing="0" style="border-collapse:collapse;">
+            <thead>
+              <tr style="background-color:#f0f0f0; border-bottom:2px solid #ddd;">
+                <th align="left">Order</th>
+                <th align="right">Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${orderRows}
+            </tbody>
+          </table>
+
+          <p style="margin-top:20px;">Funds were sent to your bank account ending in <strong>${bankLast4}</strong>.</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td style="background-color:#f9f9f9; padding:20px;">
+          <p style="margin:0;">Thank you for selling with <strong>SY Closeouts</strong>!</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td style="text-align:center; font-size:12px; color:#999999; padding:15px;">
+          &copy; ${new Date().getFullYear()} SY Closeouts. All rights reserved.<br>
+          123 Wholesale Blvd, Brooklyn, NY 11201
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>`;
+
+  const mailOptions = {
+    from: process.env.SMTP_FROM || user,
+    to,
+    subject: "Your payout has been processed",
+    text:
+      `A payout of $${amount.toFixed(2)} has been sent to your account ending in ${bankLast4}.\n\n` +
+      `Orders:\n${orderLines}`,
+    html,
+    attachments: [
+      {
+        filename: "logo.png",
+        path: path.resolve(__dirname, "..", "generated-icon.png"),
+        cid: "logo",
+      },
+    ],
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+  } catch (err) {
+    console.error("Failed to send seller payout email", err);
+  }
+}
