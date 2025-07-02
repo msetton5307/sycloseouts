@@ -259,6 +259,7 @@ export const insertOrderItemSchema = createInsertSchema(orderItems)
 export const sellerApplications = pgTable("seller_applications", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull(),
+  contactName: text("contact_name").notNull(),
   companyName: text("company_name").notNull(),
   contactEmail: text("contact_email").notNull(),
   contactPhone: text("contact_phone").notNull(),
