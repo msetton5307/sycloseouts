@@ -175,33 +175,54 @@ export default function BuyerOrderDetailPage() {
         )}
 
         {order.shippingChoice === "buyer" && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Shipping Label</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              {order.shippingLabel ? (
-                <Button asChild>
-                  <a href={order.shippingLabel} download>
-                    Download Label
-                  </a>
-                </Button>
-              ) : (
-                <>
-                  <input
-                    type="file"
-                    accept="application/pdf,image/*"
-                    ref={fileInputRef}
-                    onChange={handleFileUpload}
-                    className="hidden"
-                  />
-                  <Button onClick={triggerUpload} disabled={uploading}>
-                    {uploading ? "Uploading..." : "Upload Label"}
+          <>
+            <Card className="mb-4">
+              <CardHeader>
+                <CardTitle>Package Details</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-1 text-sm">
+                {order.shippingPackage ? (
+                  <>
+                    <p>
+                      Dimensions: {order.shippingPackage.length} x {order.shippingPackage.width} x {order.shippingPackage.height}
+                    </p>
+                    <p>Weight: {order.shippingPackage.weight}</p>
+                    <p>Ship From: {order.shippingPackage.address}</p>
+                  </>
+                ) : (
+                  <p>Waiting for seller to provide shipping info...</p>
+                )}
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle>Shipping Label</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {order.shippingLabel ? (
+                  <Button asChild>
+                    <a href={order.shippingLabel} download>
+                      Download Label
+                    </a>
                   </Button>
-                </>
-              )}
-            </CardContent>
-          </Card>
+                ) : (
+                  <>
+                    <input
+                      type="file"
+                      accept="application/pdf,image/*"
+                      ref={fileInputRef}
+                      onChange={handleFileUpload}
+                      className="hidden"
+                      disabled={!order.shippingPackage}
+                    />
+                    <Button onClick={triggerUpload} disabled={uploading || !order.shippingPackage}>
+                      {uploading ? "Uploading..." : "Upload Label"}
+                    </Button>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+          </>
         )}
 
         {order.status === "awaiting_wire" && (
