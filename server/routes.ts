@@ -218,7 +218,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const offerData = insertOfferSchema.parse({
         ...req.body,
-        price: req.body.price * (1 - SERVICE_FEE_RATE),
+        // Convert the buyer's total price to the seller's base price. The client
+        // sends the amount with the service fee included, so divide by the fee
+        // rate and round down to ensure addServiceFee(base) matches the offered
+        // total.
+        price: Math.floor((req.body.price / (1 + SERVICE_FEE_RATE)) * 100) / 100,
         productId: id,
         buyerId: user.id,
         sellerId: product.sellerId,

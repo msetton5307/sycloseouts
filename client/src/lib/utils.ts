@@ -7,9 +7,11 @@ export function cn(...inputs: ClassValue[]) {
 
 export const SERVICE_FEE_RATE = 0.035;
 
-// Remove the service fee and round to the nearest cent
+// Remove the service fee by reversing the addition logic. The price with fee
+// is rounded up when added, so we round down when removing to avoid losing
+// cents due to floating point math.
 export function removeServiceFee(priceWithFee: number): number {
-  return Math.round(priceWithFee * (1 - SERVICE_FEE_RATE) * 100) / 100;
+  return Math.floor((priceWithFee / (1 + SERVICE_FEE_RATE)) * 100) / 100;
 }
 
 // Round a number up to the nearest cent
