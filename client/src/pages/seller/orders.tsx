@@ -29,7 +29,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { apiRequest } from "@/lib/queryClient";
-import { formatCurrency, formatDate } from "@/lib/utils";
+import { formatCurrency, formatDate, calculateSellerPayout } from "@/lib/utils";
 import SendMessageDialog from "@/components/messages/send-message-dialog";
 import {
   CalendarIcon,
@@ -157,7 +157,7 @@ export default function SellerOrdersPage() {
                           <p className="text-sm text-gray-500">Customer: Buyer #{order.buyerId}</p>
                         </div>
                         <div className="text-left sm:text-right">
-                          <p className="font-medium">{formatCurrency(order.totalAmount)}</p>
+                          <p className="font-medium">{formatCurrency(calculateSellerPayout(order))}</p>
                           <span className={`text-xs px-2 py-1 rounded-full ${
                             order.status === "delivered"
                               ? "bg-green-100 text-green-800"

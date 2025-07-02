@@ -674,7 +674,7 @@ export default function SellerDashboard() {
                             </p>
                           </div>
                           <div className="text-left sm:text-right">
-                            <p className="font-medium">{formatCurrency(order.totalAmount)}</p>
+                            <p className="font-medium">{formatCurrency(calculateSellerPayout(order))}</p>
                             <span className={`text-xs px-2 py-1 rounded-full ${
                               order.status === "delivered" 
                                 ? "bg-green-100 text-green-800" 
