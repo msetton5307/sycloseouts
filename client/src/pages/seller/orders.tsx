@@ -26,6 +26,13 @@ import {
   DialogClose,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { apiRequest } from "@/lib/queryClient";
@@ -36,6 +43,7 @@ import {
   Loader2,
   ListOrdered,
   ArrowLeft,
+  AlertCircle,
 } from "lucide-react";
 
 export default function SellerOrdersPage() {
@@ -83,6 +91,19 @@ export default function SellerOrdersPage() {
   const [trackingOrderId, setTrackingOrderId] = useState<number | null>(null);
   const [trackingNum, setTrackingNum] = useState("");
 
+  const [pkgOrderId, setPkgOrderId] = useState<number | null>(null);
+  const [pkg, setPkg] = useState({
+    length: "",
+    width: "",
+    height: "",
+    weight: "",
+    unit: "lbs",
+    street: "",
+    city: "",
+    state: "",
+    zip: "",
+  });
+
 
   function handleConfirmTracking() {
     if (trackingOrderId && trackingNum) {
@@ -94,6 +115,48 @@ export default function SellerOrdersPage() {
   function handleMarkAsShipped(id: number) {
     setTrackingOrderId(id);
     setTrackingNum("");
+  }
+
+  function handleOpenPackageDetails(o: Order) {
+    const p: any = o.shippingPackage || {};
+    let weight = "";
+    let unit = "lbs";
+    if (typeof p.weight === "string") {
+      const parts = p.weight.split(" ");
+      weight = parts[0] || "";
+      unit = parts[1] || "lbs";
+    } else if (p.weight) {
+      weight = String(p.weight);
+    }
+    setPkg({
+      length: p.length || "",
+      width: p.width || "",
+      height: p.height || "",
+      weight,
+      unit,
+      street: p.street || "",
+      city: p.city || "",
+      state: p.state || "",
+      zip: p.zip || "",
+    });
+    setPkgOrderId(o.id);
+  }
+
+  function handleSavePackage() {
+    if (!pkgOrderId) return;
+    const pkgData = {
+      length: pkg.length,
+      width: pkg.width,
+      height: pkg.height,
+      weight: `${pkg.weight} ${pkg.unit}`,
+      address: `${pkg.street}, ${pkg.city}, ${pkg.state} ${pkg.zip}`,
+      street: pkg.street,
+      city: pkg.city,
+      state: pkg.state,
+      zip: pkg.zip,
+    };
+    updateOrder.mutate({ id: pkgOrderId, update: { shippingPackage: pkgData } });
+    setPkgOrderId(null);
   }
 
 
@@ -179,6 +242,14 @@ export default function SellerOrdersPage() {
                     </div>
 
                     <div className="flex flex-wrap gap-2 justify-end">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleOpenPackageDetails(order)}
+                      >
+                        Upload Package Details
+                        <AlertCircle className="ml-1 h-4 w-4 text-red-500" />
+                      </Button>
                       <Button variant="outline" size="sm" asChild>
                         <Link href={`/seller/orders/${order.id}`}>View Details</Link>
                       </Button>
@@ -209,6 +280,83 @@ export default function SellerOrdersPage() {
         </Card>
       </main>
       <Footer />
+      <Dialog open={pkgOrderId !== null} onOpenChange={() => setPkgOrderId(null)}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Package Details</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="flex gap-2">
+              <Input
+                placeholder="Length"
+                value={pkg.length}
+                onChange={(e) => setPkg({ ...pkg, length: e.target.value })}
+                type="number"
+              />
+              <Input
+                placeholder="Width"
+                value={pkg.width}
+                onChange={(e) => setPkg({ ...pkg, width: e.target.value })}
+                type="number"
+              />
+              <Input
+                placeholder="Height"
+                value={pkg.height}
+                onChange={(e) => setPkg({ ...pkg, height: e.target.value })}
+                type="number"
+              />
+            </div>
+            <div className="flex gap-2">
+              <Input
+                placeholder="Weight"
+                value={pkg.weight}
+                onChange={(e) => setPkg({ ...pkg, weight: e.target.value })}
+                type="number"
+              />
+              <Select value={pkg.unit} onValueChange={(v) => setPkg({ ...pkg, unit: v })}>
+                <SelectTrigger className="w-[80px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="oz">oz</SelectItem>
+                  <SelectItem value="lbs">lbs</SelectItem>
+                  <SelectItem value="kg">kg</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Input
+                placeholder="Street"
+                value={pkg.street}
+                onChange={(e) => setPkg({ ...pkg, street: e.target.value })}
+              />
+              <div className="flex gap-2">
+                <Input
+                  placeholder="City"
+                  value={pkg.city}
+                  onChange={(e) => setPkg({ ...pkg, city: e.target.value })}
+                />
+                <Input
+                  placeholder="State"
+                  value={pkg.state}
+                  onChange={(e) => setPkg({ ...pkg, state: e.target.value })}
+                />
+                <Input
+                  placeholder="ZIP"
+                  value={pkg.zip}
+                  onChange={(e) => setPkg({ ...pkg, zip: e.target.value })}
+                />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="outline">Cancel</Button>
+            </DialogClose>
+            <Button onClick={handleSavePackage}>Save</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       <Dialog open={trackingOrderId !== null} onOpenChange={() => setTrackingOrderId(null)}>
         <DialogContent className="sm:max-w-[400px]">
           <DialogHeader>

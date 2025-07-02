@@ -13,6 +13,14 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog";
+import {
   Accordion,
   AccordionItem,
   AccordionTrigger,
@@ -59,6 +67,7 @@ export default function BuyerOrdersPage() {
   });
   const [filter, setFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
+  const [pkgOrder, setPkgOrder] = useState<OrderWithPreview | null>(null);
   
   const { data: orders = [], isLoading } = useQuery<OrderWithPreview[]>({
     queryKey: ["/api/orders"],
@@ -91,6 +100,10 @@ export default function BuyerOrdersPage() {
     }
     return true;
   });
+
+  function handleViewPackageDetails(order: OrderWithPreview) {
+    setPkgOrder(order);
+  }
 
   return (
     <>
@@ -219,6 +232,9 @@ export default function BuyerOrdersPage() {
                             Download Invoice
                           </a>
                         </Button>
+                        <Button variant="outline" size="sm" onClick={() => handleViewPackageDetails(order)}>
+                          View Package Details
+                        </Button>
                         {order.shippingChoice === "buyer" && (
                           order.shippingLabel ? (
                             <Button variant="outline" size="sm" asChild>
@@ -301,6 +317,9 @@ export default function BuyerOrdersPage() {
                               Download Invoice
                             </a>
                           </Button>
+                          <Button variant="outline" size="sm" onClick={() => handleViewPackageDetails(order)}>
+                            View Package Details
+                          </Button>
                           {order.shippingChoice === "buyer" && (
                             order.shippingLabel ? (
                               <Button variant="outline" size="sm" asChild>
@@ -357,6 +376,31 @@ export default function BuyerOrdersPage() {
         </Card>
       </main>
       <Footer />
+      <Dialog open={pkgOrder !== null} onOpenChange={() => setPkgOrder(null)}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Package Details</DialogTitle>
+          </DialogHeader>
+          {pkgOrder?.shippingPackage ? (
+            <div className="space-y-1 text-sm">
+              <p>
+                Dimensions: {pkgOrder.shippingPackage.length} x {pkgOrder.shippingPackage.width} x {pkgOrder.shippingPackage.height}
+              </p>
+              <p>Weight: {pkgOrder.shippingPackage.weight}</p>
+              <p>Ship From: {pkgOrder.shippingPackage.address}</p>
+            </div>
+          ) : (
+            <p className="text-sm text-gray-500">
+              The seller hasn’t provided the package information yet.
+            </p>
+          )}
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="outline">Close</Button>
+            </DialogClose>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
