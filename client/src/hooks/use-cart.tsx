@@ -2,7 +2,7 @@ import { createContext, ReactNode, useContext, useState, useEffect } from "react
 import { CartItem, Product, Offer } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
-import { addServiceFee } from "@/lib/utils";
+import { addServiceFee, removeServiceFee } from "@/lib/utils";
 
 interface CartContextType {
   items: CartItem[];
@@ -38,27 +38,37 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
   const { user } = useAuth();
 
-  // Load cart from localStorage on initial render
+  // Load cart from localStorage on initial render or when user changes
   useEffect(() => {
     const savedCart = localStorage.getItem(CART_STORAGE_KEY);
-    if (savedCart) {
-      try {
-        const parsed: CartItem[] = JSON.parse(savedCart);
-        setItems(
-          parsed.map(item => ({
+    if (!savedCart) return;
+    try {
+      const parsed: CartItem[] = JSON.parse(savedCart);
+      setItems(
+        parsed.map((item) => {
+          let price = item.price;
+          let includesFee = item.priceIncludesFee ?? false;
+
+          if (!includesFee && (!user || user.role === "buyer")) {
+            price = addServiceFee(price);
+            includesFee = true;
+          } else if (includesFee && user && user.role !== "buyer") {
+            price = removeServiceFee(price);
+            includesFee = false;
+          }
+
+          return {
             ...item,
+            price,
+            priceIncludesFee: includesFee,
             orderMultiple: item.orderMultiple ?? 1,
-            price:
-              !user || user.role === "buyer"
-                ? addServiceFee(item.price)
-                : item.price,
-          }))
-        );
-      } catch (error) {
-        console.error("Failed to parse cart from localStorage", error);
-      }
+          };
+        })
+      );
+    } catch (error) {
+      console.error("Failed to parse cart from localStorage", error);
     }
-  }, []);
+  }, [user]);
 
   // Save cart to localStorage when it changes
   useEffect(() => {
@@ -156,10 +166,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
         : product.variationPrices && product.variationPrices[varKey] !== undefined
         ? product.variationPrices[varKey]
         : product.price;
-    const priceWithFee =
-      !user || user.role === "buyer"
-        ? addServiceFee(basePrice)
-        : basePrice;
+    const priceIncludesFee = !user || user.role === "buyer";
+    const priceWithFee = priceIncludesFee ? addServiceFee(basePrice) : basePrice;
 
       setItems(prevItems => {
         const existingItemIndex = prevItems.findIndex(
@@ -209,6 +217,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
             productId: product.id,
             title: product.title,
             price: priceWithFee,
+            priceIncludesFee,
             quantity,
             image: product.images[0],
             minOrderQuantity: product.minOrderQuantity,
