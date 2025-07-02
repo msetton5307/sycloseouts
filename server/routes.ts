@@ -1055,33 +1055,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/admin/recent-payouts", isAuthenticated, isAdmin, async (_req, res) => {
     try {
-      const payouts = await storage.getRecentPayouts(20);
-      const groups: Record<number, any> = {};
+      const payouts = await storage.getRecentPayouts(10);
       for (const p of payouts) {
         const items = await storage.getOrderItems(p.id);
-        const productTotalWithFee = items.reduce((sum, i) => sum + Number(i.totalPrice), 0);
+        const productTotalWithFee = items.reduce(
+          (sum, i) => sum + Number(i.totalPrice),
+          0,
+        );
         const shippingTotal = Number(p.total_amount) - productTotalWithFee;
-        const payoutAmount = productTotalWithFee * (1 - SERVICE_FEE_RATE) + shippingTotal;
-
-        if (!groups[p.seller_id]) {
-          groups[p.seller_id] = {
-            seller_id: p.seller_id,
-            seller_first_name: p.seller_first_name,
-            seller_last_name: p.seller_last_name,
-            seller_email: p.seller_email,
-            payouts: [] as any[],
-            total: 0,
-          };
-        }
-        groups[p.seller_id].payouts.push({
-          id: p.id,
-          code: p.code,
-          payout_date: p.delivered_at,
-          total_amount: payoutAmount,
-        });
-        groups[p.seller_id].total += payoutAmount;
+        // Match the payout calculation used when paying sellers
+        p.total_amount =
+          Math.round((removeServiceFee(productTotalWithFee) + shippingTotal) * 100) /
+          100;
       }
-      res.json(Object.values(groups));
+      res.json(payouts);
     } catch (error) {
       handleApiError(res, error);
     }
