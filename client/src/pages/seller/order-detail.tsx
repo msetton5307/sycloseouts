@@ -1,5 +1,6 @@
 import { Link, useParams } from "wouter";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 import { Order, OrderItem } from "@shared/schema";
 
 interface OrderItemWithProduct extends OrderItem {
@@ -11,6 +12,9 @@ import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { apiRequest } from "@/lib/queryClient";
 import { CalendarIcon, ArrowLeft } from "lucide-react";
 import OrderStatus from "@/components/buyer/order-status";
 import {
@@ -28,6 +32,17 @@ export default function SellerOrderDetailPage() {
     queryKey: ["/api/orders/" + orderId],
     enabled: !Number.isNaN(orderId),
   });
+
+  const queryClient = useQueryClient();
+  const updateOrder = useMutation({
+    mutationFn: (data: any) =>
+      apiRequest("PUT", `/api/orders/${orderId}` , data).then((r) => r.json()),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/orders/" + orderId] });
+    },
+  });
+
+  const [pkg, setPkg] = useState({ length: "", width: "", height: "", weight: "", address: "" });
 
   if (isLoading) {
     return (
@@ -146,22 +161,77 @@ export default function SellerOrderDetailPage() {
         )}
 
         {order.shippingChoice === "buyer" && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Shipping Label</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {order.shippingLabel ? (
-                <Button asChild>
-                  <a href={order.shippingLabel} download>
-                    Download Label
-                  </a>
-                </Button>
-              ) : (
-                <p>No label uploaded</p>
-              )}
-            </CardContent>
-          </Card>
+          <>
+            <Card className="mb-4">
+              <CardHeader>
+                <CardTitle>Package Details</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {order.shippingPackage ? (
+                  <div className="space-y-1 text-sm">
+                    <p>Dimensions: {order.shippingPackage.length} x {order.shippingPackage.width} x {order.shippingPackage.height}</p>
+                    <p>Weight: {order.shippingPackage.weight}</p>
+                    <p>Ship From: {order.shippingPackage.address}</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="Length"
+                        value={pkg.length}
+                        onChange={(e) => setPkg({ ...pkg, length: e.target.value })}
+                      />
+                      <Input
+                        placeholder="Width"
+                        value={pkg.width}
+                        onChange={(e) => setPkg({ ...pkg, width: e.target.value })}
+                      />
+                      <Input
+                        placeholder="Height"
+                        value={pkg.height}
+                        onChange={(e) => setPkg({ ...pkg, height: e.target.value })}
+                      />
+                      <Input
+                        placeholder="Weight"
+                        value={pkg.weight}
+                        onChange={(e) => setPkg({ ...pkg, weight: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <Input
+                        placeholder="Ship from address"
+                        value={pkg.address}
+                        onChange={(e) => setPkg({ ...pkg, address: e.target.value })}
+                      />
+                    </div>
+                    <Button
+                      onClick={() => updateOrder.mutate({ shippingPackage: pkg })}
+                      disabled={updateOrder.isPending}
+                    >
+                      {updateOrder.isPending ? "Saving..." : "Save"}
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Shipping Label</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {order.shippingLabel ? (
+                  <Button asChild>
+                    <a href={order.shippingLabel} download>
+                      Download Label
+                    </a>
+                  </Button>
+                ) : (
+                  <p>No label uploaded</p>
+                )}
+              </CardContent>
+            </Card>
+          </>
         )}
       </main>
       <Footer />

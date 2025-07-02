@@ -234,7 +234,7 @@ export default function BuyerOrdersPage() {
                                 setUploadingId(order.id);
                                 fileInputRef.current?.click();
                               }}
-                              disabled={uploadingId === order.id}
+                              disabled={uploadingId === order.id || !order.shippingPackage}
                             >
                               {uploadingId === order.id ? "Uploading..." : "Upload Label"}
                             </Button>
@@ -316,7 +316,7 @@ export default function BuyerOrdersPage() {
                                   setUploadingId(order.id);
                                   fileInputRef.current?.click();
                                 }}
-                                disabled={uploadingId === order.id}
+                                disabled={uploadingId === order.id || !order.shippingPackage}
                               >
                                 {uploadingId === order.id ? "Uploading..." : "Upload Label"}
                               </Button>
