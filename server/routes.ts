@@ -1856,6 +1856,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Allow sellers to update their banking details
+  app.put("/api/users/me/bank", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user as Express.User;
+      const updatedUser = await storage.updateUser(user.id, {
+        bankName: req.body.bankName,
+        accountNumber: req.body.accountNumber,
+        routingNumber: req.body.routingNumber,
+      });
+
+      if (!updatedUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const { password, ...userWithoutPassword } = updatedUser;
+      res.json(userWithoutPassword);
+    } catch (error) {
+      handleApiError(res, error);
+    }
+  });
+
   // Address routes
   app.get("/api/addresses", isAuthenticated, async (req, res) => {
     try {

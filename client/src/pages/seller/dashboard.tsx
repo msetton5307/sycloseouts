@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { Link, useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Order, OrderItem, Product, Address, Offer } from "@shared/schema";
+import { Order, OrderItem, Product, Address, Offer, User } from "@shared/schema";
 import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
 import {
@@ -227,6 +227,25 @@ export default function SellerDashboard() {
       toast({ title: "Failed to send message", description: err.message, variant: "destructive" }),
   });
 
+  const saveBankInfoMutation = useMutation({
+    mutationFn: (info: { bankName: string; accountNumber: string; routingNumber: string }) =>
+      apiRequest("PUT", "/api/users/me/bank", info).then((r) => r.json() as Promise<User>),
+    onSuccess: (u: User) => {
+      queryClient.setQueryData(["/api/user"], u);
+      setBankInfo({
+        bankName: u.bankName!,
+        accountNumber: u.accountNumber!,
+        routingNumber: u.routingNumber!,
+      });
+      setBankName("");
+      setAccountNumber("");
+      setRoutingNumber("");
+      toast({ title: "Bank info saved" });
+    },
+    onError: (err: Error) =>
+      toast({ title: "Save failed", description: err.message, variant: "destructive" }),
+  });
+
   const [trackingOrderId, setTrackingOrderId] = useState<number | null>(null);
   const [trackingNum, setTrackingNum] = useState("");
   const [showAllPayouts, setShowAllPayouts] = useState(false);
@@ -239,21 +258,18 @@ export default function SellerDashboard() {
   const [routingNumber, setRoutingNumber] = useState("");
 
   useEffect(() => {
-    const stored = localStorage.getItem("sellerBankInfo");
-    if (stored) {
-      try {
-        setBankInfo(JSON.parse(stored));
-      } catch {}
+    if (user?.bankName && user.accountNumber && user.routingNumber) {
+      setBankInfo({
+        bankName: user.bankName,
+        accountNumber: user.accountNumber,
+        routingNumber: user.routingNumber,
+      });
     }
-  }, []);
+  }, [user]);
 
   function handleSaveBankInfo() {
     const info = { bankName, accountNumber, routingNumber };
-    localStorage.setItem("sellerBankInfo", JSON.stringify(info));
-    setBankInfo(info);
-    setBankName("");
-    setAccountNumber("");
-    setRoutingNumber("");
+    saveBankInfoMutation.mutate(info);
   }
 
   function handleConfirmTracking() {
