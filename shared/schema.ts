@@ -499,6 +499,7 @@ export interface CartItem {
   minOrderQuantity: number;
   orderMultiple: number;
   availableUnits: number;
+  priceIncludesFee?: boolean;
   offerId?: number;
   offerQuantity?: number;
   selectedVariations?: Record<string, string>;
