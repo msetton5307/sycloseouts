@@ -38,6 +38,13 @@ import { containsContactInfo } from "./contactFilter";
 
 const SERVICE_FEE_RATE = 0.035;
 
+// Reverse the service fee addition logic. Prices with the fee applied are
+// rounded up, so divide by the fee rate and round down to recover the base
+// amount without losing cents.
+function removeServiceFee(priceWithFee: number): number {
+  return Math.floor((priceWithFee / (1 + SERVICE_FEE_RATE)) * 100) / 100;
+}
+
 async function fetchTrackingStatus(trackingNumber: string): Promise<string | undefined> {
   try {
     const apiKey = process.env.TRACKTRY_API_KEY;
@@ -218,7 +225,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const offerData = insertOfferSchema.parse({
         ...req.body,
-        price: req.body.price * (1 - SERVICE_FEE_RATE),
+        // Convert the buyer's total price to the seller's base price. The client
+        // sends the amount with the service fee included, so divide by the fee
+        // rate and round down to ensure addServiceFee(base) matches the offered
+        // total.
+        price: Math.floor((req.body.price / (1 + SERVICE_FEE_RATE)) * 100) / 100,
         productId: id,
         buyerId: user.id,
         sellerId: product.sellerId,
@@ -1019,7 +1030,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const items = await storage.getOrderItems(o.id);
         const productTotalWithFee = items.reduce((sum, i) => sum + Number(i.totalPrice), 0);
         const shippingTotal = Number(o.total_amount) - productTotalWithFee;
-        const payoutAmount = productTotalWithFee * (1 - SERVICE_FEE_RATE) + shippingTotal;
+        // Calculate the seller payout by removing the service fee from the
+        // product total. Use the same rounding logic as when the fee was
+        // applied so the amount matches what sellers expect.
+        const payoutAmount =
+          Math.round((removeServiceFee(productTotalWithFee) + shippingTotal) * 100) / 100;
         groups[key].orders.push({ id: o.id, code: o.code, total_amount: payoutAmount });
         groups[key].total += payoutAmount;
       }
