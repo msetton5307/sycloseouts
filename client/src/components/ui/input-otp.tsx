@@ -6,19 +6,35 @@ import { cn } from "@/lib/utils"
 
 const InputOTP = React.forwardRef<
   React.ElementRef<typeof OTPInput>,
-  React.ComponentPropsWithoutRef<typeof OTPInput>
->(({ className, containerClassName, autoComplete = "one-time-code", ...props }, ref) => (
-  <OTPInput
-    ref={ref}
-    containerClassName={cn(
-      "flex items-center gap-2 has-[:disabled]:opacity-50",
-      containerClassName
-    )}
-    className={cn("disabled:cursor-not-allowed", className)}
-    autoComplete={autoComplete}
-    {...props}
-  />
-))
+  React.ComponentPropsWithoutRef<typeof OTPInput> & {
+    name?: string
+  }
+>(
+  (
+    {
+      className,
+      containerClassName,
+      autoComplete = "one-time-code",
+      inputMode = "numeric",
+      name = "code",
+      ...props
+    },
+    ref
+  ) => (
+    <OTPInput
+      ref={ref}
+      containerClassName={cn(
+        "flex items-center gap-2 has-[:disabled]:opacity-50",
+        containerClassName
+      )}
+      className={cn("disabled:cursor-not-allowed", className)}
+      autoComplete={autoComplete}
+      inputMode={inputMode}
+      name={name}
+      {...props}
+    />
+  )
+)
 InputOTP.displayName = "InputOTP"
 
 const InputOTPGroup = React.forwardRef<
