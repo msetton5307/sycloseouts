@@ -135,7 +135,7 @@ export default function AdminDashboard() {
               Platform overview and management
             </p>
           </div>
-          <div className="flex items-center space-x-4">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-4">
             <Link href="/admin/users">
               <Button variant="outline" className="flex items-center">
                 <Users className="mr-2 h-4 w-4" />
