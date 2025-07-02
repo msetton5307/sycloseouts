@@ -39,14 +39,20 @@ interface WireOrder {
   created_at: string;
 }
 
-interface RecentPayout {
+interface RecentPayoutOrder {
   id: number;
   code: string;
+  payout_date: string;
+  total_amount: number;
+}
+
+interface RecentPayoutGroup {
+  seller_id: number;
   seller_first_name: string;
   seller_last_name: string;
   seller_email: string;
-  total_amount: number;
-  delivered_at: string;
+  payouts: RecentPayoutOrder[];
+  total: number;
 }
 
 interface TopSeller {
@@ -68,7 +74,7 @@ export default function AdminBillingPage() {
     queryKey: ["/api/admin/wire-orders"],
   });
 
-  const { data: recentPayouts = [], isLoading: loadingRecent } = useQuery<RecentPayout[]>({
+  const { data: recentPayouts = [], isLoading: loadingRecent } = useQuery<RecentPayoutGroup[]>({
     queryKey: ["/api/admin/recent-payouts"],
   });
 
@@ -81,6 +87,11 @@ export default function AdminBillingPage() {
       await Promise.all(
         g.orders.map((o) => apiRequest("POST", `/api/admin/orders/${o.id}/mark-paid`)),
       );
+      await apiRequest("POST", "/api/admin/payouts/notify", {
+        sellerEmail: g.seller_email,
+        orders: g.orders.map(o => ({ code: o.code, total: o.total_amount })),
+        bankLast4: g.account_number?.slice(-4) ?? "",
+      });
     },
     onSuccess: () => {
       toast({ title: "Marked Paid" });
@@ -248,20 +259,29 @@ export default function AdminBillingPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Order</TableHead>
                       <TableHead>Seller</TableHead>
-                      <TableHead className="text-right">Amount</TableHead>
+                      <TableHead>Payouts</TableHead>
+                      <TableHead className="text-right">Total</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {recentPayouts.map(p => (
-                      <TableRow key={p.id}>
-                        <TableCell>#{p.code}</TableCell>
+                    {recentPayouts.map(g => (
+                      <TableRow key={g.seller_id}>
                         <TableCell>
-                          {p.seller_first_name} {p.seller_last_name}
-                          <div className="text-xs text-gray-500">{p.seller_email}</div>
+                          {g.seller_first_name} {g.seller_last_name}
+                          <div className="text-xs text-gray-500">{g.seller_email}</div>
                         </TableCell>
-                        <TableCell className="text-right">{formatCurrency(Number(p.total_amount))}</TableCell>
+                        <TableCell>
+                          <ul className="space-y-1">
+                            {g.payouts.map(p => (
+                              <li key={p.id}>
+                                <span className="mr-2">{formatDate(p.payout_date, true)}</span>
+                                #{p.code} - {formatCurrency(p.total_amount)}
+                              </li>
+                            ))}
+                          </ul>
+                        </TableCell>
+                        <TableCell className="text-right">{formatCurrency(g.total)}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>

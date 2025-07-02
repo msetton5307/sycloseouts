@@ -753,7 +753,7 @@ export class DatabaseStorage implements IStorage {
 
   async getRecentPayouts(limit: number): Promise<any[]> {
     const result = await pool.query(
-      `SELECT o.id, o.code, o.total_amount, o.delivered_at,
+      `SELECT o.id, o.code, o.total_amount, o.delivered_at, o.seller_id,
               s.first_name AS seller_first_name, s.last_name AS seller_last_name, s.email AS seller_email
          FROM orders o
          JOIN users s ON s.id = o.seller_id
