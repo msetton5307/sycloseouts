@@ -1046,7 +1046,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/admin/recent-payouts", isAuthenticated, isAdmin, async (_req, res) => {
     try {
       const payouts = await storage.getRecentPayouts(10);
-      res.json(payouts);
+      const result = [] as any[];
+      for (const p of payouts) {
+        const items = await storage.getOrderItems(p.id);
+        const productTotalWithFee = items.reduce((sum, i) => sum + Number(i.totalPrice), 0);
+        const shippingTotal = Number(p.total_amount) - productTotalWithFee;
+        const payoutAmount = productTotalWithFee * (1 - SERVICE_FEE_RATE) + shippingTotal;
+        result.push({ ...p, total_amount: payoutAmount });
+      }
+      res.json(result);
     } catch (error) {
       handleApiError(res, error);
     }
