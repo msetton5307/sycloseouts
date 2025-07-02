@@ -22,8 +22,39 @@ interface PayoutGroup {
   seller_last_name: string;
   seller_email: string;
   payout_date: string;
+  bank_name: string;
+  account_number: string;
+  routing_number: string;
   orders: PayoutOrder[];
   total: number;
+}
+
+interface WireOrder {
+  id: number;
+  code: string;
+  buyer_first_name: string;
+  buyer_last_name: string;
+  buyer_email: string;
+  total_amount: number;
+  created_at: string;
+}
+
+interface RecentPayout {
+  id: number;
+  code: string;
+  seller_first_name: string;
+  seller_last_name: string;
+  seller_email: string;
+  total_amount: number;
+  delivered_at: string;
+}
+
+interface TopSeller {
+  id: number;
+  first_name: string;
+  last_name: string;
+  email: string;
+  revenue: number;
 }
 
 export default function AdminBillingPage() {
@@ -31,6 +62,18 @@ export default function AdminBillingPage() {
   const queryClient = useQueryClient();
   const { data: groups = [], isLoading } = useQuery<PayoutGroup[]>({
     queryKey: ["/api/admin/payouts"],
+  });
+
+  const { data: wireOrders = [], isLoading: loadingWire } = useQuery<WireOrder[]>({
+    queryKey: ["/api/admin/wire-orders"],
+  });
+
+  const { data: recentPayouts = [], isLoading: loadingRecent } = useQuery<RecentPayout[]>({
+    queryKey: ["/api/admin/recent-payouts"],
+  });
+
+  const { data: topSellers = [], isLoading: loadingTop } = useQuery<TopSeller[]>({
+    queryKey: ["/api/admin/top-sellers"],
   });
 
   const { mutate: payGroup, isPending: isPaying } = useMutation({
@@ -42,6 +85,32 @@ export default function AdminBillingPage() {
     onSuccess: () => {
       toast({ title: "Marked Paid" });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/payouts"] });
+    },
+    onError: (err: any) => {
+      toast({ title: "Action Failed", description: err.message, variant: "destructive" });
+    },
+  });
+
+  const { mutate: markWirePaid, isPending: isWirePaying } = useMutation({
+    mutationFn: async (id: number) => {
+      const res = await apiRequest("POST", `/api/admin/orders/${id}/mark-wire-paid`);
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({ title: "Marked Paid" });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/wire-orders"] });
+    },
+    onError: (err: any) => {
+      toast({ title: "Action Failed", description: err.message, variant: "destructive" });
+    },
+  });
+
+  const { mutate: sendReminder, isPending: isReminding } = useMutation({
+    mutationFn: async (id: number) => {
+      await apiRequest("POST", `/api/admin/orders/${id}/send-wire-reminder`);
+    },
+    onSuccess: () => {
+      toast({ title: "Reminder Sent" });
     },
     onError: (err: any) => {
       toast({ title: "Action Failed", description: err.message, variant: "destructive" });
@@ -61,7 +130,7 @@ export default function AdminBillingPage() {
         </div>
         <Card>
           <CardHeader>
-            <CardTitle>Billing</CardTitle>
+            <CardTitle>Billing Dashboard</CardTitle>
             <CardDescription>Upcoming seller payouts</CardDescription>
           </CardHeader>
           <CardContent>
@@ -77,6 +146,7 @@ export default function AdminBillingPage() {
                       <TableHead>Seller</TableHead>
                       <TableHead>Payout Date</TableHead>
                       <TableHead>Orders</TableHead>
+                      <TableHead>Bank Info</TableHead>
                       <TableHead className="text-right">Total</TableHead>
                       <TableHead>Actions</TableHead>
                     </TableRow>
@@ -96,6 +166,11 @@ export default function AdminBillingPage() {
                             ))}
                           </ul>
                         </TableCell>
+                        <TableCell>
+                          <div>{g.bank_name}</div>
+                          <div className="text-xs text-gray-500">{g.account_number}</div>
+                          <div className="text-xs text-gray-500">{g.routing_number}</div>
+                        </TableCell>
                         <TableCell className="text-right">{formatCurrency(g.total)}</TableCell>
                         <TableCell>
                           <Button size="sm" variant="outline" onClick={() => payGroup(g)} disabled={isPaying}>
@@ -112,6 +187,125 @@ export default function AdminBillingPage() {
                 <DollarSign className="h-8 w-8 mx-auto mb-2" />
                 No payouts pending
               </div>
+            )}
+          </CardContent>
+        </Card>
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle>Wire Orders</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {loadingWire ? (
+              <div className="flex justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : wireOrders.length > 0 ? (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Order</TableHead>
+                      <TableHead>Buyer</TableHead>
+                      <TableHead className="text-right">Total</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {wireOrders.map(o => (
+                      <TableRow key={o.id}>
+                        <TableCell>#{o.code}</TableCell>
+                        <TableCell>
+                          {o.buyer_first_name} {o.buyer_last_name}
+                          <div className="text-xs text-gray-500">{o.buyer_email}</div>
+                        </TableCell>
+                        <TableCell className="text-right">{formatCurrency(Number(o.total_amount))}</TableCell>
+                        <TableCell className="space-x-2">
+                          <Button size="sm" onClick={() => markWirePaid(o.id)} disabled={isWirePaying}>Mark Paid</Button>
+                          <Button size="sm" variant="outline" onClick={() => sendReminder(o.id)} disabled={isReminding}>Send Reminder</Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            ) : (
+              <div className="text-center py-12 text-gray-500">No wire orders</div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle>Recent Payouts</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {loadingRecent ? (
+              <div className="flex justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : recentPayouts.length > 0 ? (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Order</TableHead>
+                      <TableHead>Seller</TableHead>
+                      <TableHead className="text-right">Amount</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {recentPayouts.map(p => (
+                      <TableRow key={p.id}>
+                        <TableCell>#{p.code}</TableCell>
+                        <TableCell>
+                          {p.seller_first_name} {p.seller_last_name}
+                          <div className="text-xs text-gray-500">{p.seller_email}</div>
+                        </TableCell>
+                        <TableCell className="text-right">{formatCurrency(Number(p.total_amount))}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            ) : (
+              <div className="text-center py-12 text-gray-500">No payouts recorded</div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle>Top Sellers</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {loadingTop ? (
+              <div className="flex justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : topSellers.length > 0 ? (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Seller</TableHead>
+                      <TableHead className="text-right">Revenue</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {topSellers.map(s => (
+                      <TableRow key={s.id}>
+                        <TableCell>
+                          {s.first_name} {s.last_name}
+                          <div className="text-xs text-gray-500">{s.email}</div>
+                        </TableCell>
+                        <TableCell className="text-right">{formatCurrency(Number(s.revenue))}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            ) : (
+              <div className="text-center py-12 text-gray-500">No sales yet</div>
             )}
           </CardContent>
         </Card>

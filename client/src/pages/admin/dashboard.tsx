@@ -31,7 +31,6 @@ import {
   Package,
   Star,
   DollarSign,
-  Banknote,
   Mail
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
@@ -156,13 +155,7 @@ export default function AdminDashboard() {
             <Link href="/admin/billing">
               <Button variant="outline" className="flex items-center">
                 <DollarSign className="mr-2 h-4 w-4" />
-                Billing
-              </Button>
-            </Link>
-            <Link href="/admin/wire-orders">
-              <Button variant="outline" className="flex items-center">
-                <Banknote className="mr-2 h-4 w-4" />
-                Wire Orders
+                Billing Dashboard
               </Button>
             </Link>
             <Link href="/admin/orders">

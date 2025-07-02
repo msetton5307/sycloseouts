@@ -1008,6 +1008,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             seller_first_name: o.seller_first_name,
             seller_last_name: o.seller_last_name,
             seller_email: o.seller_email,
+            bank_name: o.bank_name,
+            account_number: o.account_number,
+            routing_number: o.routing_number,
             payout_date: payout.toISOString(),
             orders: [],
             total: 0,
@@ -1030,6 +1033,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const orders = await storage.getWireOrders();
       res.json(orders);
+    } catch (error) {
+      handleApiError(res, error);
+    }
+  });
+
+  app.get("/api/admin/recent-payouts", isAuthenticated, isAdmin, async (_req, res) => {
+    try {
+      const payouts = await storage.getRecentPayouts(10);
+      res.json(payouts);
+    } catch (error) {
+      handleApiError(res, error);
+    }
+  });
+
+  app.get("/api/admin/top-sellers", isAuthenticated, isAdmin, async (_req, res) => {
+    try {
+      const sellers = await storage.getTopSellers(10);
+      res.json(sellers);
     } catch (error) {
       handleApiError(res, error);
     }

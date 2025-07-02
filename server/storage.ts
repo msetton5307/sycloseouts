@@ -741,11 +741,39 @@ export class DatabaseStorage implements IStorage {
   async getDeliveredUnpaidOrders(): Promise<any[]> {
     const result = await pool.query(
       `SELECT o.id, o.code, o.seller_id, o.total_amount, o.delivered_at,
-              s.first_name AS seller_first_name, s.last_name AS seller_last_name, s.email AS seller_email
+              s.first_name AS seller_first_name, s.last_name AS seller_last_name, s.email AS seller_email,
+              s.bank_name, s.account_number, s.routing_number
          FROM orders o
          JOIN users s ON s.id = o.seller_id
         WHERE o.status = 'delivered' AND o.seller_paid = false
         ORDER BY o.delivered_at ASC`
+    );
+    return result.rows;
+  }
+
+  async getRecentPayouts(limit: number): Promise<any[]> {
+    const result = await pool.query(
+      `SELECT o.id, o.code, o.total_amount, o.delivered_at,
+              s.first_name AS seller_first_name, s.last_name AS seller_last_name, s.email AS seller_email
+         FROM orders o
+         JOIN users s ON s.id = o.seller_id
+        WHERE o.seller_paid = true
+        ORDER BY o.delivered_at DESC
+        LIMIT $1`,
+      [limit]
+    );
+    return result.rows;
+  }
+
+  async getTopSellers(limit: number): Promise<any[]> {
+    const result = await pool.query(
+      `SELECT u.id, u.first_name, u.last_name, u.email, SUM(o.total_amount) AS revenue
+         FROM orders o
+         JOIN users u ON u.id = o.seller_id
+        GROUP BY u.id
+        ORDER BY revenue DESC
+        LIMIT $1`,
+      [limit]
     );
     return result.rows;
   }

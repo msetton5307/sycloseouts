@@ -85,7 +85,7 @@ export default function Header({ dashboardTabs, onProfileClick }: HeaderProps) {
                     href: "/admin/tickets",
                   },
                   user?.role === "admin" && {
-                    label: "Billing",
+                    label: "Billing Dashboard",
                     href: "/admin/billing",
                   },
                   user?.role === "admin" && {
