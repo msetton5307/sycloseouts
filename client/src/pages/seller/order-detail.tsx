@@ -137,8 +137,6 @@ export default function SellerOrderDetailPage() {
                     {order.shippingDetails.zipCode}
                   </p>
                   <p>{order.shippingDetails.country}</p>
-                  {order.shippingDetails.phone && <p>{order.shippingDetails.phone}</p>}
-                  {order.shippingDetails.email && <p>{order.shippingDetails.email}</p>}
                 </>
               ) : (
                 <>Buyer contact information is hidden for privacy.</>

@@ -25,7 +25,37 @@ export function generateInvoicePdf(order: Order, items: InvoiceItem[]): Buffer {
     textBlock(50, 720, 12, `Date: ${new Date(order.createdAt || Date.now()).toDateString()}`)
   );
 
-  let y = 700;
+  let y = 705;
+
+  if (order.shippingChoice === "seller" && order.shippingDetails) {
+    const s = order.shippingDetails as Record<string, string>;
+    lines.push(textBlock(50, y, 12, "Ship To:"));
+    y -= 15;
+    if (s.name) {
+      lines.push(textBlock(60, y, 12, s.name));
+      y -= 15;
+    }
+    if (s.address) {
+      lines.push(textBlock(60, y, 12, s.address));
+      y -= 15;
+    }
+    let cityLine = "";
+    if (s.city) cityLine += s.city;
+    if (s.state) cityLine += (cityLine ? ", " : "") + s.state;
+    if (s.zipCode) cityLine += (cityLine ? " " : "") + s.zipCode;
+    if (cityLine) {
+      lines.push(textBlock(60, y, 12, cityLine));
+      y -= 15;
+    }
+    if (s.country) {
+      lines.push(textBlock(60, y, 12, s.country));
+      y -= 15;
+    }
+    y -= 5;
+  }
+  else {
+    y = 700;
+  }
   lines.push(textBlock(50, y, 12, "Description"));
   lines.push(textBlock(300, y, 12, "Qty"));
   lines.push(textBlock(350, y, 12, "Unit"));
