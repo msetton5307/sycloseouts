@@ -660,17 +660,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const updateData: any = { ...req.body };
 
       if (req.body.trackingNumber) {
-        const trackingStatus = await fetchTrackingStatus(req.body.trackingNumber);
-        if (trackingStatus) {
-          const statusLower = trackingStatus.toLowerCase();
-          if (statusLower.includes("delivered")) {
-            updateData.status = "delivered";
-          } else if (statusLower.includes("out")) {
-            updateData.status = "out_for_delivery";
-          } else {
-            updateData.status = "shipped";
+        if (user.role === "admin") {
+          const trackingStatus = await fetchTrackingStatus(req.body.trackingNumber);
+          if (trackingStatus) {
+            const statusLower = trackingStatus.toLowerCase();
+            if (statusLower.includes("delivered")) {
+              updateData.status = "delivered";
+            } else if (statusLower.includes("out")) {
+              updateData.status = "out_for_delivery";
+            } else {
+              updateData.status = "shipped";
+            }
           }
+        } else {
+          // Sellers can only mark an order as shipped when providing tracking
+          updateData.status = "shipped";
         }
+      }
+
+      if (user.role !== "admin" && updateData.status && updateData.status !== "shipped") {
+        // Prevent sellers from moving beyond shipped status
+        updateData.status = "shipped";
       }
 
       if (updateData.status === "delivered" && prevStatus !== "delivered") {
@@ -1054,6 +1064,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(400).json({ message: "Invalid order ID" });
         }
         const order = await storage.updateOrder(id, { sellerPaid: true });
+        res.json(order);
+      } catch (error) {
+        handleApiError(res, error);
+      }
+    },
+  );
+
+  app.post(
+    "/api/admin/orders/:id/mark-delivered",
+    isAuthenticated,
+    isAdmin,
+    async (req, res) => {
+      try {
+        const id = parseInt(req.params.id, 10);
+        if (Number.isNaN(id)) {
+          return res.status(400).json({ message: "Invalid order ID" });
+        }
+        const order = await storage.updateOrder(id, {
+          status: "delivered",
+          deliveredAt: new Date(),
+        });
         res.json(order);
       } catch (error) {
         handleApiError(res, error);

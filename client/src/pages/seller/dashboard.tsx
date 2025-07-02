@@ -268,13 +268,6 @@ export default function SellerDashboard() {
     setTrackingNum("");
   }
 
-  function handleMarkOutForDelivery(id: number) {
-    updateOrder.mutate({ id, update: { status: "out_for_delivery" } });
-  }
-
-  function handleMarkDelivered(id: number) {
-    updateOrder.mutate({ id, update: { status: "delivered" } });
-  }
 
   function handleCancelOrder(id: number) {
     if (window.confirm("Cancel this order?")) {
