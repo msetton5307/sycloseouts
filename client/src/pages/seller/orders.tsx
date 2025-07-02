@@ -96,13 +96,6 @@ export default function SellerOrdersPage() {
     setTrackingNum("");
   }
 
-  function handleMarkOutForDelivery(id: number) {
-    updateOrder.mutate({ id, update: { status: "out_for_delivery" } });
-  }
-
-  function handleMarkDelivered(id: number) {
-    updateOrder.mutate({ id, update: { status: "delivered" } });
-  }
 
   function handleCancelOrder(id: number) {
     if (window.confirm("Cancel this order?")) {
@@ -181,22 +174,6 @@ export default function SellerOrdersPage() {
                           onClick={() => handleMarkAsShipped(order.id)}
                         >
                           Mark as Shipped
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant={order.status === "shipped" ? "default" : "outline"}
-                          disabled={order.status !== "shipped"}
-                          onClick={() => handleMarkOutForDelivery(order.id)}
-                        >
-                          Mark as Out for Delivery
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant={order.status === "out_for_delivery" ? "default" : "outline"}
-                          disabled={order.status !== "out_for_delivery"}
-                          onClick={() => handleMarkDelivered(order.id)}
-                        >
-                          Mark as Delivered
                         </Button>
                       </div>
                     </div>
