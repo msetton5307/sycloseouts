@@ -32,6 +32,7 @@ import { Package, CheckCircle, Loader2 } from "lucide-react";
 
 // Application schema for zod validation
 const applicationSchema = z.object({
+  contactName: z.string().min(1, "Your name is required"),
   companyName: z.string().min(1, "Company name is required"),
   contactEmail: z.string().email("Please enter a valid email address"),
   contactPhone: z.string().min(10, "Please enter a valid phone number"),
@@ -53,6 +54,7 @@ export default function SellerApply() {
   const form = useForm<ApplicationFormData>({
     resolver: zodResolver(applicationSchema),
     defaultValues: {
+      contactName: user ? `${user.firstName} ${user.lastName}` : "",
       companyName: user?.company || "",
       contactEmail: user?.email || "",
       contactPhone: "",
@@ -183,6 +185,20 @@ export default function SellerApply() {
               
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                  <FormField
+                    control={form.control}
+                    name="contactName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Your Name</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Your full name" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
                   <FormField
                     control={form.control}
                     name="companyName"
