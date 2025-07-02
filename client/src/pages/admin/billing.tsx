@@ -81,6 +81,11 @@ export default function AdminBillingPage() {
       await Promise.all(
         g.orders.map((o) => apiRequest("POST", `/api/admin/orders/${o.id}/mark-paid`)),
       );
+      await apiRequest("POST", "/api/admin/payouts/notify", {
+        sellerEmail: g.seller_email,
+        orders: g.orders.map(o => ({ code: o.code, total: o.total_amount })),
+        bankLast4: g.account_number?.slice(-4) ?? "",
+      });
     },
     onSuccess: () => {
       toast({ title: "Marked Paid" });

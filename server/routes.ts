@@ -15,6 +15,7 @@ import {
   sendSuspensionEmail,
   sendWireInstructionsEmail,
   sendWireReminderEmail,
+  sendSellerPayoutEmail,
 } from "./email";
 import { generateInvoicePdf, generateSalesReportPdf } from "./pdf";
 import {
@@ -1180,6 +1181,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (buyer) {
           await sendWireReminderEmail(buyer.email, order.code);
         }
+        res.sendStatus(204);
+      } catch (error) {
+        handleApiError(res, error);
+      }
+    },
+  );
+
+  app.post(
+    "/api/admin/payouts/notify",
+    isAuthenticated,
+    isAdmin,
+    async (req, res) => {
+      try {
+        const { sellerEmail, orders, bankLast4 } = req.body as {
+          sellerEmail: string;
+          orders: { code: string; total: number }[];
+          bankLast4?: string;
+        };
+        if (!sellerEmail || !Array.isArray(orders) || orders.length === 0) {
+          return res.status(400).json({ message: "Invalid payload" });
+        }
+        const amount = orders.reduce((sum, o) => sum + Number(o.total), 0);
+        await sendSellerPayoutEmail(sellerEmail, amount, orders, bankLast4 || "");
         res.sendStatus(204);
       } catch (error) {
         handleApiError(res, error);
