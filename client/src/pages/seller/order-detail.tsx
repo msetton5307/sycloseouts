@@ -227,7 +227,7 @@ export default function SellerOrderDetailPage() {
                     </a>
                   </Button>
                 ) : (
-                  <p>No label uploaded</p>
+                  <p>Awaiting buyer to upload label</p>
                 )}
               </CardContent>
             </Card>

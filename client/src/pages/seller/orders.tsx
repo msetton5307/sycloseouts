@@ -91,6 +91,8 @@ export default function SellerOrdersPage() {
   const [trackingOrderId, setTrackingOrderId] = useState<number | null>(null);
   const [trackingNum, setTrackingNum] = useState("");
 
+  const [labelOrderId, setLabelOrderId] = useState<number | null>(null);
+
   const [pkgOrderId, setPkgOrderId] = useState<number | null>(null);
   const [pkg, setPkg] = useState({
     length: "",
@@ -115,6 +117,17 @@ export default function SellerOrdersPage() {
   function handleMarkAsShipped(id: number) {
     setTrackingOrderId(id);
     setTrackingNum("");
+  }
+
+  function handleViewLabelAndShip(id: number) {
+    setLabelOrderId(id);
+  }
+
+  function handleShipWithLabel() {
+    if (labelOrderId) {
+      updateOrder.mutate({ id: labelOrderId, update: { status: "shipped" } });
+    }
+    setLabelOrderId(null);
   }
 
   function handleOpenPackageDetails(o: Order) {
@@ -165,6 +178,8 @@ export default function SellerOrdersPage() {
       cancelOrder.mutate(id);
     }
   }
+
+  const labelOrder = orders.find((o) => o.id === labelOrderId);
 
 
 
@@ -230,14 +245,25 @@ export default function SellerOrdersPage() {
                     <div className="bg-gray-50 p-4 rounded-lg mb-4">
                       <h4 className="font-medium mb-2">Order Status</h4>
                       <div className="flex flex-wrap gap-2">
-                        <Button
-                          size="sm"
-                          variant={order.status === "ordered" ? "default" : "outline"}
-                          disabled={order.status !== "ordered"}
-                          onClick={() => handleMarkAsShipped(order.id)}
-                        >
-                          Mark as Shipped
-                        </Button>
+                        {order.shippingChoice === "buyer" ? (
+                          <Button
+                            size="sm"
+                            variant={order.status === "ordered" ? "default" : "outline"}
+                            disabled={order.status !== "ordered"}
+                            onClick={() => handleViewLabelAndShip(order.id)}
+                          >
+                            View Label &amp; Ship
+                          </Button>
+                        ) : (
+                          <Button
+                            size="sm"
+                            variant={order.status === "ordered" ? "default" : "outline"}
+                            disabled={order.status !== "ordered"}
+                            onClick={() => handleMarkAsShipped(order.id)}
+                          >
+                            Mark as Shipped
+                          </Button>
+                        )}
                       </div>
                     </div>
 
@@ -355,6 +381,26 @@ export default function SellerOrdersPage() {
             </DialogClose>
             <Button onClick={handleSavePackage}>Save</Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={labelOrderId !== null} onOpenChange={() => setLabelOrderId(null)}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle>Shipping Label</DialogTitle>
+          </DialogHeader>
+          {labelOrder?.shippingLabel ? (
+            <div className="space-y-4">
+              <img src={labelOrder.shippingLabel} alt="Shipping label" className="max-h-96 w-full object-contain" />
+              <Button asChild>
+                <a href={labelOrder.shippingLabel} download>
+                  Download Label
+                </a>
+              </Button>
+              <Button onClick={handleShipWithLabel}>Mark as Shipped</Button>
+            </div>
+          ) : (
+            <p>Awaiting buyer to upload label.</p>
+          )}
         </DialogContent>
       </Dialog>
       <Dialog open={trackingOrderId !== null} onOpenChange={() => setTrackingOrderId(null)}>
