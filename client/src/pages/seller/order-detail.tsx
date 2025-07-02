@@ -13,7 +13,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CalendarIcon, ArrowLeft } from "lucide-react";
 import OrderStatus from "@/components/buyer/order-status";
-import { formatCurrency, formatDate, removeServiceFee } from "@/lib/utils";
+import {
+  formatCurrency,
+  formatDate,
+  removeServiceFee,
+  calculateSellerPayout,
+} from "@/lib/utils";
 
 export default function SellerOrderDetailPage() {
   const { id } = useParams();
@@ -112,7 +117,7 @@ export default function SellerOrderDetailPage() {
 
             <div className="border-t pt-4 flex justify-between font-medium">
               <span>Total</span>
-              <span>{formatCurrency(removeServiceFee(order.totalAmount))}</span>
+              <span>{formatCurrency(calculateSellerPayout(order))}</span>
             </div>
           </CardContent>
         </Card>
