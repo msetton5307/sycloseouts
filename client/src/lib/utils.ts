@@ -31,13 +31,14 @@ export function formatCurrency(amount: number): string {
   }).format(amount);
 }
 
-export function formatDate(date: Date | string): string {
+export function formatDate(date: Date | string, showTime = false): string {
   const d = typeof date === 'string' ? new Date(date) : date;
-  return d.toLocaleDateString('en-US', {
+  return d.toLocaleString('en-US', {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
-  });
+    ...(showTime && { hour: 'numeric', minute: '2-digit' }),
+  } as any);
 }
 
 export function getRelativeTimeString(date: Date | string): string {

@@ -15,7 +15,6 @@ import {
   sendSuspensionEmail,
   sendWireInstructionsEmail,
   sendWireReminderEmail,
-  sendSellerPayoutEmail,
 } from "./email";
 import { generateInvoicePdf, generateSalesReportPdf } from "./pdf";
 import {
@@ -1045,16 +1044,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/admin/recent-payouts", isAuthenticated, isAdmin, async (_req, res) => {
     try {
-      const payouts = await storage.getRecentPayouts(10);
-      const result = [] as any[];
+      const payouts = await storage.getRecentPayouts(20);
+      const groups: Record<number, any> = {};
       for (const p of payouts) {
         const items = await storage.getOrderItems(p.id);
         const productTotalWithFee = items.reduce((sum, i) => sum + Number(i.totalPrice), 0);
         const shippingTotal = Number(p.total_amount) - productTotalWithFee;
         const payoutAmount = productTotalWithFee * (1 - SERVICE_FEE_RATE) + shippingTotal;
-        result.push({ ...p, total_amount: payoutAmount });
+
+        if (!groups[p.seller_id]) {
+          groups[p.seller_id] = {
+            seller_id: p.seller_id,
+            seller_first_name: p.seller_first_name,
+            seller_last_name: p.seller_last_name,
+            seller_email: p.seller_email,
+            payouts: [] as any[],
+            total: 0,
+          };
+        }
+        groups[p.seller_id].payouts.push({
+          id: p.id,
+          code: p.code,
+          payout_date: p.delivered_at,
+          total_amount: payoutAmount,
+        });
+        groups[p.seller_id].total += payoutAmount;
       }
-      res.json(result);
+      res.json(Object.values(groups));
     } catch (error) {
       handleApiError(res, error);
     }
@@ -1189,29 +1205,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (buyer) {
           await sendWireReminderEmail(buyer.email, order.code);
         }
-        res.sendStatus(204);
-      } catch (error) {
-        handleApiError(res, error);
-      }
-    },
-  );
-
-  app.post(
-    "/api/admin/payouts/notify",
-    isAuthenticated,
-    isAdmin,
-    async (req, res) => {
-      try {
-        const { sellerEmail, orders, bankLast4 } = req.body as {
-          sellerEmail: string;
-          orders: { code: string; total: number }[];
-          bankLast4?: string;
-        };
-        if (!sellerEmail || !Array.isArray(orders) || orders.length === 0) {
-          return res.status(400).json({ message: "Invalid payload" });
-        }
-        const amount = orders.reduce((sum, o) => sum + Number(o.total), 0);
-        await sendSellerPayoutEmail(sellerEmail, amount, orders, bankLast4 || "");
         res.sendStatus(204);
       } catch (error) {
         handleApiError(res, error);
