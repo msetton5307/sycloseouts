@@ -22,6 +22,7 @@ import {
   formatDate,
   removeServiceFee,
   calculateSellerPayout,
+  calculateShippingTotal,
 } from "@/lib/utils";
 
 export default function SellerOrderDetailPage() {
@@ -32,6 +33,7 @@ export default function SellerOrderDetailPage() {
     queryKey: ["/api/orders/" + orderId],
     enabled: !Number.isNaN(orderId),
   });
+  const shippingTotal = order ? calculateShippingTotal(order) : 0;
 
   const queryClient = useQueryClient();
   const updateOrder = useMutation({
@@ -129,6 +131,13 @@ export default function SellerOrderDetailPage() {
                 ))}
               </ul>
             </div>
+
+            {shippingTotal > 0 && (
+              <div className="flex justify-between">
+                <span>Shipping</span>
+                <span>{formatCurrency(shippingTotal)}</span>
+              </div>
+            )}
 
             <div className="border-t pt-4 flex justify-between font-medium">
               <span>Total</span>
