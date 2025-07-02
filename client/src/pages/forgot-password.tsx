@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useLocation } from "wouter";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -17,20 +18,15 @@ const emailSchema = z.object({
   email: z.string().email(),
 });
 
-const resetSchema = z
-  .object({
-    code: z.string().length(6),
-    password: z.string().min(6, "Password must be at least 6 characters"),
-    confirmPassword: z.string(),
-  })
-  .refine((d) => d.password === d.confirmPassword, {
-    path: ["confirmPassword"],
-    message: "Passwords do not match",
-  });
+const codeSchema = z.object({
+  code: z.string().length(6),
+});
 
 export default function ForgotPasswordPage() {
-  const [step, setStep] = useState<"email" | "code" | "done">("email");
+  const [step, setStep] = useState<"email" | "verify">("email");
   const [email, setEmail] = useState("");
+  const [cooldown, setCooldown] = useState(0);
+  const [, navigate] = useLocation();
   const { toast } = useToast();
 
   const emailForm = useForm<z.infer<typeof emailSchema>>({
@@ -38,50 +34,38 @@ export default function ForgotPasswordPage() {
     defaultValues: { email: "" },
   });
 
-  const resetForm = useForm<z.infer<typeof resetSchema>>({
-    resolver: zodResolver(resetSchema),
-    defaultValues: { code: "", password: "", confirmPassword: "" },
+  const codeForm = useForm<z.infer<typeof codeSchema>>({
+    resolver: zodResolver(codeSchema),
+    defaultValues: { code: "" },
   });
+
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const t = setInterval(() => setCooldown((c) => c - 1), 1000);
+    return () => clearInterval(t);
+  }, [cooldown]);
 
   async function sendCode(values: z.infer<typeof emailSchema>) {
     await apiRequest("POST", "/api/forgot-password", values);
     setEmail(values.email);
-    setStep("code");
+    setStep("verify");
+    setCooldown(60);
     toast({ title: "Verification code sent" });
   }
 
-  async function verify(values: z.infer<typeof resetSchema>) {
-    await apiRequest("POST", "/api/forgot-password/verify", {
+  async function verify(values: z.infer<typeof codeSchema>) {
+    await apiRequest("POST", "/api/forgot-password/check", {
       email,
       code: values.code,
-      password: values.password,
     });
-    setStep("done");
-    toast({ title: "Password updated" });
+    navigate(`/reset-password?email=${encodeURIComponent(email)}&code=${values.code}`);
   }
 
-  if (step === "done") {
-    return (
-      <>
-        <Header />
-        <div className="min-h-screen flex items-center justify-center bg-gray-50">
-          <Card className="w-full max-w-md mx-4">
-            <CardHeader>
-              <CardTitle>Password Reset Successful</CardTitle>
-            </CardHeader>
-            <CardContent>
-              You can now {" "}
-              <a href="/auth" className="text-primary hover:underline">
-                login
-              </a>{" "}
-              with your new password.
-            </CardContent>
-          </Card>
-        </div>
-        <Footer />
-      </>
-    );
-  }
+  const handleResend = async () => {
+    if (cooldown > 0) return;
+    await sendCode({ email });
+  };
+
 
   return (
     <>
@@ -102,7 +86,7 @@ export default function ForgotPasswordPage() {
                       <FormItem>
                         <FormLabel>Email</FormLabel>
                         <FormControl>
-                          <Input type="email" {...field} />
+                          <Input type="email" autoComplete="email" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -120,16 +104,22 @@ export default function ForgotPasswordPage() {
                 </form>
               </Form>
             ) : (
-              <Form {...resetForm}>
-                <form onSubmit={resetForm.handleSubmit(verify)} className="space-y-4">
+              <Form {...codeForm}>
+                <form onSubmit={codeForm.handleSubmit(verify)} className="space-y-4">
+                  <input
+                    type="text"
+                    tabIndex={-1}
+                    autoComplete="email"
+                    className="hidden"
+                  />
                   <FormField
-                    control={resetForm.control}
+                    control={codeForm.control}
                     name="code"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Verification Code</FormLabel>
                         <FormControl>
-                          <InputOTP maxLength={6} {...field}>
+                          <InputOTP maxLength={6} {...field} autoComplete="one-time-code" name="code" inputMode="numeric">
                             <InputOTPGroup>
                               {[0, 1, 2, 3, 4, 5].map((i) => (
                                 <InputOTPSlot key={i} index={i} />
@@ -141,41 +131,26 @@ export default function ForgotPasswordPage() {
                       </FormItem>
                     )}
                   />
-                  <FormField
-                    control={resetForm.control}
-                    name="password"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>New Password</FormLabel>
-                        <FormControl>
-                          <Input type="password" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={resetForm.control}
-                    name="confirmPassword"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Confirm Password</FormLabel>
-                        <FormControl>
-                          <Input type="password" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <Button type="submit" className="w-full" disabled={resetForm.formState.isSubmitting}>
-                    {resetForm.formState.isSubmitting ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Resetting...
-                      </>
-                    ) : (
-                      "Reset Password"
-                    )}
-                  </Button>
+                  <div className="flex justify-between">
+                    <Button type="submit" className="w-full" disabled={codeForm.formState.isSubmitting}>
+                      {codeForm.formState.isSubmitting ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Verifying...
+                        </>
+                      ) : (
+                        "Verify"
+                      )}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      disabled={cooldown > 0}
+                      onClick={handleResend}
+                      className="ml-2"
+                    >
+                      {cooldown > 0 ? `Resend in ${cooldown}s` : "Resend Code"}
+                    </Button>
+                  </div>
                 </form>
               </Form>
             )}
