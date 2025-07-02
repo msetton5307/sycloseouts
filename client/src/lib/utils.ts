@@ -100,3 +100,8 @@ export function calculateSellerPayout(order: { items: { totalPrice: number }[]; 
   const shippingTotal = order.totalAmount - productTotalWithFee;
   return Math.round((removeServiceFee(productTotalWithFee) + shippingTotal) * 100) / 100;
 }
+
+export function calculateShippingTotal(order: { items: { totalPrice: number }[]; totalAmount: number }): number {
+  const productTotalWithFee = order.items.reduce((sum, i) => sum + i.totalPrice, 0);
+  return Math.max(order.totalAmount - productTotalWithFee, 0);
+}

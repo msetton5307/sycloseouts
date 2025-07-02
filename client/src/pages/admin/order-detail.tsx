@@ -13,7 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CalendarIcon, ArrowLeft } from "lucide-react";
 import OrderStatus from "@/components/buyer/order-status";
-import { formatCurrency, formatDate } from "@/lib/utils";
+import { formatCurrency, formatDate, calculateShippingTotal } from "@/lib/utils";
 
 export default function AdminOrderDetailPage() {
   const { id } = useParams();
@@ -23,6 +23,7 @@ export default function AdminOrderDetailPage() {
     queryKey: ["/api/orders/" + orderId],
     enabled: !Number.isNaN(orderId),
   });
+  const shippingTotal = order ? calculateShippingTotal(order) : 0;
 
   if (isLoading) {
     return (
@@ -109,6 +110,13 @@ export default function AdminOrderDetailPage() {
                 ))}
               </ul>
             </div>
+
+            {shippingTotal > 0 && (
+              <div className="flex justify-between">
+                <span>Shipping</span>
+                <span>{formatCurrency(shippingTotal)}</span>
+              </div>
+            )}
 
             <div className="border-t pt-4 flex justify-between font-medium">
               <span>Total</span>
