@@ -140,6 +140,25 @@ export default function AdminOrderDetailPage() {
           </Card>
         )}
 
+        <Card>
+          <CardHeader>
+            <CardTitle>Shipment Details</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-1">
+            <p>Shipping Choice: {order.shippingChoice || "-"}</p>
+            {order.shippingCarrier && <p>Carrier: {order.shippingCarrier}</p>}
+            {order.trackingNumber && <p>Tracking #: {order.trackingNumber}</p>}
+            {order.shippingLabel && (
+              <p>
+                Label: {" "}
+                <a href={order.shippingLabel} download className="text-primary underline">
+                  Download
+                </a>
+              </p>
+            )}
+          </CardContent>
+        </Card>
+
         {order.paymentDetails && (
           <Card>
             <CardHeader>

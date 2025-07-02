@@ -165,6 +165,12 @@ export default function AdminDashboard() {
                 Wire Orders
               </Button>
             </Link>
+            <Link href="/admin/orders">
+              <Button variant="outline" className="flex items-center">
+                <Package className="mr-2 h-4 w-4" />
+                Orders
+              </Button>
+            </Link>
             <Link href="/admin/featured">
               <Button variant="outline" className="flex items-center">
                 <Star className="mr-2 h-4 w-4" />
