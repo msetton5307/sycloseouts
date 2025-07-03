@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
-import { useSearch } from "wouter/use-location";
+import { useSearch } from "@/hooks/use-search";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Product } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
