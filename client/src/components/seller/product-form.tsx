@@ -47,6 +47,34 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
   const [variationPrices, setVariationPrices] = useState<Record<string, number | undefined>>(product?.variationPrices || {});
   const [variationStocks, setVariationStocks] = useState<Record<string, number | undefined>>(product?.variationStocks || {});
   const [comboKeys, setComboKeys] = useState<string[]>([]);
+  // New state to control if buyers can purchase less than the entire lot
+  const [sellIndividuals, setSellIndividuals] = useState<boolean>(
+    product ? product.minOrderQuantity < product.totalUnits : false
+  );
+
+  useEffect(() => {
+    if (!sellIndividuals) {
+      form.setValue(
+        "minOrderQuantity",
+        form.getValues("totalUnits") ?? 0,
+        { shouldValidate: true }
+      );
+    }
+  }, []); // run once on mount
+
+  // Keep minOrderQuantity in sync when selling only as a take-all lot
+  useEffect(() => {
+    if (!sellIndividuals) {
+      const subscription = form.watch((values, { name }) => {
+        if (name === "totalUnits") {
+          form.setValue("minOrderQuantity", values.totalUnits ?? 0, {
+            shouldValidate: true,
+          });
+        }
+      });
+      return () => subscription.unsubscribe();
+    }
+  }, [sellIndividuals, form]);
 
   useEffect(() => {
     const sizes = sizeOptions.split(',').map(s => s.trim()).filter(Boolean);
@@ -232,8 +260,12 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
       ),
       shippingType,
       shippingResponsibility,
-      shippingFee: data.shippingFee
-    };
+      shippingFee: data.shippingFee,
+    } as InsertProduct;
+
+    if (!sellIndividuals) {
+      formattedData.minOrderQuantity = formattedData.totalUnits;
+    }
     
     // Check for NaN values and replace with defaults
     if (isNaN(formattedData.price)) formattedData.price = 0;
@@ -718,7 +750,23 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
           </div>
         )}
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="space-y-4">
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="sell-individuals"
+              checked={sellIndividuals}
+              onCheckedChange={(v) => setSellIndividuals(!!v)}
+            />
+            <label htmlFor="sell-individuals" className="text-sm font-medium leading-none">
+              Allow individual orders
+            </label>
+          </div>
+          {!sellIndividuals && (
+            <p className="text-sm text-gray-500">Buyers must purchase the entire lot.</p>
+          )}
+        </div>
+
+        {sellIndividuals && (
           <FormField
             control={form.control}
             name="minOrderQuantity"
@@ -745,7 +793,9 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
               </FormItem>
             )}
           />
+        )}
 
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <FormField
             control={form.control}
             name="orderMultiple"
