@@ -51,9 +51,15 @@ export default function ProductCard({ product }: ProductCardProps) {
           {product.title}
         </Link>
         <div className="flex flex-wrap gap-1 text-xs">
-          <Badge variant="outline" className="bg-blue-100 text-blue-800 hover:bg-blue-100">
-            MOQ: {product.minOrderQuantity}
-          </Badge>
+          {product.minOrderQuantity >= product.totalUnits ? (
+            <Badge variant="outline" className="bg-blue-100 text-blue-800 hover:bg-blue-100">
+              Take All Lot
+            </Badge>
+          ) : (
+            <Badge variant="outline" className="bg-blue-100 text-blue-800 hover:bg-blue-100">
+              MOQ: {product.minOrderQuantity}
+            </Badge>
+          )}
           <Badge variant="outline" className="bg-purple-100 text-purple-800 hover:bg-purple-100">
             Order by {product.orderMultiple}
           </Badge>
