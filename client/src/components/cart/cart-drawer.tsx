@@ -83,7 +83,9 @@ export default function CartDrawer() {
                     )}
                     <div className="flex-1">
                       <p className="text-sm font-medium">{o.productTitle}</p>
-                      <p className="text-xs text-gray-500">Qty {o.quantity}</p>
+                      <p className="text-xs text-gray-500">
+                        Qty {o.quantity} · {formatCurrency(o.price)}
+                      </p>
                     </div>
                     <Button size="sm" onClick={() => addOfferToCart(o)}>
                       Add
