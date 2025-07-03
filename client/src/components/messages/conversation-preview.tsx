@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { formatDistanceToNow, parseISO } from "date-fns";
+import { formatDistanceToNow } from "date-fns";
 import { Message, User } from "@shared/schema";
 import { getQueryFn } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
@@ -44,7 +44,7 @@ export default function ConversationPreview({ otherId, selected }: ConversationP
           </span>
           {lastMessage && (
             <span className="text-gray-500 text-xs">
-              {formatDistanceToNow(parseISO(lastMessage.createdAt as unknown as string), { addSuffix: true })}
+              {formatDistanceToNow(new Date(lastMessage.createdAt as unknown as string), { addSuffix: true })}
             </span>
           )}
         </div>
