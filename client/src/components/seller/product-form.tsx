@@ -52,6 +52,78 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
     product ? product.minOrderQuantity < product.totalUnits : false
   );
 
+  const form = useForm<InsertProduct>({
+    resolver: zodResolver(insertProductSchema),
+    defaultValues: product
+      ? {
+          ...product,
+          price:
+            typeof product.price === "number" && !isNaN(product.price)
+              ? product.price
+              : 0,
+          retailMsrp:
+            typeof (product as any).retailMsrp === "number" &&
+            !isNaN((product as any).retailMsrp)
+              ? (product as any).retailMsrp
+              : undefined,
+          totalUnits:
+            typeof product.totalUnits === "number" &&
+            !isNaN(product.totalUnits)
+              ? product.totalUnits
+              : 0,
+          availableUnits:
+            typeof product.availableUnits === "number" &&
+            !isNaN(product.availableUnits)
+              ? product.availableUnits
+              : 0,
+          minOrderQuantity:
+            typeof product.minOrderQuantity === "number" &&
+            !isNaN(product.minOrderQuantity)
+              ? product.minOrderQuantity
+              : 1,
+          orderMultiple:
+            typeof (product as any).orderMultiple === "number" &&
+            !isNaN((product as any).orderMultiple)
+              ? (product as any).orderMultiple
+              : 1,
+          fobLocation: product.fobLocation || "",
+          retailComparisonUrl: product.retailComparisonUrl || "",
+          upc: product.upc || "",
+          variations: (product as any).variations || {},
+          variationPrices: (product as any).variationPrices || {},
+          variationStocks: (product as any).variationStocks || {},
+          shippingType: product.shippingType || "truckload",
+          shippingResponsibility: product.shippingResponsibility ||
+            "seller_free",
+          shippingFee: product.shippingFee ?? undefined,
+          isBanner: product.isBanner ?? false,
+        }
+      : {
+          sellerId: 0, // Will be set by the server
+          title: "",
+          description: "",
+          category: "",
+          price: undefined as unknown as number,
+          retailMsrp: undefined as unknown as number,
+          totalUnits: undefined as unknown as number,
+          availableUnits: undefined as unknown as number,
+          minOrderQuantity: undefined as unknown as number,
+          orderMultiple: undefined as unknown as number,
+          images: [],
+          fobLocation: "",
+          retailComparisonUrl: "",
+          upc: "",
+          variations: {},
+          variationPrices: {},
+          variationStocks: {},
+          condition: "New",
+          shippingType: "truckload",
+          shippingResponsibility: "seller_free",
+          shippingFee: undefined as unknown as number,
+          isBanner: false,
+        },
+  });
+
   useEffect(() => {
     if (!sellIndividuals) {
       form.setValue(
@@ -136,51 +208,6 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
     "Used",
   ];
   
-  const form = useForm<InsertProduct>({
-    resolver: zodResolver(insertProductSchema),
-    defaultValues: product ? {
-      ...product,
-      price: typeof product.price === 'number' && !isNaN(product.price) ? product.price : 0,
-      retailMsrp: typeof (product as any).retailMsrp === 'number' && !isNaN((product as any).retailMsrp) ? (product as any).retailMsrp : undefined,
-      totalUnits: typeof product.totalUnits === 'number' && !isNaN(product.totalUnits) ? product.totalUnits : 0,
-      availableUnits: typeof product.availableUnits === 'number' && !isNaN(product.availableUnits) ? product.availableUnits : 0,
-      minOrderQuantity: typeof product.minOrderQuantity === 'number' && !isNaN(product.minOrderQuantity) ? product.minOrderQuantity : 1,
-      orderMultiple: typeof (product as any).orderMultiple === 'number' && !isNaN((product as any).orderMultiple) ? (product as any).orderMultiple : 1,
-      fobLocation: product.fobLocation || '',
-      retailComparisonUrl: product.retailComparisonUrl || '',
-      upc: product.upc || '',
-      variations: (product as any).variations || {},
-      variationPrices: (product as any).variationPrices || {},
-      variationStocks: (product as any).variationStocks || {},
-      shippingType: product.shippingType || 'truckload',
-      shippingResponsibility: product.shippingResponsibility || 'seller_free',
-      shippingFee: product.shippingFee ?? undefined,
-      isBanner: product.isBanner ?? false,
-    } : {
-      sellerId: 0, // Will be set by the server
-      title: "",
-      description: "",
-      category: "",
-      price: undefined as unknown as number,
-      retailMsrp: undefined as unknown as number,
-      totalUnits: undefined as unknown as number,
-      availableUnits: undefined as unknown as number,
-      minOrderQuantity: undefined as unknown as number,
-      orderMultiple: undefined as unknown as number,
-      images: [],
-      fobLocation: "",
-      retailComparisonUrl: "",
-      upc: "",
-      variations: {},
-      variationPrices: {},
-      variationStocks: {},
-      condition: "New",
-      shippingType: 'truckload',
-      shippingResponsibility: 'seller_free',
-      shippingFee: undefined as unknown as number,
-      isBanner: false
-    },
-  });
   
   const { mutate: saveProduct, isPending } = useMutation({
     mutationFn: async (data: InsertProduct) => {
