@@ -18,7 +18,7 @@ export default function ChatMessage({ message, isOwn }: ChatMessageProps) {
       >
         {message.content}
         <div className="text-xs text-muted-foreground mt-1 text-right">
-          {format(new Date(message.createdAt as unknown as string), "p")}
+          {format(new Date(message.createdAt), "p")}
         </div>
       </div>
     </div>

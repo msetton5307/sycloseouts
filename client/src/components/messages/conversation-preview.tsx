@@ -44,7 +44,7 @@ export default function ConversationPreview({ otherId, selected }: ConversationP
           </span>
           {lastMessage && (
             <span className="text-gray-500 text-xs">
-              {formatDistanceToNow(new Date(lastMessage.createdAt as unknown as string), { addSuffix: true })}
+              {formatDistanceToNow(new Date(lastMessage.createdAt), { addSuffix: true })}
             </span>
           )}
         </div>
