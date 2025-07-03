@@ -106,6 +106,12 @@ export default function ForgotPasswordPage() {
             ) : (
               <Form {...codeForm}>
                 <form onSubmit={codeForm.handleSubmit(verify)} className="space-y-4">
+                  <input
+                    type="text"
+                    tabIndex={-1}
+                    autoComplete="email"
+                    className="hidden"
+                  />
                   <FormField
                     control={codeForm.control}
                     name="code"
@@ -113,7 +119,7 @@ export default function ForgotPasswordPage() {
                       <FormItem>
                         <FormLabel>Verification Code</FormLabel>
                         <FormControl>
-                          <InputOTP maxLength={6} {...field}>
+                          <InputOTP maxLength={6} {...field} autoComplete="one-time-code" name="code" inputMode="numeric">
                             <InputOTPGroup>
                               {[0, 1, 2, 3, 4, 5].map((i) => (
                                 <InputOTPSlot key={i} index={i} />
