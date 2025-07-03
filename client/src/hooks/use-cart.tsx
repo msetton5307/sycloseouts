@@ -26,6 +26,8 @@ interface CartContextType {
   itemCount: number;
   isCartOpen: boolean;
   setIsCartOpen: (isOpen: boolean) => void;
+  acceptedOffers: (Offer & { productTitle: string; productImages: string[] })[];
+  addOfferToCart: (offer: Offer) => Promise<void>;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -35,6 +37,7 @@ const CART_STORAGE_KEY = "sy-closeouts-cart";
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [acceptedOffers, setAcceptedOffers] = useState<(Offer & { productTitle: string; productImages: string[] })[]>([]);
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -76,33 +79,23 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [items]);
 
   useEffect(() => {
-    async function loadAcceptedOffers() {
-      if (!user || user.role !== "buyer") return;
+    async function fetchAccepted() {
+      if (!user || user.role !== "buyer") {
+        setAcceptedOffers([]);
+        return;
+      }
       try {
         const res = await fetch("/api/offers?status=accepted", {
           credentials: "include",
         });
         if (!res.ok) return;
-        const offers: Offer[] = await res.json();
-        for (const o of offers) {
-          if (items.some((it) => it.offerId === o.id)) continue;
-          const prodRes = await fetch(`/api/products/${o.productId}`);
-          if (!prodRes.ok) continue;
-          const product = await prodRes.json();
-          addToCart(
-            product,
-            o.quantity,
-            o.selectedVariations ?? {},
-            o.price,
-            o.quantity,
-            o.id
-          );
-        }
+        const offers: (Offer & { productTitle: string; productImages: string[] })[] = await res.json();
+        setAcceptedOffers(offers);
       } catch {
         /* ignore */
       }
     }
-    loadAcceptedOffers();
+    fetchAccepted();
   }, [user]);
 
   const addToCart = (
@@ -242,6 +235,24 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setIsCartOpen(true);
   };
 
+  const addOfferToCart = async (offer: Offer) => {
+    try {
+      const res = await fetch(`/api/products/${offer.productId}`);
+      if (!res.ok) return;
+      const product: Product = await res.json();
+      addToCart(
+        product,
+        offer.quantity,
+        offer.selectedVariations ?? {},
+        offer.price,
+        offer.quantity,
+        offer.id
+      );
+    } catch {
+      /* ignore */
+    }
+  };
+
   const removeFromCart = (productId: number, variationKey = "", offerId?: number) => {
     setItems(prevItems =>
       prevItems.filter(
@@ -365,7 +376,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
         cartTotal,
         itemCount,
         isCartOpen,
-        setIsCartOpen
+        setIsCartOpen,
+        acceptedOffers,
+        addOfferToCart
       }}
     >
       {children}
