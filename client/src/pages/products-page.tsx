@@ -9,9 +9,11 @@ import { Button } from "@/components/ui/button";
 import { Loader2, Grid3X3, List, ShoppingCart } from "lucide-react";
 import { formatCurrency, addServiceFee } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
+import { useCart } from "@/hooks/use-cart";
 
 export default function ProductsPage() {
   const { user } = useAuth();
+  const { addToCart } = useCart();
   const [viewMode, setViewMode] = useState<"grid" | "list">(
     () => (window.innerWidth < 640 ? "list" : "grid")
   );
@@ -178,10 +180,7 @@ export default function ProductsPage() {
                       <Button
                         size="sm"
                         className="flex items-center"
-                        onClick={() => {
-                          const cartEvent = new CustomEvent('add-to-cart', { detail: product });
-                          window.dispatchEvent(cartEvent);
-                        }}
+                        onClick={() => addToCart(product, product.minOrderQuantity, {})}
                       >
                         <ShoppingCart className="mr-1 h-4 w-4" /> Add to Cart
                       </Button>
