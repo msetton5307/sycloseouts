@@ -27,8 +27,8 @@ export default function RegisterChoicePage() {
               <Package className="h-12 w-12 text-primary mb-4" />
               <h2 className="text-2xl font-bold mb-2">Sell Your Inventory</h2>
               <p className="text-gray-600 mb-6">Reach thousands of resellers looking for liquidation inventory.</p>
-              <Link href="/seller/apply" className="w-full">
-                <Button variant="outline" className="w-full">Apply as Seller</Button>
+              <Link href="/seller/signup" className="w-full">
+                <Button variant="outline" className="w-full">Sign Up as Seller</Button>
               </Link>
             </div>
           </div>
