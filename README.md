@@ -4,7 +4,10 @@ This project serves the API and client from a single Express server.
 
 ## Configuration
 
-The server reads the port from the `PORT` environment variable. If `PORT` is not set or is invalid, the server falls back to port `5000`.
+Copy `.env.example` to `.env` and fill in your credentials. The server reads all
+configuration values from this file. The `PORT` variable controls which port the
+server listens on. If it is not set or invalid, the server falls back to port
+`5000`.
 
 ```bash
 PORT=3000 npm run dev
