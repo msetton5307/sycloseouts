@@ -1,6 +1,7 @@
 import "dotenv/config";
 import { Pool as NeonPool, neonConfig } from "@neondatabase/serverless";
-import { Pool as PgPool } from "pg";
+import pgPkg from "pg";
+const { Pool: PgPool } = pgPkg;
 import { drizzle as drizzleNeon } from "drizzle-orm/neon-serverless";
 import { drizzle as drizzlePg } from "drizzle-orm/node-postgres";
 import ws from "ws";
