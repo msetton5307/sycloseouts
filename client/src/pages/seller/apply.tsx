@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useAuth, registerSchema } from "@/hooks/use-auth";
 import { useForm } from "react-hook-form";
@@ -28,7 +28,7 @@ import {
 } from "@/components/ui/select";
 import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
-import { Package, CheckCircle, Loader2, ImagePlus } from "lucide-react";
+import { Package, CheckCircle, Loader2 } from "lucide-react";
 
 // Application schema for zod validation
 const applicationSchema = z.object({
@@ -71,36 +71,9 @@ export default function SellerApply() {
     },
   });
 
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const [uploading, setUploading] = useState(false);
-
   function onSignup(values: z.infer<typeof registerSchema>) {
     registerMutation.mutate(values);
   }
-
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setUploading(true);
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      if (event.target && event.target.result) {
-        signupForm.setValue("resaleCertUrl", event.target.result.toString());
-      }
-      setUploading(false);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
-    };
-    reader.onerror = () => {
-      setUploading(false);
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const triggerFileUpload = () => {
-    fileInputRef.current?.click();
-  };
 
   useEffect(() => {
     if (user) {
@@ -180,7 +153,7 @@ export default function SellerApply() {
               <Button className="flex-1" onClick={() => setLocation("/")}>
                 Return Home
               </Button>
-              {user && (
+              {user?.role === "buyer" && (
                 <Button
                   variant="outline"
                   className="flex-1"
@@ -462,50 +435,6 @@ export default function SellerApply() {
                             <FormControl>
                               <Input {...field} />
                             </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={signupForm.control}
-                        name="resaleCertUrl"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Resale Certificate</FormLabel>
-                            <FormControl>
-                              <Input type="hidden" {...field} />
-                            </FormControl>
-                            <Button
-                              type="button"
-                              variant="outline"
-                              className="mt-2 w-full"
-                              onClick={triggerFileUpload}
-                              disabled={uploading}
-                            >
-                              {uploading ? (
-                                <>
-                                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                  Uploading...
-                                </>
-                              ) : (
-                                <>
-                                  <ImagePlus className="mr-2 h-4 w-4" />
-                                  {field.value ? "Replace File" : "Upload File"}
-                                </>
-                              )}
-                            </Button>
-                            {field.value && (
-                              <p className="text-xs text-gray-500 mt-1">
-                                File attached
-                              </p>
-                            )}
-                            <input
-                              type="file"
-                              ref={fileInputRef}
-                              onChange={handleFileUpload}
-                              className="hidden"
-                              accept="application/pdf,image/*"
-                            />
                             <FormMessage />
                           </FormItem>
                         )}

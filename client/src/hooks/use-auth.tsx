@@ -30,7 +30,7 @@ export const registerSchema = z.object({
   zipCode: z.string().min(1, "ZIP code is required"),
   country: z.string().default("United States"),
   role: z.string().default("buyer"),
-  resaleCertUrl: z.string().min(1, "Resale certificate is required"),
+  resaleCertUrl: z.string().optional().default(""),
   confirmPassword: z.string(),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
