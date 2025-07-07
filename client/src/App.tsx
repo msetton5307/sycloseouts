@@ -34,6 +34,7 @@ import SellerMessagesPage from "@/pages/seller/messages";
 import SellerAnalyticsPage from "@/pages/seller/analytics";
 import SellerPayoutPage from "@/pages/seller/payouts";
 import SellerApply from "@/pages/seller/apply";
+import SellerSignupPage from "@/pages/seller/signup";
 import OrderMessagesPage from "@/pages/order-messages";
 import ConversationPage from "@/pages/conversation";
 import AdminDashboard from "@/pages/admin/dashboard";
@@ -77,7 +78,8 @@ function Router() {
       <Route path="/help" component={HelpPage} />
       <ProtectedRoute path="/notifications" component={NotificationsPage} allowedRoles={["buyer", "seller", "admin"]} />
       
-      {/* Public seller application route */}
+      {/* Public seller routes */}
+      <Route path="/seller/signup" component={SellerSignupPage} />
       <Route path="/seller/apply" component={SellerApply} />
 
       {/* Buyer routes */}
