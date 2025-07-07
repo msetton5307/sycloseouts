@@ -1,412 +1,142 @@
-import { useState, useRef } from "react";
-import { useLocation } from "wouter";
-import { registerSchema } from "@/hooks/use-auth";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import Header from "@/components/layout/header-fixed";
-import Footer from "@/components/layout/footer-fixed";
-import { CheckCircle, Loader2 } from "lucide-react";
-import { apiRequest } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
+import { Switch, Route } from "wouter";
+import { queryClient } from "./lib/queryClient";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { Toaster } from "@/components/ui/toaster";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { AuthProvider } from "@/hooks/use-auth";
+import { CartProvider } from "@/hooks/use-cart";
+import { ProtectedRoute } from "./lib/protected-route";
+import { ScrollToTop } from "@/lib/scroll-to-top";
 
-const sellerSignupSchema = registerSchema
-  .omit({ role: true })
-  .extend({
-    role: z.literal("seller"),
-    inventoryType: z.string().min(1, "Inventory type is required"),
-    yearsInBusiness: z.coerce.number().min(0, "Years must be a positive number"),
-    website: z.string().optional(),
-    additionalInfo: z.string().optional(),
-  });
+// Pages
+import HomePage from "@/pages/home-page";
+import ProductsPage from "@/pages/products-page";
+import ProductDetailPage from "@/pages/product-detail-page";
+import AuthPage from "@/pages/auth-page";
+import RegisterChoicePage from "@/pages/register";
+import BuyerSignupPage from "@/pages/buyer/signup";
+import ForgotPasswordPage from "@/pages/forgot-password";
+import ResetPasswordPage from "@/pages/reset-password";
+import CartPage from "@/pages/cart-page";
+import CheckoutPage from "@/pages/checkout-page";
+import BuyerHomePage from "@/pages/buyer/home";
+import BuyerOrdersPage from "@/pages/buyer/orders";
+import BuyerOrderDetailPage from "@/pages/buyer/order-detail";
+import BuyerProfilePage from "@/pages/buyer/profile";
+import BuyerMessagesPage from "@/pages/buyer/messages";
+import BuyerOffersPage from "@/pages/buyer/offers";
+import SellerDashboard from "@/pages/seller/dashboard";
+import SellerProducts from "@/pages/seller/products";
+import SellerOrdersPage from "@/pages/seller/orders";
+import SellerOffersPage from "@/pages/seller/offers";
+import SellerOrderDetailPage from "@/pages/seller/order-detail";
+import SellerMessagesPage from "@/pages/seller/messages";
+import SellerAnalyticsPage from "@/pages/seller/analytics";
+import SellerPayoutPage from "@/pages/seller/payouts";
+import SellerApply from "@/pages/seller/apply";
+import SellerSignupPage from "@/pages/seller/signup";
+import OrderMessagesPage from "@/pages/order-messages";
+import ConversationPage from "@/pages/conversation";
+import AdminDashboard from "@/pages/admin/dashboard";
+import FeaturedProductsPage from "@/pages/admin/featured-products";
+import AdminUsers from "@/pages/admin/users";
+import AdminBillingPage from "@/pages/admin/billing";
+import AdminOrderDetailPage from "@/pages/admin/order-detail";
+import AdminOrdersPage from "@/pages/admin/orders";
+import AdminApplications from "@/pages/admin/applications";
+import HelpPage from "@/pages/help-page";
+import AdminTicketsPage from "@/pages/admin/tickets";
+import AdminMessagesPage from "@/pages/admin/messages";
+import AdminUserProfilePage from "@/pages/admin/user-profile";
+import AdminEmailTemplatesPage from "@/pages/admin/email-templates";
+import AboutPage from "@/pages/about-page";
+import SellerAgreementPage from "@/pages/seller-agreement";
+import BuyerAgreementPage from "@/pages/buyer-agreement";
+import NotificationsPage from "@/pages/notifications-page";
+import SuspendedPage from "@/pages/suspended";
+import WireInstructionsPage from "@/pages/wire-instructions";
+import NotFound from "@/pages/not-found";
 
-type SellerSignupData = z.infer<typeof sellerSignupSchema>;
-
-export default function SellerSignupPage() {
-  const [, setLocation] = useLocation();
-  const { toast } = useToast();
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const [uploading, setUploading] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
-
-  const form = useForm<SellerSignupData>({
-    resolver: zodResolver(sellerSignupSchema),
-    defaultValues: {
-      username: "",
-      password: "",
-      confirmPassword: "",
-      email: "",
-      firstName: "",
-      lastName: "",
-      company: "",
-      phone: "",
-      address: "",
-      city: "",
-      state: "",
-      zipCode: "",
-      country: "United States",
-      role: "seller",
-      resaleCertUrl: "",
-      inventoryType: "",
-      yearsInBusiness: 0,
-      website: "",
-      additionalInfo: "",
-    },
-  });
-
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setUploading(true);
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      if (event.target && event.target.result) {
-        form.setValue("resaleCertUrl", event.target.result.toString());
-      }
-      setUploading(false);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
-    };
-    reader.onerror = () => setUploading(false);
-    reader.readAsDataURL(file);
-  };
-
-  const triggerFileUpload = () => fileInputRef.current?.click();
-
-  async function onSubmit(values: SellerSignupData) {
-    try {
-      const { confirmPassword, inventoryType, yearsInBusiness, website, additionalInfo, ...userData } = values;
-      await apiRequest("POST", "/api/register", userData);
-      await apiRequest("POST", "/api/seller-applications", {
-        contactName: `${values.firstName} ${values.lastName}`,
-        companyName: values.company || "",
-        contactEmail: values.email,
-        contactPhone: values.phone,
-        inventoryType,
-        yearsInBusiness,
-        website,
-        additionalInfo,
-      });
-      setSubmitted(true);
-      toast({ title: "Application Submitted", description: "We'll review your application soon." });
-    } catch (error: any) {
-      toast({ title: "Signup failed", description: error.message, variant: "destructive" });
-    }
-  }
-
+function Router() {
   return (
-    <>
-      <Header />
-      <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {submitted ? (
-          <div className="text-center py-16">
-            <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
-            <h1 className="text-3xl font-extrabold text-gray-900 mb-4">Application Submitted!</h1>
-            <p className="text-lg text-gray-600 mb-8">Thank you for applying to sell on SY Closeouts.</p>
-            <Button onClick={() => setLocation("/")}>Return Home</Button>
-          </div>
-        ) : (
-          <div className="bg-white rounded-lg shadow-lg p-8">
-            <h2 className="text-2xl font-bold mb-6">Create a Seller Account</h2>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="firstName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>First Name</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="lastName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Last Name</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                <FormField
-                  control={form.control}
-                  name="username"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Username</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Email</FormLabel>
-                      <FormControl>
-                        <Input type="email" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="company"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Company</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="phone"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Phone</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="address"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Street Address</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <div className="grid grid-cols-3 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="city"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>City</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="state"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>State</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="zipCode"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>ZIP</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                <FormField
-                  control={form.control}
-                  name="country"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Country</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="resaleCertUrl"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Resale Certificate</FormLabel>
-                      <FormControl>
-                        <Input type="hidden" {...field} />
-                      </FormControl>
-                      <Button type="button" variant="outline" className="mt-2" onClick={triggerFileUpload} disabled={uploading}>
-                        {uploading ? (
-                          <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Uploading...
-                          </>
-                        ) : (
-                          "Upload File"
-                        )}
-                      </Button>
-                      {field.value && <p className="text-xs text-gray-500 mt-1">File attached</p>}
-                      <input type="file" ref={fileInputRef} onChange={handleFileUpload} className="hidden" accept="application/pdf,image/*" />
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="inventoryType"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Inventory Type</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select type" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="Electronics">Electronics</SelectItem>
-                          <SelectItem value="Apparel">Apparel</SelectItem>
-                          <SelectItem value="Home Goods">Home Goods</SelectItem>
-                          <SelectItem value="Toys & Games">Toys & Games</SelectItem>
-                          <SelectItem value="Mixed Lots">Mixed Lots</SelectItem>
-                          <SelectItem value="Other">Other</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="yearsInBusiness"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Years in Business</FormLabel>
-                      <FormControl>
-                        <Input type="number" min="0" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="website"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Website</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="additionalInfo"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Additional Info</FormLabel>
-                      <FormControl>
-                        <Textarea className="h-28" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="password"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Password</FormLabel>
-                      <FormControl>
-                        <Input type="password" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="confirmPassword"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Confirm Password</FormLabel>
-                      <FormControl>
-                        <Input type="password" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
-                  {form.formState.isSubmitting ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Submitting...
-                    </>
-                  ) : (
-                    "Submit Application"
-                  )}
-                </Button>
-              </form>
-            </Form>
-          </div>
-        )}
-      </main>
-      <Footer />
-    </>
+    <Switch>
+      {/* Public routes */}
+      <Route path="/" component={HomePage} />
+      <Route path="/products" component={ProductsPage} />
+      <Route path="/products/:id" component={ProductDetailPage} />
+      <Route path="/auth" component={AuthPage} />
+      <Route path="/register" component={RegisterChoicePage} />
+      <Route path="/buyer/signup" component={BuyerSignupPage} />
+      <Route path="/forgot-password" component={ForgotPasswordPage} />
+      <Route path="/reset-password" component={ResetPasswordPage} />
+      <Route path="/suspended" component={SuspendedPage} />
+      <Route path="/cart" component={CartPage} />
+      <Route path="/about" component={AboutPage} />
+      <Route path="/wire-instructions" component={WireInstructionsPage} />
+      <Route path="/seller-agreement" component={SellerAgreementPage} />
+      <Route path="/buyer-agreement" component={BuyerAgreementPage} />
+      <Route path="/help" component={HelpPage} />
+      <ProtectedRoute path="/notifications" component={NotificationsPage} allowedRoles={["buyer", "seller", "admin"]} />
+      
+      {/* Public seller routes */}
+      <Route path="/seller/signup" component={SellerSignupPage} />
+      <Route path="/seller/apply" component={SellerApply} />
+
+      {/* Buyer routes */}
+      <ProtectedRoute path="/checkout" component={CheckoutPage} allowedRoles={["buyer", "seller", "admin"]} />
+      <ProtectedRoute path="/buyer/home" component={BuyerHomePage} allowedRoles={["buyer", "admin"]} />
+      <ProtectedRoute path="/buyer/orders" component={BuyerOrdersPage} allowedRoles={["buyer", "admin"]} />
+      <ProtectedRoute path="/buyer/messages" component={BuyerMessagesPage} allowedRoles={["buyer", "admin"]} />
+      <ProtectedRoute path="/buyer/offers" component={BuyerOffersPage} allowedRoles={["buyer", "admin"]} />
+      <ProtectedRoute path="/buyer/orders/:id" component={BuyerOrderDetailPage} allowedRoles={["buyer", "admin"]} />
+      <ProtectedRoute path="/buyer/profile" component={BuyerProfilePage} allowedRoles={["buyer", "admin"]} />
+
+      {/* Seller routes */}
+      <ProtectedRoute path="/seller/dashboard" component={SellerDashboard} allowedRoles={["seller"]} />
+      <ProtectedRoute path="/seller/products" component={SellerProducts} allowedRoles={["seller"]} />
+      <ProtectedRoute path="/seller/offers" component={SellerOffersPage} allowedRoles={["seller"]} />
+      <ProtectedRoute path="/seller/orders" component={SellerOrdersPage} allowedRoles={["seller"]} />
+      <ProtectedRoute path="/seller/orders/:id" component={SellerOrderDetailPage} allowedRoles={["seller"]} />
+      <ProtectedRoute path="/seller/messages" component={SellerMessagesPage} allowedRoles={["seller"]} />
+      <ProtectedRoute path="/seller/analytics" component={SellerAnalyticsPage} allowedRoles={["seller"]} />
+      <ProtectedRoute path="/seller/payouts" component={SellerPayoutPage} allowedRoles={["seller"]} />
+
+      <ProtectedRoute path="/orders/:id/messages" component={OrderMessagesPage} allowedRoles={["buyer", "seller", "admin"]} />
+      <ProtectedRoute path="/conversations/:id" component={ConversationPage} allowedRoles={["buyer", "seller", "admin"]} />
+
+      {/* Admin routes */}
+      <ProtectedRoute path="/admin/dashboard" component={AdminDashboard} allowedRoles={["admin"]} />
+      <ProtectedRoute path="/admin/users/:id" component={AdminUserProfilePage} allowedRoles={["admin"]} />
+      <ProtectedRoute path="/admin/users" component={AdminUsers} allowedRoles={["admin"]} />
+      <ProtectedRoute path="/admin/billing" component={AdminBillingPage} allowedRoles={["admin"]} />
+      <ProtectedRoute path="/admin/orders" component={AdminOrdersPage} allowedRoles={["admin"]} />
+      <ProtectedRoute path="/admin/orders/:id" component={AdminOrderDetailPage} allowedRoles={["admin"]} />
+      <ProtectedRoute path="/admin/applications" component={AdminApplications} allowedRoles={["admin"]} />
+      <ProtectedRoute path="/admin/featured" component={FeaturedProductsPage} allowedRoles={["admin"]} />
+      <ProtectedRoute path="/admin/messages" component={AdminMessagesPage} allowedRoles={["admin"]} />
+      <ProtectedRoute path="/admin/email-templates" component={AdminEmailTemplatesPage} allowedRoles={["admin"]} />
+      <ProtectedRoute path="/admin/tickets" component={AdminTicketsPage} allowedRoles={["admin"]} />
+
+      {/* Fallback to 404 */}
+      <Route component={NotFound} />
+    </Switch>
   );
 }
+
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <CartProvider>
+          <TooltipProvider>
+            <ScrollToTop />
+            <Toaster />
+            <Router />
+          </TooltipProvider>
+        </CartProvider>
+      </AuthProvider>
+    </QueryClientProvider>
+  );
+}
+
+export default App;
