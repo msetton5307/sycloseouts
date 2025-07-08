@@ -34,15 +34,6 @@ export function ProtectedRoute({
           return <Redirect to="/" />;
         }
 
-        if (
-          path.startsWith("/seller") &&
-          path !== "/seller/apply" &&
-          user.role === "seller" &&
-          (!user.isSeller || !user.isApproved)
-        ) {
-          return <Redirect to="/seller/apply" />;
-        }
-
         return <Component />;
       }}
     </Route>
