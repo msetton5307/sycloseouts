@@ -1,3 +1,4 @@
+import "./polyfills";
 import "dotenv/config";
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
@@ -87,3 +88,4 @@ app.use((req, res, next) => {
     }
   );
 })();
+
