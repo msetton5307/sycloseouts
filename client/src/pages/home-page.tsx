@@ -23,7 +23,10 @@ export default function HomePage() {
 
   if (user) {
     if (user.role === "seller") {
-      return <Redirect to="/seller/dashboard" />;
+      if (user.isSeller && user.isApproved) {
+        return <Redirect to="/seller/dashboard" />;
+      }
+      return <Redirect to="/seller/apply" />;
     }
     if (user.role === "buyer") {
       return <Redirect to="/buyer/home" />;
