@@ -353,6 +353,8 @@ export default function SellerApply() {
                               <Input
                                 placeholder="Your company name"
                                 {...field}
+                                value={field.value}
+                                onChange={field.onChange}
                               />
                             </FormControl>
                             <FormMessage />
@@ -538,6 +540,8 @@ export default function SellerApply() {
                               <Input
                                 placeholder="Your company name"
                                 {...field}
+                                value={field.value}
+                                onChange={field.onChange}
                               />
                             </FormControl>
                             <FormMessage />
@@ -651,6 +655,8 @@ export default function SellerApply() {
                               <Input
                                 placeholder="https://www.example.com"
                                 {...field}
+                                value={field.value}
+                                onChange={field.onChange}
                               />
                             </FormControl>
                             <FormDescription>
@@ -672,6 +678,7 @@ export default function SellerApply() {
                               <Textarea
                                 placeholder="Tell us more about your business and inventory..."
                                 className="h-32"
+                                {...field}
                                 value={field.value}
                                 onChange={field.onChange}
                               />
