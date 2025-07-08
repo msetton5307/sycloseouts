@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import { useAuth, registerSchema } from "@/hooks/use-auth";
 import { useForm } from "react-hook-form";
@@ -75,8 +75,9 @@ export default function SellerApply() {
     registerMutation.mutate(values);
   }
 
+  const hasSetDefaults = useRef(false)
   useEffect(() => {
-    if (user) {
+    if (user && !hasSetDefaults.current) {
       form.reset({
         contactName: `${user.firstName} ${user.lastName}`,
         companyName: user.company || "",
@@ -86,9 +87,10 @@ export default function SellerApply() {
         yearsInBusiness: 0,
         website: "",
         additionalInfo: "",
-      });
+      })
+      hasSetDefaults.current = true
     }
-  }, [user]);
+  }, [user, form])
 
   // Setup form with zod validation
   const form = useForm<ApplicationFormData>({
