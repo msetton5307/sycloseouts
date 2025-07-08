@@ -672,7 +672,8 @@ export default function SellerApply() {
                               <Textarea
                                 placeholder="Tell us more about your business and inventory..."
                                 className="h-32"
-                                {...field}
+                                value={field.value}
+                                onChange={field.onChange}
                               />
                             </FormControl>
                             <FormDescription>
