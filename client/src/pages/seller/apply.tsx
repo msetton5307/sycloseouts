@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import { useAuth, registerSchema } from "@/hooks/use-auth";
 import { useForm } from "react-hook-form";
@@ -49,6 +49,7 @@ export default function SellerApply() {
   const { user, registerMutation } = useAuth();
   const { toast } = useToast();
   const [isSubmitSuccess, setIsSubmitSuccess] = useState(false);
+  const hasInitialized = useRef(false);
 
   const signupForm = useForm<z.infer<typeof registerSchema>>({
     resolver: zodResolver(registerSchema),
@@ -76,7 +77,7 @@ export default function SellerApply() {
   }
 
   useEffect(() => {
-    if (user) {
+    if (user && !hasInitialized.current) {
       form.reset({
         contactName: `${user.firstName} ${user.lastName}`,
         companyName: user.company || "",
@@ -87,8 +88,9 @@ export default function SellerApply() {
         website: "",
         additionalInfo: "",
       });
+      hasInitialized.current = true;
     }
-  }, [user]);
+  }, [user, form]);
 
   // Setup form with zod validation
   const form = useForm<ApplicationFormData>({
