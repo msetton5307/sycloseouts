@@ -24,9 +24,11 @@ import {
 import { toast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { Loader2, Plus, X, Upload, ImagePlus } from "lucide-react";
+import { Loader2, Plus, X, ImagePlus } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useAuth } from "@/hooks/use-auth";
+
+type VariationField = { name: string; options: string };
 
 interface ProductFormProps {
   product?: Product;
@@ -42,8 +44,14 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [shippingType, setShippingType] = useState<string>(product?.shippingType || "truckload");
   const [shippingResponsibility, setShippingResponsibility] = useState<string>(product?.shippingResponsibility || "seller_free");
-  const [sizeOptions, setSizeOptions] = useState<string>(product?.variations?.size?.join(", ") || "");
-  const [colorOptions, setColorOptions] = useState<string>(product?.variations?.color?.join(", ") || "");
+  const [variationFields, setVariationFields] = useState<VariationField[]>(
+    product?.variations
+      ? Object.entries(product.variations).map(([name, opts]) => ({
+          name,
+          options: Array.isArray(opts) ? (opts as string[]).join(", ") : "",
+        }))
+      : []
+  );
   const [variationPrices, setVariationPrices] = useState<Record<string, number | undefined>>(product?.variationPrices || {});
   const [variationStocks, setVariationStocks] = useState<Record<string, number | undefined>>(product?.variationStocks || {});
   const [comboKeys, setComboKeys] = useState<string[]>([]);
@@ -149,44 +157,53 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
   }, [sellIndividuals, form]);
 
   useEffect(() => {
-    const sizes = sizeOptions.split(',').map(s => s.trim()).filter(Boolean);
-    const colors = colorOptions.split(',').map(c => c.trim()).filter(Boolean);
+    const parsed = variationFields
+      .map((v) => ({
+        name: v.name.trim(),
+        options: v.options.split(',').map((o) => o.trim()).filter(Boolean),
+      }))
+      .filter((v) => v.name && v.options.length > 0);
+
     let combos: string[] = [];
-    if (sizes.length === 0 && colors.length === 0) {
-      combos = [];
-    } else if (sizes.length === 0) {
-      combos = colors.map(c => JSON.stringify({ color: c }));
-    } else if (colors.length === 0) {
-      combos = sizes.map(s => JSON.stringify({ size: s }));
-    } else {
-      combos = sizes.flatMap(s => colors.map(c => JSON.stringify({ size: s, color: c })));
+    if (parsed.length > 0) {
+      const build = (idx: number, current: Record<string, string>) => {
+        if (idx === parsed.length) {
+          combos.push(JSON.stringify(current));
+          return;
+        }
+        for (const opt of parsed[idx].options) {
+          build(idx + 1, { ...current, [parsed[idx].name]: opt });
+        }
+      };
+      build(0, {});
     }
+
     setComboKeys(combos);
-    setVariationPrices(prev => {
+    setVariationPrices((prev) => {
       const updated: Record<string, number | undefined> = { ...prev };
-      combos.forEach(k => {
+      combos.forEach((k) => {
         if (!(k in updated)) {
           updated[k] = undefined;
         }
       });
-      Object.keys(updated).forEach(k => {
+      Object.keys(updated).forEach((k) => {
         if (!combos.includes(k)) delete updated[k];
       });
       return updated;
     });
-    setVariationStocks(prev => {
+    setVariationStocks((prev) => {
       const updated: Record<string, number | undefined> = { ...prev };
-      combos.forEach(k => {
+      combos.forEach((k) => {
         if (!(k in updated)) {
           updated[k] = undefined;
         }
       });
-      Object.keys(updated).forEach(k => {
+      Object.keys(updated).forEach((k) => {
         if (!combos.includes(k)) delete updated[k];
       });
       return updated;
     });
-  }, [sizeOptions, colorOptions]);
+  }, [variationFields]);
   
   const categories = [
     "Electronics",
@@ -275,10 +292,15 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
       availableUnits: typeof data.availableUnits === 'string' ? parseInt(data.availableUnits) : data.availableUnits,
       minOrderQuantity: typeof data.minOrderQuantity === 'string' ? parseInt(data.minOrderQuantity) : data.minOrderQuantity,
       orderMultiple: typeof (data as any).orderMultiple === 'string' ? parseInt((data as any).orderMultiple) : (data as any).orderMultiple,
-      variations: {
-        size: sizeOptions.split(',').map(s => s.trim()).filter(Boolean),
-        color: colorOptions.split(',').map(c => c.trim()).filter(Boolean)
-      },
+      variations: Object.fromEntries(
+        variationFields
+          .map((v) => ({
+            name: v.name.trim(),
+            options: v.options.split(',').map((o) => o.trim()).filter(Boolean),
+          }))
+          .filter((v) => v.name && v.options.length > 0)
+          .map((v) => [v.name, v.options])
+      ),
       variationPrices: Object.fromEntries(
         Object.entries(variationPrices).map(([k, v]) => [k, v])
       ),
@@ -668,23 +690,34 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
           />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <FormLabel>Sizes (comma separated)</FormLabel>
-            <Input
-              placeholder="S, M, L"
-              value={sizeOptions}
-              onChange={(e) => setSizeOptions(e.target.value)}
-            />
-          </div>
-          <div>
-            <FormLabel>Colors (comma separated)</FormLabel>
-            <Input
-              placeholder="Red, Blue"
-              value={colorOptions}
-              onChange={(e) => setColorOptions(e.target.value)}
-            />
-          </div>
+        <div className="space-y-4">
+          <FormLabel>Variations</FormLabel>
+          {variationFields.map((v, idx) => (
+            <div key={idx} className="grid grid-cols-1 md:grid-cols-3 gap-2 items-start">
+              <Input
+                placeholder="Variation Name"
+                value={v.name}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setVariationFields((fields) => fields.map((f, i) => i === idx ? { ...f, name: value } : f));
+                }}
+              />
+              <Input
+                placeholder="Options (comma separated)"
+                value={v.options}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setVariationFields((fields) => fields.map((f, i) => i === idx ? { ...f, options: value } : f));
+                }}
+              />
+              <Button type="button" variant="ghost" onClick={() => setVariationFields(fields => fields.filter((_, i) => i !== idx))}>
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+          ))}
+          <Button type="button" variant="outline" onClick={() => setVariationFields([...variationFields, { name: "", options: "" }])}>
+            <Plus className="mr-2 h-4 w-4" /> Add Variation
+          </Button>
         </div>
 
         {comboKeys.length > 0 && (
@@ -780,6 +813,16 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
         <div className="space-y-4">
           <div className="flex items-center space-x-2">
             <Checkbox
+              id="take-all-lot"
+              checked={!sellIndividuals}
+              onCheckedChange={(v) => setSellIndividuals(!v)}
+            />
+            <label htmlFor="take-all-lot" className="text-sm font-medium leading-none">
+              Take All Lot
+            </label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Checkbox
               id="sell-individuals"
               checked={sellIndividuals}
               onCheckedChange={(v) => setSellIndividuals(!!v)}
@@ -823,32 +866,36 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <FormField
-            control={form.control}
-            name="orderMultiple"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Order By Quantity</FormLabel>
-                <FormControl>
-                  <Input
-                    type="number"
-                    min="1"
-                    placeholder="1"
-                    {...field}
-                    value={field.value === undefined ? "" : field.value}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      field.onChange(value === "" ? undefined : parseInt(value));
-                    }}
-                  />
-                </FormControl>
-                <FormDescription>
-                  Buyers must order in multiples of this amount.
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          {sellIndividuals && (
+            <FormField
+              control={form.control}
+              name="orderMultiple"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Order By Quantity</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      min="1"
+                      placeholder="1"
+                      {...field}
+                      value={field.value === undefined ? "" : field.value}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        field.onChange(
+                          value === "" ? undefined : parseInt(value)
+                        );
+                      }}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Buyers must order in multiples of this amount.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
           
           <FormField
             control={form.control}
