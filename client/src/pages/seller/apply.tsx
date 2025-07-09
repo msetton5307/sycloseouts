@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
-import { useAuth, registerSchema } from "@/hooks/use-auth";
+import { useAuth, registerSchemaBase } from "@/hooks/use-auth";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -43,12 +43,20 @@ const applicationSchema = z.object({
 });
 
 // Combined registration + application schema for new sellers
-const sellerSignupSchema = registerSchema.extend({
-  inventoryType: z.string().min(1, "Inventory type is required"),
-  yearsInBusiness: z.coerce.number().min(0, "Years must be a positive number"),
-  website: z.string().optional(),
-  additionalInfo: z.string().optional(),
-});
+const sellerSignupSchema = registerSchemaBase
+  .extend({
+    inventoryType: z.string().min(1, "Inventory type is required"),
+    yearsInBusiness: z
+      .coerce
+      .number()
+      .min(0, "Years must be a positive number"),
+    website: z.string().optional(),
+    additionalInfo: z.string().optional(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ["confirmPassword"],
+  });
 
 type SellerSignupData = z.infer<typeof sellerSignupSchema>;
 
