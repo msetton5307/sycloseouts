@@ -12,7 +12,8 @@ import {
   offers, Offer, InsertOffer,
   supportTickets, SupportTicket, InsertSupportTicket,
   notifications, Notification, InsertNotification,
-  emailTemplates, EmailTemplate, InsertEmailTemplate
+  emailTemplates, EmailTemplate, InsertEmailTemplate,
+  siteSettings
 } from "@shared/schema";
 import session from "express-session";
 import { db, pool } from "./db";
@@ -864,5 +865,5 @@ export class DatabaseStorage implements IStorage {
     }
   }
 }
-// Export an instance of the storage
-export const storage = new DatabaseStorage();
+
+// Export an instance of the storageexport const storage = new DatabaseStorage();
