@@ -4,6 +4,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import type { Express } from "express";
 import type { Order } from "@shared/schema";
+import { storage } from "./storage";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -21,6 +22,18 @@ if (host && user && pass) {
     secure: port === 465,
     auth: { user, pass },
   });
+}
+
+async function getLogoAttachment() {
+  const logo = await storage.getSiteSetting("logo");
+  if (logo && logo.startsWith("data:")) {
+    const base = logo.split(",", 2)[1] || "";
+    return { filename: "logo.png", content: Buffer.from(base, "base64"), cid: "logo" };
+  }
+  if (logo) {
+    return { filename: "logo.png", path: logo, cid: "logo" };
+  }
+  return { filename: "logo.png", path: path.resolve(__dirname, "..", "generated-icon.png"), cid: "logo" };
 }
 
 interface InvoiceItem {
@@ -154,6 +167,7 @@ export async function sendInvoiceEmail(
   </body>
 </html>`;
 
+  const logo = await getLogoAttachment();
   const mailOptions = {
     from: process.env.SMTP_FROM || user,
     to,
@@ -166,13 +180,7 @@ export async function sendInvoiceEmail(
       `\nItems:\n${itemLines}\n\n` +
       `We appreciate your business!`,
     html,
-    attachments: [
-      {
-        filename: "logo.png",
-        path: path.resolve(__dirname, "..", "generated-icon.png"),
-        cid: "logo",
-      },
-    ],
+    attachments: [logo],
   };
 
   try {
@@ -326,13 +334,7 @@ export async function sendSellerOrderEmail(
       `Shipping Method: ${shippingMethod}\n` +
       `\nItems:\n${itemLines}\n`,
     html,
-    attachments: [
-      {
-        filename: "logo.png",
-        path: path.resolve(__dirname, "..", "generated-icon.png"),
-        cid: "logo",
-      },
-    ],
+    attachments: [logo],
   };
 
   try {
@@ -656,13 +658,7 @@ export async function sendWireInstructionsEmail(to: string, order: Order) {
     subject: `Wire Instructions for Order #${order.code}`,
     text: `${instructions}\nAccount Number: ${accountNumber}\nRouting Number: ${routingNumber}\n\nAmount: $${order.totalAmount.toFixed(2)}\nOrder #: ${order.code}`,
     html,
-    attachments: [
-      {
-        filename: "logo.png",
-        path: path.resolve(__dirname, "..", "generated-icon.png"),
-        cid: "logo",
-      },
-    ],
+    attachments: [logo],
   };
 
   try {
@@ -780,13 +776,7 @@ export async function sendSellerPayoutEmail(
       `A payout of $${amount.toFixed(2)} has been sent to your account ending in ${bankLast4}.\n\n` +
       `Orders:\n${orderLines}`,
     html,
-    attachments: [
-      {
-        filename: "logo.png",
-        path: path.resolve(__dirname, "..", "generated-icon.png"),
-        cid: "logo",
-      },
-    ],
+    attachments: [logo],
   };
 
   try {

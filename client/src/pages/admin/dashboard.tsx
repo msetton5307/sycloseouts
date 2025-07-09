@@ -34,15 +34,14 @@ import {
   Mail
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
-import {
-  formatCurrency,
-  SERVICE_FEE_RATE,
-  calculateOrderCommission,
-} from "@/lib/utils";
+import { formatCurrency, calculateOrderCommission } from "@/lib/utils";
+import { useSettings, DEFAULT_SERVICE_FEE_RATE } from "@/hooks/use-settings";
 
 export default function AdminDashboard() {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("overview");
+  const { data: settings } = useSettings();
+  const feeRate = settings?.commissionRate ?? DEFAULT_SERVICE_FEE_RATE;
   
   // Fetch all users
   const {
@@ -170,6 +169,12 @@ export default function AdminDashboard() {
                 Featured Products
               </Button>
             </Link>
+            <Link href="/admin/settings">
+              <Button variant="outline" className="flex items-center">
+                <LayoutDashboard className="mr-2 h-4 w-4" />
+                Settings
+              </Button>
+            </Link>
             <Link href="/admin/email-templates">
               <Button variant="outline" className="flex items-center">
                 <Mail className="mr-2 h-4 w-4" />
@@ -213,7 +218,7 @@ export default function AdminDashboard() {
                     <CardContent>
                       <div className="text-sm text-gray-500 flex items-center">
                         <Calculator className="h-4 w-4 mr-1 text-green-500" />
-                        3.5% commission on {formatCurrency(productRevenue)}
+                        {(feeRate * 100).toFixed(1)}% commission on {formatCurrency(productRevenue)}
                       </div>
                     </CardContent>
                   </Card>
@@ -512,7 +517,7 @@ export default function AdminDashboard() {
                         </CardHeader>
                         <CardContent>
                           <div className="text-sm text-gray-500">
-                            3.5% commission on all products
+                            {(feeRate * 100).toFixed(1)}% commission on all products
                           </div>
                         </CardContent>
                       </Card>

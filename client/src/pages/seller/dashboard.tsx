@@ -50,12 +50,7 @@ import {
   ListOrdered
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
-import {
-  formatCurrency,
-  formatDate,
-  SERVICE_FEE_RATE,
-  calculateSellerPayout,
-} from "@/lib/utils";
+import { formatCurrency, formatDate, calculateSellerPayout } from "@/lib/utils";
 
 interface OrderItemWithProduct extends OrderItem {
   productTitle: string;

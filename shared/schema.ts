@@ -450,6 +450,14 @@ export const insertNotificationSchema = createInsertSchema(notifications).omit({
   createdAt: true,
 });
 
+// Site-wide settings key/value store
+export const siteSettings = pgTable("site_settings", {
+  key: text("key").primaryKey(),
+  value: text("value").notNull(),
+});
+
+export const insertSiteSettingSchema = createInsertSchema(siteSettings);
+
 // Type definitions
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -496,6 +504,9 @@ export type InsertNotification = z.infer<typeof insertNotificationSchema>;
 export type EmailTemplate = typeof emailTemplates.$inferSelect;
 export type InsertEmailTemplate = z.infer<typeof insertEmailTemplateSchema>;
 
+export type SiteSetting = typeof siteSettings.$inferSelect;
+export type InsertSiteSetting = z.infer<typeof insertSiteSettingSchema>;
+
 // Cart item interface for the frontend
 export interface CartItem {
   productId: number;
@@ -510,5 +521,4 @@ export interface CartItem {
   offerId?: number;
   offerQuantity?: number;
   selectedVariations?: Record<string, string>;
-  variationKey?: string;
-}
+  variationKey?: string;}

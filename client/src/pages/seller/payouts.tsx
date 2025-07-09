@@ -4,12 +4,7 @@ import Footer from "@/components/layout/footer";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { Order, OrderItem } from "@shared/schema";
-import {
-  formatCurrency,
-  formatDate,
-  SERVICE_FEE_RATE,
-  calculateSellerPayout,
-} from "@/lib/utils";
+import { formatCurrency, formatDate, calculateSellerPayout } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
