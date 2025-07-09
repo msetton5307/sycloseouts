@@ -3,12 +3,19 @@ import * as React from "react"
 import { cn } from "@/lib/utils"
 
 const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
-  ({ className, type, ...props }, ref) => {
+  ({ className, type, onWheel, ...props }, ref) => {
     const numberClasses =
       type === "number"
         ?
           "[appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
         : ""
+    const handleWheel: React.WheelEventHandler<HTMLInputElement> = e => {
+      if (type === "number") {
+        e.currentTarget.blur()
+      }
+      onWheel?.(e)
+    }
+
     return (
       <input
         type={type}
@@ -18,6 +25,7 @@ const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
           className
         )}
         ref={ref}
+        onWheel={handleWheel}
         {...props}
       />
     )
