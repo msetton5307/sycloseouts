@@ -19,6 +19,7 @@ import { db, pool } from "./db";
 import { eq, and, or, desc, SQL, ilike, lte, sql } from "drizzle-orm";
 import connectPgSimple from "connect-pg-simple";
 import { generateOrderCode } from "./orderCode";
+import { randomBytes } from "crypto";
 
 const PgStore = connectPgSimple(session);
 
@@ -304,7 +305,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createOrder(insertOrder: InsertOrder): Promise<Order> {
-    const [order] = await db.insert(orders).values(insertOrder).returning();
+    const tempCode = randomBytes(8).toString("hex");
+    const [order] = await db
+      .insert(orders)
+      .values({ ...insertOrder, code: tempCode })
+      .returning();
     const code = generateOrderCode(order.id);
     const [withCode] = await db
       .update(orders)

@@ -36,6 +36,7 @@ import { eq } from "drizzle-orm";
 import { generateOrderCode } from "./orderCode";
 import { ZodError } from "zod";
 import { containsContactInfo } from "./contactFilter";
+import { randomBytes } from "crypto";
 
 const SERVICE_FEE_RATE = 0.035;
 
@@ -486,9 +487,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }[] = [];
 
       const order = await db.transaction(async (tx) => {
+        const tempCode = randomBytes(8).toString("hex");
         const [createdOrder] = await tx
           .insert(ordersTable)
-          .values(orderData)
+          .values({ ...orderData, code: tempCode })
           .returning();
 
         const code = generateOrderCode(createdOrder.id);
