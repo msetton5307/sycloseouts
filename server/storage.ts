@@ -124,6 +124,10 @@ export interface IStorage {
   // Cart methods
   getCart(userId: number): Promise<Cart | undefined>;
   createOrUpdateCart(cart: InsertCart): Promise<Cart>;
+
+  // Site setting methods
+  getSiteSetting(key: string): Promise<string | undefined>;
+  setSiteSetting(key: string, value: string): Promise<void>;
   
   // Session store
   sessionStore: session.Store;
@@ -839,7 +843,26 @@ export class DatabaseStorage implements IStorage {
       return newCart;
     }
   }
+
+  async getSiteSetting(key: string): Promise<string | undefined> {
+    const [row] = await db
+      .select()
+      .from(siteSettings)
+      .where(eq(siteSettings.key, key));
+    return row?.value as string | undefined;
+  }
+
+  async setSiteSetting(key: string, value: string): Promise<void> {
+    const existing = await this.getSiteSetting(key);
+    if (existing !== undefined) {
+      await db
+        .update(siteSettings)
+        .set({ value })
+        .where(eq(siteSettings.key, key));
+    } else {
+      await db.insert(siteSettings).values({ key, value });
+    }
+  }
 }
 
-// Export an instance of the storage
-export const storage = new DatabaseStorage();
+// Export an instance of the storageexport const storage = new DatabaseStorage();

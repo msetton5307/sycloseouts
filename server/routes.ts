@@ -37,14 +37,17 @@ import { generateOrderCode } from "./orderCode";
 import { ZodError } from "zod";
 import { containsContactInfo } from "./contactFilter";
 import { randomBytes } from "crypto";
+import { storage } from "./storage";
 
-const SERVICE_FEE_RATE = 0.035;
+async function getServiceFeeRate(): Promise<number> {
+  const val = await storage.getSiteSetting("commission_rate");
+  const num = parseFloat(val ?? "0.035");
+  return Number.isFinite(num) ? num : 0.035;
+}
 
-// Reverse the service fee addition logic. Prices with the fee applied are
-// rounded up, so divide by the fee rate and round down to recover the base
-// amount without losing cents.
-function removeServiceFee(priceWithFee: number): number {
-  return Math.floor((priceWithFee / (1 + SERVICE_FEE_RATE)) * 100) / 100;
+// Reverse the service fee addition logic using a provided rate
+function removeServiceFee(priceWithFee: number, rate: number): number {
+  return Math.floor((priceWithFee / (1 + rate)) * 100) / 100;
 }
 
 async function fetchTrackingStatus(trackingNumber: string): Promise<string | undefined> {
@@ -225,13 +228,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Quantity exceeds available stock" });
       }
 
+      const rate = await getServiceFeeRate();
       const offerData = insertOfferSchema.parse({
         ...req.body,
-        // Convert the buyer's total price to the seller's base price. The client
-        // sends the amount with the service fee included, so divide by the fee
-        // rate and round down to ensure addServiceFee(base) matches the offered
-        // total.
-        price: Math.floor((req.body.price / (1 + SERVICE_FEE_RATE)) * 100) / 100,
+        // Convert the buyer's total price to the seller's base price using the
+        // current service fee rate and round down so addServiceFee(base)
+        // matches the offered total.
+        price: Math.floor((req.body.price / (1 + rate)) * 100) / 100,
         productId: id,
         buyerId: user.id,
         sellerId: product.sellerId,
@@ -993,6 +996,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/settings", async (_req, res) => {
+    try {
+      const rate = await getServiceFeeRate();
+      const logo = await storage.getSiteSetting("logo");
+      res.json({ commissionRate: rate, logo });
+    } catch (error) {
+      handleApiError(res, error);
+    }
+  });
+
+  app.get("/api/admin/settings", isAuthenticated, isAdmin, async (_req, res) => {
+    try {
+      const rate = await getServiceFeeRate();
+      const logo = await storage.getSiteSetting("logo");
+      res.json({ commissionRate: rate, logo });
+    } catch (error) {
+      handleApiError(res, error);
+    }
+  });
+
+  app.put("/api/admin/settings", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      if (req.body.commissionRate !== undefined) {
+        await storage.setSiteSetting("commission_rate", String(req.body.commissionRate));
+      }
+      if (req.body.logo !== undefined) {
+        await storage.setSiteSetting("logo", req.body.logo ?? "");
+      }
+      res.sendStatus(204);
+    } catch (error) {
+      handleApiError(res, error);
+    }
+  });
+
   app.get("/api/admin/billing", isAuthenticated, isAdmin, async (_req, res) => {
     try {
       const orders = await storage.getOrdersForBilling();
@@ -1028,11 +1065,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const items = await storage.getOrderItems(o.id);
         const productTotalWithFee = items.reduce((sum, i) => sum + Number(i.totalPrice), 0);
         const shippingTotal = Number(o.total_amount) - productTotalWithFee;
+        const rate = await getServiceFeeRate();
         // Calculate the seller payout by removing the service fee from the
         // product total. Use the same rounding logic as when the fee was
         // applied so the amount matches what sellers expect.
         const payoutAmount =
-          Math.round((removeServiceFee(productTotalWithFee) + shippingTotal) * 100) / 100;
+          Math.round((removeServiceFee(productTotalWithFee, rate) + shippingTotal) * 100) / 100;
         groups[key].orders.push({ id: o.id, code: o.code, total_amount: payoutAmount });
         groups[key].total += payoutAmount;
       }
@@ -1075,8 +1113,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           0,
         );
         const shippingTotal = Number(p.total_amount) - productTotalWithFee;
+        const rate = await getServiceFeeRate();
         const payoutAmount =
-          Math.round((removeServiceFee(productTotalWithFee) + shippingTotal) * 100) /
+          Math.round((removeServiceFee(productTotalWithFee, rate) + shippingTotal) * 100) /
           100;
         groups[p.seller_id].payouts.push({
           id: p.id,

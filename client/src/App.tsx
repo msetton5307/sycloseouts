@@ -1,6 +1,8 @@
 import { Switch, Route } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
+import { useEffect } from "react";
+import { useSettings, setServiceFeeRate } from "@/hooks/use-settings";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/hooks/use-auth";
@@ -48,6 +50,7 @@ import AdminTicketsPage from "@/pages/admin/tickets";
 import AdminMessagesPage from "@/pages/admin/messages";
 import AdminUserProfilePage from "@/pages/admin/user-profile";
 import AdminEmailTemplatesPage from "@/pages/admin/email-templates";
+import AdminSettingsPage from "@/pages/admin/settings";
 import AboutPage from "@/pages/about-page";
 import SellerAgreementPage from "@/pages/seller-agreement";
 import BuyerAgreementPage from "@/pages/buyer-agreement";
@@ -55,6 +58,16 @@ import NotificationsPage from "@/pages/notifications-page";
 import SuspendedPage from "@/pages/suspended";
 import WireInstructionsPage from "@/pages/wire-instructions";
 import NotFound from "@/pages/not-found";
+
+function SettingsLoader() {
+  const { data } = useSettings();
+  useEffect(() => {
+    if (data && data.commissionRate !== undefined) {
+      setServiceFeeRate(data.commissionRate);
+    }
+  }, [data]);
+  return null;
+}
 
 function Router() {
   return (
@@ -111,6 +124,7 @@ function Router() {
       <ProtectedRoute path="/admin/orders/:id" component={AdminOrderDetailPage} allowedRoles={["admin"]} />
       <ProtectedRoute path="/admin/applications" component={AdminApplications} allowedRoles={["admin"]} />
       <ProtectedRoute path="/admin/featured" component={FeaturedProductsPage} allowedRoles={["admin"]} />
+      <ProtectedRoute path="/admin/settings" component={AdminSettingsPage} allowedRoles={["admin"]} />
       <ProtectedRoute path="/admin/messages" component={AdminMessagesPage} allowedRoles={["admin"]} />
       <ProtectedRoute path="/admin/email-templates" component={AdminEmailTemplatesPage} allowedRoles={["admin"]} />
       <ProtectedRoute path="/admin/tickets" component={AdminTicketsPage} allowedRoles={["admin"]} />
@@ -124,6 +138,7 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
+      <SettingsLoader />
       <AuthProvider>
         <CartProvider>
           <TooltipProvider>
@@ -136,5 +151,4 @@ function App() {
     </QueryClientProvider>
   );
 }
-
 export default App;
