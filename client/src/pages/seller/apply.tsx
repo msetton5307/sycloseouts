@@ -353,6 +353,7 @@ export default function SellerApply() {
                             <FormLabel>Company (Optional)</FormLabel>
                             <FormControl>
                               <Input
+                                type="text"
                                 placeholder="Your company name"
                                 {...field}
                               />
@@ -538,6 +539,7 @@ export default function SellerApply() {
                             <FormLabel>Company Name</FormLabel>
                             <FormControl>
                               <Input
+                                type="text"
                                 placeholder="Your company name"
                                 {...field}
                               />
@@ -651,6 +653,7 @@ export default function SellerApply() {
                             <FormLabel>Website (Optional)</FormLabel>
                             <FormControl>
                               <Input
+                                type="text"
                                 placeholder="https://www.example.com"
                                 {...field}
                               />
