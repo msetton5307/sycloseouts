@@ -2014,7 +2014,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Address not found" });
       }
 
-      const updated = await storage.updateAddress(id, req.body);
+      const { id: _ignore, createdAt, ...data } = req.body as Record<string, any>;
+      const updated = await storage.updateAddress(id, data);
       res.json(updated);
     } catch (error) {
       handleApiError(res, error);
