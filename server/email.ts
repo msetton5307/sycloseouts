@@ -322,6 +322,7 @@ export async function sendSellerOrderEmail(
   </body>
 </html>`;
 
+  const logo = await getLogoAttachment();
   const mailOptions = {
     from: process.env.SMTP_FROM || user,
     to,
@@ -474,6 +475,7 @@ export async function sendPasswordResetEmail(to: string, code: string) {
     </body>
   </html>`;
 
+  const logo = await getLogoAttachment();
   const mailOptions = {
     from: process.env.SMTP_FROM || user,
     to,
@@ -648,10 +650,11 @@ export async function sendWireInstructionsEmail(to: string, order: Order) {
             </table>
           </td>
         </tr>
-      </table>
+  </table>
     </body>
   </html>`;
 
+  const logo = await getLogoAttachment();
   const mailOptions = {
     from: process.env.SMTP_FROM || user,
     to,
@@ -768,6 +771,7 @@ export async function sendSellerPayoutEmail(
   </body>
 </html>`;
 
+  const logo = await getLogoAttachment();
   const mailOptions = {
     from: process.env.SMTP_FROM || user,
     to,
