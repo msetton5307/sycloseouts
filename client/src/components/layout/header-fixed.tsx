@@ -50,7 +50,7 @@ export default function Header() {
               <div className="flex-shrink-0 flex items-center">
                 <Link href="/">
                   {settings?.logo ? (
-                    <img src={settings.logo} alt="Logo" className="h-8 w-auto" />
+                    <img src={settings.logo} alt="Logo" className="h-full w-auto" />
                   ) : (
                     <span className="text-primary font-bold text-2xl cursor-pointer">SY Closeouts</span>
                   )}
