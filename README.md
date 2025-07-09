@@ -28,3 +28,6 @@ Buyers selecting this payment method receive a styled HTML email with the invoic
 
 When paying via wire, the buyer initially receives only the wire transfer instructions.
 The invoice and seller notification emails are sent once the order status is updated to **ordered** after the wire is received.
+
+## Support Tickets
+When a user submits a support ticket they receive an email confirming the ticket number. Set `SUPPORT_EMAIL_FROM` to control the "from" address for these messages and `SUPPORT_EMAIL_CC` to copy another address on every ticket email.
