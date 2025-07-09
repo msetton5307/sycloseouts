@@ -76,6 +76,21 @@ export default function SellerApply() {
     registerMutation.mutate(values);
   }
 
+  // Setup form with zod validation
+  const form = useForm<ApplicationFormData>({
+    resolver: zodResolver(applicationSchema),
+    defaultValues: {
+      contactName: user ? `${user.firstName} ${user.lastName}` : "",
+      companyName: user?.company || "",
+      contactEmail: user?.email || "",
+      contactPhone: "",
+      inventoryType: "",
+      yearsInBusiness: 0,
+      website: "",
+      additionalInfo: "",
+    },
+  });
+
   useEffect(() => {
     if (user && !hasInitialized.current) {
       form.reset({
@@ -91,21 +106,6 @@ export default function SellerApply() {
       hasInitialized.current = true;
     }
   }, [user, form]);
-
-  // Setup form with zod validation
-  const form = useForm<ApplicationFormData>({
-    resolver: zodResolver(applicationSchema),
-    defaultValues: {
-      contactName: user ? `${user.firstName} ${user.lastName}` : "",
-      companyName: user?.company || "",
-      contactEmail: user?.email || "",
-      contactPhone: "",
-      inventoryType: "",
-      yearsInBusiness: 0,
-      website: "",
-      additionalInfo: "",
-    },
-  });
 
   // Handle form submission with React Query
   const { mutate: submitApplication, isPending } = useMutation({
