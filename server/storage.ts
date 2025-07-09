@@ -850,18 +850,26 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(siteSettings)
       .where(eq(siteSettings.key, key));
-    return row?.value as string | undefined;
+    if (!row) {
+      return undefined;
+    }
+    try {
+      return JSON.parse((row as any).value);
+    } catch {
+      return (row as any).value as string;
+    }
   }
 
   async setSiteSetting(key: string, value: string): Promise<void> {
+    const stored = JSON.stringify(value);
     const existing = await this.getSiteSetting(key);
     if (existing !== undefined) {
       await db
         .update(siteSettings)
-        .set({ value })
+        .set({ value: stored })
         .where(eq(siteSettings.key, key));
     } else {
-      await db.insert(siteSettings).values({ key, value });
+      await db.insert(siteSettings).values({ key, value: stored });
     }
   }
 }
