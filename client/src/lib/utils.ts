@@ -1,17 +1,18 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { getServiceFeeRate, DEFAULT_SERVICE_FEE_RATE } from "@/hooks/use-settings";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export const SERVICE_FEE_RATE = 0.035;
+
 
 // Remove the service fee by reversing the addition logic. The price with fee
 // is rounded up when added, so we round down when removing to avoid losing
 // cents due to floating point math.
-export function removeServiceFee(priceWithFee: number): number {
-  return Math.floor((priceWithFee / (1 + SERVICE_FEE_RATE)) * 100) / 100;
+export function removeServiceFee(priceWithFee: number, rate: number = getServiceFeeRate()): number {
+  return Math.floor((priceWithFee / (1 + rate)) * 100) / 100;
 }
 
 // Round a number up to the nearest cent
@@ -20,8 +21,8 @@ export function roundUpToCent(amount: number): number {
 }
 
 // Apply the service fee and round up to the nearest cent
-export function addServiceFee(basePrice: number): number {
-  return roundUpToCent(basePrice * (1 + SERVICE_FEE_RATE));
+export function addServiceFee(basePrice: number, rate: number = getServiceFeeRate()): number {
+  return roundUpToCent(basePrice * (1 + rate));
 }
 
 export function formatCurrency(amount: number): string {
@@ -89,16 +90,22 @@ export function getEstimatedDeliveryDate(): Date {
 }
 
 
-export function calculateOrderCommission(order: { items: { totalPrice: number }[] }): number {
+export function calculateOrderCommission(
+  order: { items: { totalPrice: number }[] },
+  rate: number = getServiceFeeRate(),
+): number {
   const productTotalWithFee = order.items.reduce((sum, i) => sum + i.totalPrice, 0);
-  const productTotalWithoutFee = removeServiceFee(productTotalWithFee);
+  const productTotalWithoutFee = removeServiceFee(productTotalWithFee, rate);
   return Math.round((productTotalWithFee - productTotalWithoutFee) * 100) / 100;
 }
 
-export function calculateSellerPayout(order: { items: { totalPrice: number }[]; totalAmount: number }): number {
+export function calculateSellerPayout(
+  order: { items: { totalPrice: number }[]; totalAmount: number },
+  rate: number = getServiceFeeRate(),
+): number {
   const productTotalWithFee = order.items.reduce((sum, i) => sum + i.totalPrice, 0);
   const shippingTotal = order.totalAmount - productTotalWithFee;
-  return Math.round((removeServiceFee(productTotalWithFee) + shippingTotal) * 100) / 100;
+  return Math.round((removeServiceFee(productTotalWithFee, rate) + shippingTotal) * 100) / 100;
 }
 
 export function calculateShippingTotal(order: { items: { totalPrice: number }[]; totalAmount: number }): number {

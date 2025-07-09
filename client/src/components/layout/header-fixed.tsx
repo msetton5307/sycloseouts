@@ -23,6 +23,7 @@ import { useCart } from "@/hooks/use-cart";
 import { useUnreadMessages } from "@/hooks/use-messages";
 import CartDrawer from "@/components/cart/cart-drawer";
 import MobileNav from "@/components/layout/mobile-nav";
+import { useSettings } from "@/hooks/use-settings";
 
 export default function Header() {
   const [location] = useLocation();
@@ -30,6 +31,7 @@ export default function Header() {
   const { itemCount, setIsCartOpen } = useCart();
   const unread = useUnreadMessages();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { data: settings } = useSettings();
 
   const isActive = (path: string) => {
     return location === path;
@@ -47,7 +49,11 @@ export default function Header() {
             <div className="flex">
               <div className="flex-shrink-0 flex items-center">
                 <Link href="/">
-                  <span className="text-primary font-bold text-2xl cursor-pointer">SY Closeouts</span>
+                  {settings?.logo ? (
+                    <img src={settings.logo} alt="Logo" className="h-8 w-auto" />
+                  ) : (
+                    <span className="text-primary font-bold text-2xl cursor-pointer">SY Closeouts</span>
+                  )}
                 </Link>
               </div>
               <nav className="hidden sm:ml-6 sm:flex sm:space-x-8 items-center">
