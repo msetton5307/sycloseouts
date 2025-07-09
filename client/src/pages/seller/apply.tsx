@@ -4,7 +4,7 @@ import { useAuth, registerSchemaBase } from "@/hooks/use-auth";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -29,6 +29,7 @@ import {
 import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
 import { Package, CheckCircle, Loader2 } from "lucide-react";
+import { SellerApplication } from "@shared/schema";
 
 // Application schema for zod validation
 const applicationSchema = z.object({
@@ -68,6 +69,22 @@ export default function SellerApply() {
   const { toast } = useToast();
   const [isSubmitSuccess, setIsSubmitSuccess] = useState(false);
   const hasInitialized = useRef(false);
+
+  const { data: existingApplication } = useQuery<SellerApplication | null>({
+    queryKey: ["/api/seller-applications/my"],
+    enabled: !!user,
+    queryFn: async () => {
+      const res = await fetch("/api/seller-applications/my", {
+        credentials: "include",
+      });
+      if (res.status === 404) return null;
+      if (!res.ok) {
+        const text = (await res.text()) || res.statusText;
+        throw new Error(text);
+      }
+      return (await res.json()) as SellerApplication;
+    },
+  });
 
   const signupForm = useForm<SellerSignupData>({
     resolver: zodResolver(sellerSignupSchema),
@@ -166,6 +183,9 @@ export default function SellerApply() {
     },
   });
 
+  const showPendingMessage =
+    isSubmitSuccess || existingApplication?.status === "pending";
+
   // Submit handler
   function onSubmit(data: ApplicationFormData) {
     submitApplication(data);
@@ -175,7 +195,7 @@ export default function SellerApply() {
     <>
       <Header />
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {isSubmitSuccess ? (
+        {showPendingMessage ? (
           <div className="text-center max-w-md mx-auto py-16">
             <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
             <h1 className="text-3xl font-extrabold text-gray-900 mb-4">
