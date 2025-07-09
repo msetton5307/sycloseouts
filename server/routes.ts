@@ -15,6 +15,7 @@ import {
   sendWireInstructionsEmail,
   sendWireReminderEmail,
   sendSellerPayoutEmail,
+  sendSupportTicketEmail,
 } from "./email";
 import { generateInvoicePdf, generateSalesReportPdf } from "./pdf";
 import {
@@ -2101,6 +2102,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const user = req.user as Express.User;
       const data = insertSupportTicketSchema.parse({ ...req.body, userId: user.id });
       const ticket = await storage.createSupportTicket(data);
+      try {
+        await sendSupportTicketEmail(user.email, ticket.id);
+      } catch (err) {
+        console.error("Failed to send support ticket email", err);
+      }
       res.status(201).json(ticket);
     } catch (error) {
       handleApiError(res, error);

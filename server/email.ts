@@ -785,3 +785,26 @@ export async function sendSellerPayoutEmail(
     console.error("Failed to send seller payout email", err);
   }
 }
+
+export async function sendSupportTicketEmail(to: string, ticketId: number) {
+  if (!transporter) {
+    console.warn("Email transport not configured; skipping support ticket email");
+    return;
+  }
+
+  const mailOptions = {
+    from: process.env.SUPPORT_EMAIL_FROM || process.env.SMTP_FROM || user,
+    to,
+    cc: process.env.SUPPORT_EMAIL_CC,
+    subject: `Support Ticket #${ticketId}`,
+    text:
+      `We\'ve received your support request. Your ticket number is #${ticketId}. ` +
+      `We will communicate with you via email regarding this issue.`,
+  } as nodemailer.SendMailOptions;
+
+  try {
+    await transporter.sendMail(mailOptions);
+  } catch (err) {
+    console.error("Failed to send support ticket email", err);
+  }
+}
