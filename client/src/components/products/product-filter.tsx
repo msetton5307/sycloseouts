@@ -19,6 +19,7 @@ import {
   SheetClose,
 } from "@/components/ui/sheet";
 import { Search, Filter, RefreshCw } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface FilterValues {
   search: string;
@@ -39,6 +40,7 @@ export default function ProductFilter({
   conditions = ["All Conditions", "New", "Like New", "Good", "Refurbished"],
 }: ProductFilterProps) {
   const [, setLocation] = useLocation();
+  const isMobile = useIsMobile();
   const [filters, setFilters] = useState<FilterValues>({
     search: "",
     category: "All Categories",
@@ -200,7 +202,7 @@ export default function ProductFilter({
       )}
 
       {/* Mobile Filter Sheet */}
-      <Sheet open={showFilters} onOpenChange={setShowFilters}>
+      <Sheet open={isMobile && showFilters} onOpenChange={setShowFilters}>
         <SheetContent side="bottom" className="p-6 md:hidden space-y-4">
           <SheetHeader>
             <SheetTitle>Filters</SheetTitle>
