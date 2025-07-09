@@ -15,8 +15,8 @@ export const loginSchema = z.object({
   password: z.string().min(6, "Password must be at least 6 characters long"),
 });
 
-// Create a registration schema manually rather than extending insertUserSchema
-export const registerSchema = z.object({
+// Create a base registration schema that other forms can extend
+export const registerSchemaBase = z.object({
   username: z.string().min(1, "Username is required"),
   password: z.string().min(6, "Password must be at least 6 characters long"),
   email: z.string().email("Please enter a valid email"),
@@ -32,10 +32,16 @@ export const registerSchema = z.object({
   role: z.string().default("buyer"),
   resaleCertUrl: z.string().optional().default(""),
   confirmPassword: z.string(),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords don't match",
-  path: ["confirmPassword"],
 });
+
+// Registration schema used on the signup page with password confirmation check
+export const registerSchema = registerSchemaBase.refine(
+  (data) => data.password === data.confirmPassword,
+  {
+    message: "Passwords don't match",
+    path: ["confirmPassword"],
+  }
+);
 
 type AuthContextType = {
   user: User | null;

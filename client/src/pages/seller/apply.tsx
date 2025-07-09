@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
-import { useAuth, registerSchema } from "@/hooks/use-auth";
+import { useAuth, registerSchemaBase } from "@/hooks/use-auth";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -42,6 +42,24 @@ const applicationSchema = z.object({
   additionalInfo: z.string().optional(),
 });
 
+// Combined registration + application schema for new sellers
+const sellerSignupSchema = registerSchemaBase
+  .extend({
+    inventoryType: z.string().min(1, "Inventory type is required"),
+    yearsInBusiness: z
+      .coerce
+      .number()
+      .min(0, "Years must be a positive number"),
+    website: z.string().optional(),
+    additionalInfo: z.string().optional(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ["confirmPassword"],
+  });
+
+type SellerSignupData = z.infer<typeof sellerSignupSchema>;
+
 type ApplicationFormData = z.infer<typeof applicationSchema>;
 
 export default function SellerApply() {
@@ -51,8 +69,8 @@ export default function SellerApply() {
   const [isSubmitSuccess, setIsSubmitSuccess] = useState(false);
   const hasInitialized = useRef(false);
 
-  const signupForm = useForm<z.infer<typeof registerSchema>>({
-    resolver: zodResolver(registerSchema),
+  const signupForm = useForm<SellerSignupData>({
+    resolver: zodResolver(sellerSignupSchema),
     defaultValues: {
       username: "",
       password: "",
@@ -69,11 +87,27 @@ export default function SellerApply() {
       country: "United States",
       role: "seller",
       resaleCertUrl: "",
+      inventoryType: "",
+      yearsInBusiness: 0,
+      website: "",
+      additionalInfo: "",
     },
   });
 
-  function onSignup(values: z.infer<typeof registerSchema>) {
-    registerMutation.mutate(values);
+  async function onSignupAndApply(values: SellerSignupData) {
+    const { inventoryType, yearsInBusiness, website, additionalInfo, ...userData } =
+      values;
+    await registerMutation.mutateAsync(userData);
+    await submitApplication({
+      contactName: `${values.firstName} ${values.lastName}`,
+      companyName: values.company || "",
+      contactEmail: values.email,
+      contactPhone: values.phone,
+      inventoryType,
+      yearsInBusiness,
+      website,
+      additionalInfo,
+    });
   }
 
   // Setup form with zod validation
@@ -108,7 +142,7 @@ export default function SellerApply() {
   }, [user, form]);
 
   // Handle form submission with React Query
-  const { mutate: submitApplication, isPending } = useMutation({
+  const { mutateAsync: submitApplication, isPending } = useMutation({
     mutationFn: async (data: ApplicationFormData) => {
       const res = await apiRequest("POST", "/api/seller-applications", data);
       return res.json();
@@ -273,15 +307,16 @@ export default function SellerApply() {
               {!user ? (
                 <>
                   <h2 className="text-2xl font-bold mb-6">
-                    Create a Seller Account
+                    Seller Registration
                   </h2>
                   <p className="text-gray-600 mb-8">
-                    Fill out the form below to create your seller account.
+                    Complete the form below to create your account and submit
+                    your seller application in one step.
                   </p>
 
                   <Form {...signupForm}>
                     <form
-                      onSubmit={signupForm.handleSubmit(onSignup)}
+                      onSubmit={signupForm.handleSubmit(onSignupAndApply)}
                       className="space-y-4"
                     >
                       <div className="grid grid-cols-2 gap-4">
@@ -353,6 +388,7 @@ export default function SellerApply() {
                             <FormLabel>Company (Optional)</FormLabel>
                             <FormControl>
                               <Input
+                                type="text"
                                 placeholder="Your company name"
                                 {...field}
                               />
@@ -475,18 +511,105 @@ export default function SellerApply() {
                           </FormItem>
                         )}
                       />
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
+                        <FormField
+                          control={signupForm.control}
+                          name="inventoryType"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Type of Inventory</FormLabel>
+                              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select inventory type" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="Electronics">Electronics</SelectItem>
+                                  <SelectItem value="Apparel">Apparel</SelectItem>
+                                  <SelectItem value="Home Goods">Home Goods</SelectItem>
+                                  <SelectItem value="Toys & Games">Toys & Games</SelectItem>
+                                  <SelectItem value="Kitchen">Kitchen</SelectItem>
+                                  <SelectItem value="Beauty">Beauty</SelectItem>
+                                  <SelectItem value="Mixed Lots">Mixed Lots</SelectItem>
+                                  <SelectItem value="Other">Other</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={signupForm.control}
+                          name="yearsInBusiness"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Years in Business</FormLabel>
+                              <FormControl>
+                                <Input type="number" min="0" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      <FormField
+                        control={signupForm.control}
+                        name="website"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Website (Optional)</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="text"
+                                placeholder="https://www.example.com"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormDescription>
+                              If you have a company website, please provide the URL
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={signupForm.control}
+                        name="additionalInfo"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Additional Information</FormLabel>
+                            <FormControl>
+                              <Textarea
+                                placeholder="Tell us more about your business and inventory..."
+                                className="h-32"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormDescription>
+                              Share any additional information about your business, inventory sources, or past experience selling wholesale
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
                       <Button
                         type="submit"
                         className="w-full"
-                        disabled={registerMutation.isPending}
+                        disabled={registerMutation.isPending || isPending}
                       >
-                        {registerMutation.isPending ? (
+                        {registerMutation.isPending || isPending ? (
                           <>
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Creating account...
+                            Submitting...
                           </>
                         ) : (
-                          "Create Account"
+                          "Create Account & Apply"
                         )}
                       </Button>
                     </form>
@@ -538,6 +661,7 @@ export default function SellerApply() {
                             <FormLabel>Company Name</FormLabel>
                             <FormControl>
                               <Input
+                                type="text"
                                 placeholder="Your company name"
                                 {...field}
                               />
@@ -651,6 +775,7 @@ export default function SellerApply() {
                             <FormLabel>Website (Optional)</FormLabel>
                             <FormControl>
                               <Input
+                                type="text"
                                 placeholder="https://www.example.com"
                                 {...field}
                               />
