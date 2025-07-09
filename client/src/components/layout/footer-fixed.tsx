@@ -8,12 +8,14 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useSettings } from "@/hooks/use-settings";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 
 export default function Footer() {
   const [email, setEmail] = useState("");
   const { toast } = useToast();
+  const { data: settings } = useSettings();
   
   const handleSubscribe = (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,7 +32,11 @@ export default function Footer() {
         <div className="xl:grid xl:grid-cols-3 xl:gap-8">
           <div className="space-y-8 xl:col-span-1">
             <Link href="/">
-              <span className="text-primary font-bold text-2xl cursor-pointer">SY Closeouts</span>
+              {settings?.logo ? (
+                <img src={settings.logo} alt="Logo" className="h-8 w-auto" />
+              ) : (
+                <span className="text-primary font-bold text-2xl cursor-pointer">SY Closeouts</span>
+              )}
             </Link>
             <p className="text-gray-400 text-base max-w-xs">
               Your trusted source for wholesale liquidation merchandise. 

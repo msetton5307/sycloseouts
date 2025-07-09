@@ -23,6 +23,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useCart } from "@/hooks/use-cart";
 import { useUnreadMessages } from "@/hooks/use-messages";
 import { useUnreadNotifications } from "@/hooks/use-notifications";
+import { useSettings } from "@/hooks/use-settings";
 import CartDrawer from "@/components/cart/cart-drawer";
 import MobileNav from "@/components/layout/mobile-nav";
 import { ReactNode } from "react";
@@ -39,6 +40,7 @@ export default function Header({ dashboardTabs, onProfileClick }: HeaderProps) {
   const { itemCount, setIsCartOpen } = useCart();
   const unread = useUnreadMessages();
   const unreadNotifs = useUnreadNotifications();
+  const { data: settings } = useSettings();
 
   const handleLogout = () => logoutMutation.mutate();
   const isActive = (path: string) => location === path;
@@ -56,9 +58,11 @@ export default function Header({ dashboardTabs, onProfileClick }: HeaderProps) {
             <div className="flex">
               <div className="flex-shrink-0 flex items-center">
                 <Link href="/">
-                  <span className="text-primary font-bold text-2xl cursor-pointer">
-                    SY Closeouts
-                  </span>
+                  {settings?.logo ? (
+                    <img src={settings.logo} alt="Logo" className="h-8 w-auto" />
+                  ) : (
+                    <span className="text-primary font-bold text-2xl cursor-pointer">SY Closeouts</span>
+                  )}
                 </Link>
               </div>
               <nav className="hidden sm:ml-6 sm:flex sm:space-x-8 items-center">
