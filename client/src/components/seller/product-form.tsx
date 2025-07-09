@@ -866,32 +866,36 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <FormField
-            control={form.control}
-            name="orderMultiple"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Order By Quantity</FormLabel>
-                <FormControl>
-                  <Input
-                    type="number"
-                    min="1"
-                    placeholder="1"
-                    {...field}
-                    value={field.value === undefined ? "" : field.value}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      field.onChange(value === "" ? undefined : parseInt(value));
-                    }}
-                  />
-                </FormControl>
-                <FormDescription>
-                  Buyers must order in multiples of this amount.
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          {sellIndividuals && (
+            <FormField
+              control={form.control}
+              name="orderMultiple"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Order By Quantity</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      min="1"
+                      placeholder="1"
+                      {...field}
+                      value={field.value === undefined ? "" : field.value}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        field.onChange(
+                          value === "" ? undefined : parseInt(value)
+                        );
+                      }}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Buyers must order in multiples of this amount.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
           
           <FormField
             control={form.control}
