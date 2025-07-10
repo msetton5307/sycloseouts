@@ -24,10 +24,18 @@ export const registerSchemaBase = z.object({
   lastName: z.string().min(1, "Last name is required"),
   company: z.string().optional(),
   phone: z.string().min(1, "Phone is required"),
-  address: z.string().min(1, "Address is required"),
+  address: z
+    .string()
+    .min(1, "Address is required")
+    .refine((val) => /\d/.test(val) && /[A-Za-z]/.test(val) && val.length >= 5, {
+      message: "Please enter a valid street address",
+    }),
   city: z.string().min(1, "City is required"),
   state: z.string().min(1, "State is required"),
-  zipCode: z.string().min(1, "ZIP code is required"),
+  zipCode: z
+    .string()
+    .min(1, "ZIP code is required")
+    .regex(/^\d{5}(?:-\d{4})?$/, "Please enter a valid ZIP code"),
   country: z.string().default("United States"),
   role: z.string().default("buyer"),
   resaleCertUrl: z.string().optional().default(""),

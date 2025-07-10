@@ -28,6 +28,7 @@ import {
   insertSupportTicketSchema,
   insertEmailTemplateSchema,
   insertStrikeReasonSchema,
+  insertAddressSchema,
   insertUserNoteSchema,
   type InsertUserNote,
   insertOfferSchema,
@@ -2165,7 +2166,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/addresses", isAuthenticated, async (req, res) => {
     try {
       const user = req.user as Express.User;
-      const address = await storage.createAddress({ ...req.body, userId: user.id });
+      const data = insertAddressSchema.parse({ ...req.body, userId: user.id });
+      const address = await storage.createAddress(data);
       res.status(201).json(address);
     } catch (error) {
       handleApiError(res, error);
