@@ -973,12 +973,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(404).json({ message: "User not found" });
         }
 
-        const { subject, message } = req.body;
+        const { subject, message, html } = req.body;
         if (!subject || !message) {
           return res.status(400).json({ message: "Missing subject or message" });
         }
 
-        await sendAdminUserEmail(user.email, subject, message);
+        await sendAdminUserEmail(user.email, subject, message, html);
         res.sendStatus(204);
       } catch (error) {
         handleApiError(res, error);

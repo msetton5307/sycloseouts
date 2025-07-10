@@ -627,6 +627,7 @@ export async function sendAdminUserEmail(
   to: string,
   subject: string,
   body: string,
+  html?: string,
 ) {
   if (!transporter) {
     console.warn("Email transport not configured; skipping admin user email");
@@ -638,7 +639,8 @@ export async function sendAdminUserEmail(
     to,
     subject,
     text: body,
-  };
+    ...(html ? { html } : {}),
+  } as nodemailer.SendMailOptions;
 
   try {
     await transporter.sendMail(mailOptions);
