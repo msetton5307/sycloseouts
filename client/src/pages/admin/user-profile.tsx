@@ -24,6 +24,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import ChatMessage from "@/components/messages/chat-message";
 import { useAdminUserMessages } from "@/hooks/use-messages";
+import { useUserNotes, useCreateUserNote } from "@/hooks/use-user-notes";
+import { Textarea } from "@/components/ui/textarea";
 
 export default function AdminUserProfilePage() {
   const { id } = useParams();
@@ -48,6 +50,10 @@ export default function AdminUserProfilePage() {
   });
 
   const { data: messages = [] } = useAdminUserMessages(userId);
+  const { data: notes = [] } = useUserNotes(userId);
+  const createNote = useCreateUserNote(userId);
+  const [noteText, setNoteText] = useState("");
+  const [relatedUser, setRelatedUser] = useState("");
 
   const onTimeRate = orders.length
     ? orders.filter(o => o.status === "delivered").length / orders.length
@@ -203,6 +209,47 @@ export default function AdminUserProfilePage() {
             {messages.map(m => (
               <ChatMessage key={m.id} message={m} isOwn={m.senderId === userId} />
             ))}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Admin Notes ({notes.length})</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {notes.map(n => (
+              <div key={n.id} className="border rounded p-2 text-sm space-y-1">
+                <div className="text-xs text-gray-500">
+                  {format(new Date(n.createdAt), "PPP")}
+                  {n.relatedUserId ? ` - Related User #${n.relatedUserId}` : ""}
+                </div>
+                <div className="whitespace-pre-wrap">{n.note}</div>
+              </div>
+            ))}
+            <Textarea
+              value={noteText}
+              onChange={e => setNoteText(e.target.value)}
+              placeholder="New note"
+            />
+            <Input
+              type="number"
+              value={relatedUser}
+              onChange={e => setRelatedUser(e.target.value)}
+              placeholder="Related user ID (optional)"
+            />
+            <Button
+              onClick={() => {
+                createNote.mutate({
+                  note: noteText,
+                  relatedUserId: relatedUser ? Number(relatedUser) : undefined,
+                });
+                setNoteText("");
+                setRelatedUser("");
+              }}
+              disabled={createNote.isPending}
+            >
+              Add Note
+            </Button>
           </CardContent>
         </Card>
 

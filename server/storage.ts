@@ -15,7 +15,8 @@ import {
   emailTemplates, EmailTemplate, InsertEmailTemplate,
   siteSettings,
   userStrikes, UserStrike, InsertUserStrike,
-  strikeReasons, StrikeReason, InsertStrikeReason
+  strikeReasons, StrikeReason, InsertStrikeReason,
+  userNotes, UserNote, InsertUserNote
 } from "@shared/schema";
 import session from "express-session";
 import { db, pool } from "./db";
@@ -135,6 +136,10 @@ export interface IStorage {
   getAllStrikes(): Promise<any[]>;
   getUserStrikes(userId: number): Promise<UserStrike[]>;
   createUserStrike(strike: InsertUserStrike): Promise<UserStrike>;
+
+  // User note methods
+  getUserNotes(userId: number): Promise<UserNote[]>;
+  createUserNote(note: InsertUserNote): Promise<UserNote>;
 
   // Cart methods
   getCart(userId: number): Promise<Cart | undefined>;
@@ -878,6 +883,20 @@ export class DatabaseStorage implements IStorage {
   async createUserStrike(strike: InsertUserStrike): Promise<UserStrike> {
     const [s] = await db.insert(userStrikes).values(strike).returning();
     return s;
+  }
+
+  // User note methods
+  async getUserNotes(userId: number): Promise<UserNote[]> {
+    return await db
+      .select()
+      .from(userNotes)
+      .where(eq(userNotes.userId, userId))
+      .orderBy(desc(userNotes.createdAt));
+  }
+
+  async createUserNote(note: InsertUserNote): Promise<UserNote> {
+    const [n] = await db.insert(userNotes).values(note).returning();
+    return n;
   }
 
   // Cart methods
