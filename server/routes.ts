@@ -27,6 +27,7 @@ import {
   insertSellerApplicationSchema,
   insertSupportTicketSchema,
   insertEmailTemplateSchema,
+  insertStrikeReasonSchema,
   insertOfferSchema,
   offers as offersTable,
   orders as ordersTable,
@@ -992,6 +993,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
           .replace(/\[company\]/gi, u.company || "");
         await sendHtmlEmail(u.email, template.subject, html);
       }
+      res.sendStatus(204);
+    } catch (error) {
+      handleApiError(res, error);
+    }
+  });
+
+  // Strike reason routes
+  app.get("/api/admin/strike-reasons", isAuthenticated, isAdmin, async (_req, res) => {
+    try {
+      const reasons = await storage.getStrikeReasons();
+      res.json(reasons);
+    } catch (error) {
+      handleApiError(res, error);
+    }
+  });
+
+  app.post("/api/admin/strike-reasons", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const data = insertStrikeReasonSchema.parse(req.body);
+      const reason = await storage.createStrikeReason(data);
+      res.status(201).json(reason);
+    } catch (error) {
+      handleApiError(res, error);
+    }
+  });
+
+  app.put("/api/admin/strike-reasons/:id", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id, 10);
+      if (Number.isNaN(id)) return res.status(400).json({ message: "Invalid reason ID" });
+      const reason = await storage.updateStrikeReason(id, req.body);
+      if (!reason) return res.status(404).json({ message: "Reason not found" });
+      res.json(reason);
+    } catch (error) {
+      handleApiError(res, error);
+    }
+  });
+
+  app.delete("/api/admin/strike-reasons/:id", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id, 10);
+      if (Number.isNaN(id)) return res.status(400).json({ message: "Invalid reason ID" });
+      await storage.deleteStrikeReason(id);
       res.sendStatus(204);
     } catch (error) {
       handleApiError(res, error);
@@ -2144,9 +2188,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/strikes", isAuthenticated, isAdmin, async (req, res) => {
     try {
-      const { userId, reason, suspensionDays, permanent } = req.body as {
+      const { userId, reason, message, suspensionDays, permanent } = req.body as {
         userId: number;
         reason: string;
+        message?: string;
         suspensionDays?: number;
         permanent?: boolean;
       };
@@ -2171,7 +2216,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await sendSuspensionEmail(user.email, suspensionDays);
       }
 
-      await sendStrikeEmail(user.email, reason, strikeNumber, suspensionDays, permanent);
+      await sendStrikeEmail(user.email, reason, strikeNumber, suspensionDays, permanent, message);
       res.status(201).json(strike);
     } catch (error) {
       handleApiError(res, error);
