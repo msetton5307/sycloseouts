@@ -14,7 +14,8 @@ import {
   notifications, Notification, InsertNotification,
   emailTemplates, EmailTemplate, InsertEmailTemplate,
   siteSettings,
-  userStrikes, UserStrike, InsertUserStrike
+  userStrikes, UserStrike, InsertUserStrike,
+  strikeReasons, StrikeReason, InsertStrikeReason
 } from "@shared/schema";
 import session from "express-session";
 import { db, pool } from "./db";
@@ -122,6 +123,13 @@ export interface IStorage {
   createEmailTemplate(t: InsertEmailTemplate): Promise<EmailTemplate>;
   updateEmailTemplate(id: number, t: Partial<EmailTemplate>): Promise<EmailTemplate | undefined>;
   deleteEmailTemplate(id: number): Promise<void>;
+
+  // Strike reason methods
+  getStrikeReasons(): Promise<StrikeReason[]>;
+  getStrikeReason(id: number): Promise<StrikeReason | undefined>;
+  createStrikeReason(reason: InsertStrikeReason): Promise<StrikeReason>;
+  updateStrikeReason(id: number, reason: Partial<StrikeReason>): Promise<StrikeReason | undefined>;
+  deleteStrikeReason(id: number): Promise<void>;
 
   // Strike methods
   getAllStrikes(): Promise<any[]>;
@@ -816,6 +824,34 @@ export class DatabaseStorage implements IStorage {
 
   async deleteEmailTemplate(id: number): Promise<void> {
     await db.delete(emailTemplates).where(eq(emailTemplates.id, id));
+  }
+
+  // Strike reason methods
+  async getStrikeReasons(): Promise<StrikeReason[]> {
+    return await db.select().from(strikeReasons).orderBy(desc(strikeReasons.createdAt));
+  }
+
+  async getStrikeReason(id: number): Promise<StrikeReason | undefined> {
+    const [r] = await db.select().from(strikeReasons).where(eq(strikeReasons.id, id));
+    return r;
+  }
+
+  async createStrikeReason(reason: InsertStrikeReason): Promise<StrikeReason> {
+    const [r] = await db.insert(strikeReasons).values(reason).returning();
+    return r;
+  }
+
+  async updateStrikeReason(id: number, reason: Partial<StrikeReason>): Promise<StrikeReason | undefined> {
+    const [r] = await db
+      .update(strikeReasons)
+      .set(reason)
+      .where(eq(strikeReasons.id, id))
+      .returning();
+    return r;
+  }
+
+  async deleteStrikeReason(id: number): Promise<void> {
+    await db.delete(strikeReasons).where(eq(strikeReasons.id, id));
   }
 
   // Strike methods

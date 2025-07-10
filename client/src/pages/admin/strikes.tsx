@@ -1,10 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectTrigger,
@@ -13,6 +15,12 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 import { useStrikes, useCreateStrike, useUserStrikes } from "@/hooks/use-strikes";
+import {
+  useStrikeReasons,
+  useCreateStrikeReason,
+  useUpdateStrikeReason,
+  useDeleteStrikeReason,
+} from "@/hooks/use-strike-reasons";
 import { apiRequest } from "@/lib/queryClient";
 import { User } from "@shared/schema";
 
@@ -28,29 +36,78 @@ export default function AdminStrikesPage() {
     },
   });
 
+  const { data: reasons = [] } = useStrikeReasons();
+  const createReason = useCreateStrikeReason();
+  const updateReason = useUpdateStrikeReason();
+  const deleteReason = useDeleteStrikeReason();
+
   const [selectedUser, setSelectedUser] = useState<number>();
   const [search, setSearch] = useState("");
-  const [reason, setReason] = useState("late/missed shipment");
+  const [reasonId, setReasonId] = useState<number>();
+  const [creatingNew, setCreatingNew] = useState(false);
+  const [templateName, setTemplateName] = useState("");
+  const [message, setMessage] = useState("");
+  const [newReasonName, setNewReasonName] = useState("");
+  const [newReasonBody, setNewReasonBody] = useState("");
+  const [editingId, setEditingId] = useState<number | null>(null);
 
-  const reasonOptions = [
-    "late/missed shipment",
-    "not paying the wire",
-    "sharing contact info",
-    "inaccurate listing/shipping information",
-  ];
+  useEffect(() => {
+    if (reasons.length > 0 && reasonId === undefined && !creatingNew) {
+      setReasonId(reasons[0].id);
+      setMessage(reasons[0].emailBody);
+    }
+  }, [reasons, creatingNew]);
+
+  useEffect(() => {
+    if (creatingNew) return;
+    const r = reasons.find(r => r.id === reasonId);
+    if (r) setMessage(r.emailBody);
+  }, [reasonId, reasons, creatingNew]);
 
   const { data: userStrikes = [] } = useUserStrikes(selectedUser ?? 0);
   const [suspensionDays, setSuspensionDays] = useState<string>("");
   const [permanent, setPermanent] = useState(false);
 
+  function buildPreview() {
+    const r = creatingNew ? { name: templateName } : reasons.find(t => t.id === reasonId);
+    const count = (userStrikes?.length || 0) + 1;
+    const consequences =
+      count === 1
+        ? "This is a warning."
+        : count === 2
+        ? "Further violations may lead to suspension or removal."
+        : "Your account is at risk of permanent suspension.";
+    const days = Number(suspensionDays);
+    const suspensionText = permanent
+      ? "Your account has been suspended permanently."
+      : days > 0
+      ? `Your account has been suspended for ${days} day${days === 1 ? "" : "s"}.`
+      : "";
+    return `<!DOCTYPE html><html><body style="margin:0;padding:20px;background:#f7f7f7;font-family:Arial,sans-serif;"><table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:auto;background:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 0 10px rgba(0,0,0,0.1);"><tr><td style="background:#222;padding:20px;text-align:center;"><h1 style="margin:0;color:#ffffff;font-size:24px;">SY Closeouts</h1><p style="margin:5px 0 0;color:#bbbbbb;">Account Strike Notice</p></td></tr><tr><td style="padding:20px;"><p style="margin-top:0;">You have received a strike for the following reason:</p><p style="font-weight:bold;">${r?.name || ""}</p>${message ? `<p>${message}</p>` : ""}<p>This is strike <strong>${count}</strong> of 3 on your account.</p><p>${consequences}</p>${suspensionText ? `<p>${suspensionText}</p>` : ""}</td></tr><tr><td style="background:#f9f9f9;padding:20px;"><p style="margin:0;">If you have questions please reply to this email.</p><p style="margin:5px 0 0;">Thank you for using <strong>SY Closeouts</strong>.</p></td></tr></table></body></html>`;
+  }
+
   function submit() {
     if (!selectedUser) return;
+    const r = reasons.find(t => t.id === reasonId);
+    if (!r) return;
     create.mutate({
       userId: selectedUser,
-      reason,
+      reason: r.name,
+      message,
       suspensionDays: suspensionDays ? Number(suspensionDays) : undefined,
       permanent,
     });
+  }
+
+  function saveReason() {
+    if (editingId) {
+      updateReason.mutate({ id: editingId, values: { name: newReasonName, emailBody: newReasonBody } });
+    } else {
+      createReason.mutate({ name: newReasonName, emailBody: newReasonBody });
+    }
+    setEditingId(null);
+    setNewReasonName("");
+    setNewReasonBody("");
   }
 
   return (
@@ -96,16 +153,60 @@ export default function AdminStrikesPage() {
                 {users.find(u => u.id === selectedUser)?.lastName} ({users.find(u => u.id === selectedUser)?.email}) - {userStrikes.length} strike{userStrikes.length === 1 ? "" : "s"}
               </div>
             )}
-            <Select value={reason} onValueChange={setReason}>
+            <Select
+              value={creatingNew ? "new" : reasonId?.toString()}
+              onValueChange={v => {
+                if (v === "new") {
+                  setCreatingNew(true);
+                  setReasonId(undefined);
+                  setTemplateName("");
+                  setMessage("");
+                } else {
+                  setCreatingNew(false);
+                  setReasonId(Number(v));
+                }
+              }}
+            >
               <SelectTrigger className="w-[300px]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {reasonOptions.map(r => (
-                  <SelectItem key={r} value={r}>{r}</SelectItem>
+                {reasons.map(r => (
+                  <SelectItem key={r.id} value={r.id.toString()}>{r.name}</SelectItem>
                 ))}
+                <SelectItem value="new">New reason...</SelectItem>
               </SelectContent>
             </Select>
+            {creatingNew && (
+              <Input
+                placeholder="Reason name"
+                value={templateName}
+                onChange={e => setTemplateName(e.target.value)}
+              />
+            )}
+            <Textarea rows={4} value={message} onChange={e => setMessage(e.target.value)} />
+            <Button
+              variant="outline"
+              onClick={() => {
+                if (creatingNew) {
+                  createReason.mutate({ name: templateName, emailBody: message });
+                  setCreatingNew(false);
+                } else if (reasonId) {
+                  updateReason.mutate({ id: reasonId, values: { emailBody: message } });
+                }
+              }}
+              disabled={
+                creatingNew
+                  ? !templateName || createReason.isPending
+                  : !reasonId || updateReason.isPending
+              }
+            >
+              Save Template
+            </Button>
+            <div
+              className="border rounded p-4"
+              dangerouslySetInnerHTML={{ __html: buildPreview() }}
+            />
             {selectedUser && (
               <div className="flex items-center gap-2">
                 <input
@@ -176,6 +277,51 @@ export default function AdminStrikesPage() {
                     </TableCell>
                   </TableRow>
                 )}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Manage Strike Reasons</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <Input
+              placeholder="Reason name"
+              value={newReasonName}
+              onChange={e => setNewReasonName(e.target.value)}
+            />
+            <Textarea
+              rows={4}
+              placeholder="Email message"
+              value={newReasonBody}
+              onChange={e => setNewReasonBody(e.target.value)}
+            />
+            <Button onClick={saveReason} disabled={createReason.isPending}>
+              Save
+            </Button>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {reasons.map(r => (
+                  <TableRow key={r.id}>
+                    <TableCell>{r.name}</TableCell>
+                    <TableCell className="space-x-2">
+                      <Button size="sm" variant="outline" onClick={() => {setNewReasonName(r.name); setNewReasonBody(r.emailBody); setEditingId(r.id);}}>
+                        Edit
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => deleteReason.mutate(r.id)}>
+                        Delete
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
               </TableBody>
             </Table>
           </CardContent>
