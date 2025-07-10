@@ -44,29 +44,32 @@ export default function AdminStrikesPage() {
   const [selectedUser, setSelectedUser] = useState<number>();
   const [search, setSearch] = useState("");
   const [reasonId, setReasonId] = useState<number>();
+  const [creatingNew, setCreatingNew] = useState(false);
+  const [templateName, setTemplateName] = useState("");
   const [message, setMessage] = useState("");
   const [newReasonName, setNewReasonName] = useState("");
   const [newReasonBody, setNewReasonBody] = useState("");
   const [editingId, setEditingId] = useState<number | null>(null);
 
   useEffect(() => {
-    if (reasons.length > 0 && reasonId === undefined) {
+    if (reasons.length > 0 && reasonId === undefined && !creatingNew) {
       setReasonId(reasons[0].id);
       setMessage(reasons[0].emailBody);
     }
-  }, [reasons]);
+  }, [reasons, creatingNew]);
 
   useEffect(() => {
+    if (creatingNew) return;
     const r = reasons.find(r => r.id === reasonId);
     if (r) setMessage(r.emailBody);
-  }, [reasonId, reasons]);
+  }, [reasonId, reasons, creatingNew]);
 
   const { data: userStrikes = [] } = useUserStrikes(selectedUser ?? 0);
   const [suspensionDays, setSuspensionDays] = useState<string>("");
   const [permanent, setPermanent] = useState(false);
 
   function buildPreview() {
-    const r = reasons.find(t => t.id === reasonId);
+    const r = creatingNew ? { name: templateName } : reasons.find(t => t.id === reasonId);
     const count = (userStrikes?.length || 0) + 1;
     const consequences =
       count === 1
@@ -150,7 +153,20 @@ export default function AdminStrikesPage() {
                 {users.find(u => u.id === selectedUser)?.lastName} ({users.find(u => u.id === selectedUser)?.email}) - {userStrikes.length} strike{userStrikes.length === 1 ? "" : "s"}
               </div>
             )}
-            <Select value={reasonId?.toString()} onValueChange={v => setReasonId(Number(v))}>
+            <Select
+              value={creatingNew ? "new" : reasonId?.toString()}
+              onValueChange={v => {
+                if (v === "new") {
+                  setCreatingNew(true);
+                  setReasonId(undefined);
+                  setTemplateName("");
+                  setMessage("");
+                } else {
+                  setCreatingNew(false);
+                  setReasonId(Number(v));
+                }
+              }}
+            >
               <SelectTrigger className="w-[300px]">
                 <SelectValue />
               </SelectTrigger>
@@ -158,13 +174,32 @@ export default function AdminStrikesPage() {
                 {reasons.map(r => (
                   <SelectItem key={r.id} value={r.id.toString()}>{r.name}</SelectItem>
                 ))}
+                <SelectItem value="new">New reason...</SelectItem>
               </SelectContent>
             </Select>
+            {creatingNew && (
+              <Input
+                placeholder="Reason name"
+                value={templateName}
+                onChange={e => setTemplateName(e.target.value)}
+              />
+            )}
             <Textarea rows={4} value={message} onChange={e => setMessage(e.target.value)} />
             <Button
               variant="outline"
-              onClick={() => reasonId && updateReason.mutate({ id: reasonId, values: { emailBody: message } })}
-              disabled={!reasonId || updateReason.isPending}
+              onClick={() => {
+                if (creatingNew) {
+                  createReason.mutate({ name: templateName, emailBody: message });
+                  setCreatingNew(false);
+                } else if (reasonId) {
+                  updateReason.mutate({ id: reasonId, values: { emailBody: message } });
+                }
+              }}
+              disabled={
+                creatingNew
+                  ? !templateName || createReason.isPending
+                  : !reasonId || updateReason.isPending
+              }
             >
               Save Template
             </Button>
