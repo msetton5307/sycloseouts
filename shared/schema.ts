@@ -451,6 +451,33 @@ export const insertNotificationSchema = createInsertSchema(notifications).omit({
   createdAt: true,
 });
 
+// Logs of emails sent using templates
+export const emailLogs = pgTable("email_logs", {
+  id: serial("id").primaryKey(),
+  templateId: integer("template_id")
+    .notNull()
+    .references(() => emailTemplates.id),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id),
+  subject: text("subject").notNull(),
+  html: text("html").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const emailLogsRelations = relations(emailLogs, ({ one }) => ({
+  template: one(emailTemplates, {
+    fields: [emailLogs.templateId],
+    references: [emailTemplates.id],
+  }),
+  user: one(users, { fields: [emailLogs.userId], references: [users.id] }),
+}));
+
+export const insertEmailLogSchema = createInsertSchema(emailLogs).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Strikes issued by admins to buyers or sellers
 export const userStrikes = pgTable("user_strikes", {
   id: serial("id").primaryKey(),
@@ -564,6 +591,9 @@ export type InsertStrikeReason = z.infer<typeof insertStrikeReasonSchema>;
 
 export type EmailTemplate = typeof emailTemplates.$inferSelect;
 export type InsertEmailTemplate = z.infer<typeof insertEmailTemplateSchema>;
+
+export type EmailLog = typeof emailLogs.$inferSelect;
+export type InsertEmailLog = z.infer<typeof insertEmailLogSchema>;
 
 export type SiteSetting = typeof siteSettings.$inferSelect;
 export type InsertSiteSetting = z.infer<typeof insertSiteSettingSchema>;

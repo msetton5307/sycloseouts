@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { EmailTemplate } from "@shared/schema";
+import { EmailTemplate, EmailLog } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 
 export function useEmailTemplates() {
@@ -38,4 +38,11 @@ export function useSendEmailTemplate() {
   return useMutation((data: { id: number; group: string }) =>
     apiRequest("POST", `/api/admin/email-templates/${data.id}/send`, { group: data.group })
   );
+}
+
+export function useEmailLogs(templateId?: number) {
+  return useQuery<(EmailLog & { user: any })[]>({
+    queryKey: ["/api/admin/email-templates", templateId, "logs"],
+    enabled: !!templateId,
+  });
 }
