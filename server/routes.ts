@@ -17,6 +17,7 @@ import {
   sendSellerPayoutEmail,
   sendSupportTicketEmail,
   sendStrikeEmail,
+  sendOrderCancelledEmail,
 } from "./email";
 import { generateInvoicePdf, generateSalesReportPdf } from "./pdf";
 import {
@@ -1286,6 +1287,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
           await sendWireReminderEmail(buyer.email, order.code);
         }
         res.sendStatus(204);
+      } catch (error) {
+        handleApiError(res, error);
+      }
+    },
+  );
+
+  app.post(
+    "/api/admin/orders/:id/cancel",
+    isAuthenticated,
+    isAdmin,
+    async (req, res) => {
+      try {
+        const id = parseInt(req.params.id, 10);
+        if (Number.isNaN(id)) {
+          return res.status(400).json({ message: "Invalid order ID" });
+        }
+        const order = await storage.getOrder(id);
+        if (!order) {
+          return res.status(404).json({ message: "Order not found" });
+        }
+        if (order.status !== "awaiting_wire") {
+          return res.status(400).json({ message: "Order cannot be cancelled" });
+        }
+
+        const updatedOrder = await storage.updateOrder(id, { status: "cancelled" });
+        res.json(updatedOrder);
+
+        const buyer = await storage.getUser(order.buyerId);
+        if (buyer) {
+          sendOrderCancelledEmail(buyer.email, order.code).catch(console.error);
+        }
+
+        await storage.createNotification({
+          userId: updatedOrder.buyerId,
+          type: 'order',
+          content: `Order #${updatedOrder.code} was cancelled`,
+          link: `/buyer/orders/${updatedOrder.id}`,
+        });
+        await storage.createNotification({
+          userId: updatedOrder.sellerId,
+          type: 'order',
+          content: `Order #${updatedOrder.code} was cancelled`,
+          link: `/seller/orders`,
+        });
       } catch (error) {
         handleApiError(res, error);
       }

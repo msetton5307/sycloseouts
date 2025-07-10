@@ -803,6 +803,27 @@ export async function sendWireReminderEmail(to: string, orderCode: string) {
     console.error("Failed to send wire reminder email", err);
   }
 }
+
+export async function sendOrderCancelledEmail(to: string, orderCode: string) {
+  if (!transporter) {
+    console.warn("Email transport not configured; skipping order cancelled email");
+    return;
+  }
+
+  const mailOptions = {
+    from: process.env.SMTP_FROM || user,
+    to,
+    subject: `Order #${orderCode} Cancelled`,
+    text:
+      `Your order #${orderCode} has been cancelled because payment was not received within 48 hours. This may result in a strike on your account.`,
+  } as nodemailer.SendMailOptions;
+
+  try {
+    await transporter.sendMail(mailOptions);
+  } catch (err) {
+    console.error("Failed to send order cancelled email", err);
+  }
+}
 export async function sendSellerPayoutEmail(
   to: string,
   amount: number,
