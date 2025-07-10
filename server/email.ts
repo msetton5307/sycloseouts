@@ -542,6 +542,7 @@ export async function sendStrikeEmail(
   count: number,
   suspensionDays?: number,
   permanent?: boolean,
+  messageHtml?: string,
 ) {
   if (!transporter) {
     console.warn("Email transport not configured; skipping strike email");
@@ -582,6 +583,7 @@ export async function sendStrikeEmail(
           <td style="padding:20px;">
             <p style="margin-top:0;">You have received a strike for the following reason:</p>
             <p style="font-weight:bold;">${reason}</p>
+            ${messageHtml ? messageHtml : ""}
             <p>This is strike <strong>${count}</strong> of 3 on your account.</p>
             <p>${consequences}</p>
             ${suspensionText ? `<p>${suspensionText}</p>` : ""}
@@ -598,8 +600,10 @@ export async function sendStrikeEmail(
   </html>`;
 
   const logo = await getLogoAttachment();
+  const messageText = messageHtml ? messageHtml.replace(/<[^>]*>/g, "") : "";
   const text =
     `You have received a strike for: ${reason}\n` +
+    (messageText ? `${messageText}\n` : "") +
     `Strike ${count} of 3. ${consequences}` +
     (suspensionText ? `\n${suspensionText}` : "");
 
