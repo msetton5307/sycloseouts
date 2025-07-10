@@ -822,7 +822,7 @@ export class DatabaseStorage implements IStorage {
   async getAllStrikes(): Promise<any[]> {
     const result = await pool.query(
       `SELECT s.id, s.user_id, s.reason, s.created_at,
-              u.first_name, u.last_name, u.email
+              u.first_name, u.last_name, u.email, u.suspended_until
          FROM user_strikes s
          JOIN users u ON u.id = s.user_id
         ORDER BY s.created_at DESC`,
