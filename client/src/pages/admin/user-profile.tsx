@@ -66,20 +66,6 @@ export default function AdminUserProfilePage() {
 
   const queryClient = useQueryClient();
 
-  const [emailSubject, setEmailSubject] = useState("");
-  const [emailBody, setEmailBody] = useState("");
-
-  const sendEmail = useMutation({
-    mutationFn: () =>
-      apiRequest("POST", `/api/admin/users/${userId}/email`, {
-        subject: emailSubject,
-        message: emailBody,
-      }),
-    onSuccess: () => {
-      setEmailSubject("");
-      setEmailBody("");
-    },
-  });
 
   const [suspendDays, setSuspendDays] = useState(0);
   const suspendUser = useMutation({
@@ -229,40 +215,47 @@ export default function AdminUserProfilePage() {
               <CardHeader>
                 <CardTitle>Admin Notes ({notes.length})</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-2">
-                {notes.map(n => (
-                  <div key={n.id} className="border rounded p-2 text-sm space-y-1">
-                    <div className="text-xs text-gray-500">
-                      {format(new Date(n.createdAt), "PPP")}
-                      {n.relatedUserId ? ` - Related User #${n.relatedUserId}` : ""}
+              <CardContent className="space-y-4">
+                <div className="space-y-2 max-h-60 overflow-y-auto">
+                  {notes.map(n => (
+                    <div key={n.id} className="rounded border p-3 bg-gray-50">
+                      <div className="text-xs text-gray-500 flex justify-between">
+                        <span>{format(new Date(n.createdAt), "PPP")}</span>
+                        {n.relatedUserId && <span>Related #{n.relatedUserId}</span>}
+                      </div>
+                      <p className="mt-2 whitespace-pre-wrap">{n.note}</p>
                     </div>
-                    <div className="whitespace-pre-wrap">{n.note}</div>
-                  </div>
-                ))}
-                <Textarea
-                  value={noteText}
-                  onChange={e => setNoteText(e.target.value)}
-                  placeholder="New note"
-                />
-                <Input
-                  type="number"
-                  value={relatedUser}
-                  onChange={e => setRelatedUser(e.target.value)}
-                  placeholder="Related user ID (optional)"
-                />
-                <Button
-                  onClick={() => {
-                    createNote.mutate({
-                      note: noteText,
-                      relatedUserId: relatedUser ? Number(relatedUser) : undefined,
-                    });
-                    setNoteText("");
-                    setRelatedUser("");
-                  }}
-                  disabled={createNote.isPending}
-                >
-                  Add Note
-                </Button>
+                  ))}
+                  {notes.length === 0 && (
+                    <p className="text-sm text-gray-500">No notes yet.</p>
+                  )}
+                </div>
+                <div className="space-y-2 border-t pt-4">
+                  <Textarea
+                    value={noteText}
+                    onChange={e => setNoteText(e.target.value)}
+                    placeholder="Write a note..."
+                  />
+                  <Input
+                    type="number"
+                    value={relatedUser}
+                    onChange={e => setRelatedUser(e.target.value)}
+                    placeholder="Related user ID (optional)"
+                  />
+                  <Button
+                    onClick={() => {
+                      createNote.mutate({
+                        note: noteText,
+                        relatedUserId: relatedUser ? Number(relatedUser) : undefined,
+                      });
+                      setNoteText("");
+                      setRelatedUser("");
+                    }}
+                    disabled={createNote.isPending}
+                  >
+                    Add Note
+                  </Button>
+                </div>
               </CardContent>
             </Card>
 
@@ -292,27 +285,6 @@ export default function AdminUserProfilePage() {
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Send Email</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                <Input
-                  placeholder="Subject"
-                  value={emailSubject}
-                  onChange={e => setEmailSubject(e.target.value)}
-                />
-                <textarea
-                  className="w-full border rounded p-2"
-                  rows={4}
-                  value={emailBody}
-                  onChange={e => setEmailBody(e.target.value)}
-                />
-                <Button onClick={() => sendEmail.mutate()} disabled={sendEmail.isPending}>
-                  Send Email
-                </Button>
-              </CardContent>
-            </Card>
           </div>
         )}
       </main>
@@ -320,4 +292,3 @@ export default function AdminUserProfilePage() {
     </>
   );
 }
-
