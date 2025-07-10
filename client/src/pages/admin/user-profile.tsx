@@ -14,6 +14,11 @@ import { getQueryFn, apiRequest } from "@/lib/queryClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
+  Avatar,
+  AvatarImage,
+  AvatarFallback,
+} from "@/components/ui/avatar";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -111,195 +116,205 @@ export default function AdminUserProfilePage() {
   return (
     <>
       <Header />
-      <main className="max-w-7xl mx-auto px-4 py-8 space-y-6">
+      <main className="max-w-7xl mx-auto px-4 py-8">
         <Link href="/admin/users" className="text-primary hover:underline">
           &larr; Back to Users
         </Link>
 
         {user && (
-          <Card>
-            <CardHeader>
-              <CardTitle>{user.firstName} {user.lastName}</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p>Email: {user.email}</p>
-              <p>Username: {user.username}</p>
-              <p>Role: {user.role}</p>
-              {user.suspendedUntil ? (
-                <p>
-                  Suspended until {format(new Date(user.suspendedUntil), "PPP")}
-                </p>
-              ) : (
-                <p>Not suspended</p>
-              )}
-          </CardContent>
-        </Card>
-      )}
-
-      {user?.resaleCertUrl && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Resale Certificate</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <a
-              href={user.resaleCertUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="text-primary underline"
-            >
-              View Uploaded File
-            </a>
-            <div className="flex items-center space-x-2">
-              <Select value={certStatus} onValueChange={setCertStatus}>
-                <SelectTrigger className="w-[150px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="approved">Approved</SelectItem>
-                  <SelectItem value="denied">Denied</SelectItem>
-                </SelectContent>
-              </Select>
-              <Button
-                onClick={() => updateCertStatus.mutate()}
-                disabled={updateCertStatus.isPending}
-              >
-                Update
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Support Tickets ({userTickets.length})</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {userTickets.map(t => (
-              <div key={t.id} className="border rounded p-2">
-                <p className="font-medium">{t.subject}</p>
-                <p className="text-sm text-gray-500">Status: {t.status}</p>
-              </div>
-            ))}
-            {userTickets.length === 0 && <p>No tickets</p>}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Orders ({orders.length})</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <p>On-time delivery rate: {(onTimeRate * 100).toFixed(0)}%</p>
-            {orders.map(o => (
-              <div key={o.id} className="border rounded p-2 text-sm">
-                Order #{o.code} - {o.status}
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>All Messages ({messages.length})</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2 max-h-64 overflow-y-auto bg-gray-50">
-            {messages.map(m => (
-              <ChatMessage key={m.id} message={m} isOwn={m.senderId === userId} />
-            ))}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Admin Notes ({notes.length})</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {notes.map(n => (
-              <div key={n.id} className="border rounded p-2 text-sm space-y-1">
-                <div className="text-xs text-gray-500">
-                  {format(new Date(n.createdAt), "PPP")}
-                  {n.relatedUserId ? ` - Related User #${n.relatedUserId}` : ""}
+          <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Card className="md:col-span-2">
+              <CardHeader>
+                <CardTitle>Profile</CardTitle>
+              </CardHeader>
+              <CardContent className="flex items-center space-x-4">
+                <Avatar className="h-20 w-20">
+                  <AvatarImage src={user.avatarUrl || undefined} alt={user.username} />
+                  <AvatarFallback>
+                    {user.firstName?.charAt(0)}{user.lastName?.charAt(0)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="space-y-1">
+                  <p className="text-lg font-semibold">
+                    {user.firstName} {user.lastName}
+                  </p>
+                  <p className="text-sm text-gray-500">{user.email}</p>
+                  <p className="text-sm">Username: {user.username}</p>
+                  <p className="text-sm capitalize">Role: {user.role}</p>
+                  {user.suspendedUntil ? (
+                    <p className="text-sm text-red-600">
+                      Suspended until {format(new Date(user.suspendedUntil), "PPP")}
+                    </p>
+                  ) : (
+                    <p className="text-sm text-green-600">Active</p>
+                  )}
                 </div>
-                <div className="whitespace-pre-wrap">{n.note}</div>
-              </div>
-            ))}
-            <Textarea
-              value={noteText}
-              onChange={e => setNoteText(e.target.value)}
-              placeholder="New note"
-            />
-            <Input
-              type="number"
-              value={relatedUser}
-              onChange={e => setRelatedUser(e.target.value)}
-              placeholder="Related user ID (optional)"
-            />
-            <Button
-              onClick={() => {
-                createNote.mutate({
-                  note: noteText,
-                  relatedUserId: relatedUser ? Number(relatedUser) : undefined,
-                });
-                setNoteText("");
-                setRelatedUser("");
-              }}
-              disabled={createNote.isPending}
-            >
-              Add Note
-            </Button>
-          </CardContent>
-        </Card>
+              </CardContent>
+            </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Suspend Account</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="suspend-days">Suspension Duration (days)</Label>
-              <Input
-                id="suspend-days"
-                type="number"
-                value={suspendDays}
-                onChange={e => setSuspendDays(parseInt(e.target.value))}
-                placeholder="Days"
-              />
-              <Button onClick={() => suspendUser.mutate()} disabled={suspendUser.isPending}>
-                Suspend
-              </Button>
-            </div>
-            {user?.suspendedUntil && new Date(user.suspendedUntil) > new Date() && (
-              <Button variant="secondary" onClick={() => reinstateUser.mutate()} disabled={reinstateUser.isPending}>
-                Reinstate Now
-              </Button>
+            {user.resaleCertUrl && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Resale Certificate</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <a
+                    href={user.resaleCertUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-primary underline"
+                  >
+                    View Uploaded File
+                  </a>
+                  <div className="flex items-center space-x-2">
+                    <Select value={certStatus} onValueChange={setCertStatus}>
+                      <SelectTrigger className="w-[150px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="pending">Pending</SelectItem>
+                        <SelectItem value="approved">Approved</SelectItem>
+                        <SelectItem value="denied">Denied</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Button onClick={() => updateCertStatus.mutate()} disabled={updateCertStatus.isPending}>
+                      Update
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
             )}
-          </CardContent>
-        </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Send Email</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <Input
-              placeholder="Subject"
-              value={emailSubject}
-              onChange={e => setEmailSubject(e.target.value)}
-            />
-            <textarea
-              className="w-full border rounded p-2"
-              rows={4}
-              value={emailBody}
-              onChange={e => setEmailBody(e.target.value)}
-            />
-            <Button onClick={() => sendEmail.mutate()} disabled={sendEmail.isPending}>
-              Send Email
-            </Button>
-          </CardContent>
-        </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle>Support Tickets ({userTickets.length})</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {userTickets.map(t => (
+                  <div key={t.id} className="border rounded p-2">
+                    <p className="font-medium">{t.subject}</p>
+                    <p className="text-sm text-gray-500">Status: {t.status}</p>
+                  </div>
+                ))}
+                {userTickets.length === 0 && <p>No tickets</p>}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Orders ({orders.length})</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <p>On-time delivery rate: {(onTimeRate * 100).toFixed(0)}%</p>
+                {orders.map(o => (
+                  <div key={o.id} className="border rounded p-2 text-sm">
+                    Order #{o.code} - {o.status}
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+
+            <Card className="md:col-span-2">
+              <CardHeader>
+                <CardTitle>All Messages ({messages.length})</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2 max-h-64 overflow-y-auto bg-gray-50">
+                {messages.map(m => (
+                  <ChatMessage key={m.id} message={m} isOwn={m.senderId === userId} />
+                ))}
+              </CardContent>
+            </Card>
+
+            <Card className="md:col-span-2">
+              <CardHeader>
+                <CardTitle>Admin Notes ({notes.length})</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {notes.map(n => (
+                  <div key={n.id} className="border rounded p-2 text-sm space-y-1">
+                    <div className="text-xs text-gray-500">
+                      {format(new Date(n.createdAt), "PPP")}
+                      {n.relatedUserId ? ` - Related User #${n.relatedUserId}` : ""}
+                    </div>
+                    <div className="whitespace-pre-wrap">{n.note}</div>
+                  </div>
+                ))}
+                <Textarea
+                  value={noteText}
+                  onChange={e => setNoteText(e.target.value)}
+                  placeholder="New note"
+                />
+                <Input
+                  type="number"
+                  value={relatedUser}
+                  onChange={e => setRelatedUser(e.target.value)}
+                  placeholder="Related user ID (optional)"
+                />
+                <Button
+                  onClick={() => {
+                    createNote.mutate({
+                      note: noteText,
+                      relatedUserId: relatedUser ? Number(relatedUser) : undefined,
+                    });
+                    setNoteText("");
+                    setRelatedUser("");
+                  }}
+                  disabled={createNote.isPending}
+                >
+                  Add Note
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Suspend Account</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="suspend-days">Suspension Duration (days)</Label>
+                  <Input
+                    id="suspend-days"
+                    type="number"
+                    value={suspendDays}
+                    onChange={e => setSuspendDays(parseInt(e.target.value))}
+                    placeholder="Days"
+                  />
+                  <Button onClick={() => suspendUser.mutate()} disabled={suspendUser.isPending}>
+                    Suspend
+                  </Button>
+                </div>
+                {user.suspendedUntil && new Date(user.suspendedUntil) > new Date() && (
+                  <Button variant="secondary" onClick={() => reinstateUser.mutate()} disabled={reinstateUser.isPending}>
+                    Reinstate Now
+                  </Button>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Send Email</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <Input
+                  placeholder="Subject"
+                  value={emailSubject}
+                  onChange={e => setEmailSubject(e.target.value)}
+                />
+                <textarea
+                  className="w-full border rounded p-2"
+                  rows={4}
+                  value={emailBody}
+                  onChange={e => setEmailBody(e.target.value)}
+                />
+                <Button onClick={() => sendEmail.mutate()} disabled={sendEmail.isPending}>
+                  Send Email
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </main>
       <Footer />
     </>
