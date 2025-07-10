@@ -16,6 +16,7 @@ import {
   sendWireReminderEmail,
   sendSellerPayoutEmail,
   sendSupportTicketEmail,
+  sendStrikeEmail,
 } from "./email";
 import { generateInvoicePdf, generateSalesReportPdf } from "./pdf";
 import {
@@ -2085,6 +2086,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
       handleApiError(res, error);
     }
   });
+
+  // Strike routes
+  app.get("/api/strikes", isAuthenticated, isAdmin, async (_req, res) => {
+    try {
+      const strikes = await storage.getAllStrikes();
+      res.json(strikes);
+    } catch (error) {
+      handleApiError(res, error);
+    }
+  });
+
+  app.post("/api/strikes", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const { userId, reason } = req.body as { userId: number; reason: string };
+      if (!userId || !reason) {
+        return res.status(400).json({ message: "Missing userId or reason" });
+      }
+      const user = await storage.getUser(Number(userId));
+      if (!user) return res.status(404).json({ message: "User not found" });
+
+      const strike = await storage.createUserStrike({ userId: Number(userId), reason });
+      await sendStrikeEmail(user.email, reason);
+      res.status(201).json(strike);
+    } catch (error) {
+      handleApiError(res, error);
+    }
+  });
+
+  app.get(
+    "/api/users/:id/strikes",
+    isAuthenticated,
+    isAdmin,
+    async (req, res) => {
+      try {
+        const id = parseInt(req.params.id, 10);
+        if (Number.isNaN(id)) {
+          return res.status(400).json({ message: "Invalid user ID" });
+        }
+        const strikes = await storage.getUserStrikes(id);
+        res.json(strikes);
+      } catch (error) {
+        handleApiError(res, error);
+      }
+    },
+  );
 
   // Support ticket routes
   app.get("/api/support-tickets", isAuthenticated, async (req, res) => {
