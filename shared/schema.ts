@@ -467,6 +467,19 @@ export const insertUserStrikeSchema = createInsertSchema(userStrikes).omit({
   createdAt: true,
 });
 
+// Predefined strike reasons with custom email text
+export const strikeReasons = pgTable("strike_reasons", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  emailBody: text("email_body").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertStrikeReasonSchema = createInsertSchema(strikeReasons).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Site-wide settings key/value store
 export const siteSettings = pgTable("site_settings", {
   key: text("key").primaryKey(),
@@ -520,6 +533,9 @@ export type InsertNotification = z.infer<typeof insertNotificationSchema>;
 
 export type UserStrike = typeof userStrikes.$inferSelect;
 export type InsertUserStrike = z.infer<typeof insertUserStrikeSchema>;
+
+export type StrikeReason = typeof strikeReasons.$inferSelect;
+export type InsertStrikeReason = z.infer<typeof insertStrikeReasonSchema>;
 
 export type EmailTemplate = typeof emailTemplates.$inferSelect;
 export type InsertEmailTemplate = z.infer<typeof insertEmailTemplateSchema>;
