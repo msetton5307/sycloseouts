@@ -542,7 +542,7 @@ export async function sendStrikeEmail(
   count: number,
   suspensionDays?: number,
   permanent?: boolean,
-  message?: string,
+  messageHtml?: string,
 ) {
   if (!transporter) {
     console.warn("Email transport not configured; skipping strike email");
@@ -583,7 +583,7 @@ export async function sendStrikeEmail(
           <td style="padding:20px;">
             <p style="margin-top:0;">You have received a strike for the following reason:</p>
             <p style="font-weight:bold;">${reason}</p>
-            ${message ? `<p>${message}</p>` : ""}
+            ${messageHtml ? messageHtml : ""}
             <p>This is strike <strong>${count}</strong> of 3 on your account.</p>
             <p>${consequences}</p>
             ${suspensionText ? `<p>${suspensionText}</p>` : ""}
@@ -600,9 +600,10 @@ export async function sendStrikeEmail(
   </html>`;
 
   const logo = await getLogoAttachment();
+  const messageText = messageHtml ? messageHtml.replace(/<[^>]*>/g, "") : "";
   const text =
     `You have received a strike for: ${reason}\n` +
-    (message ? `${message}\n` : "") +
+    (messageText ? `${messageText}\n` : "") +
     `Strike ${count} of 3. ${consequences}` +
     (suspensionText ? `\n${suspensionText}` : "");
 
@@ -804,27 +805,6 @@ export async function sendWireReminderEmail(to: string, orderCode: string) {
     await transporter.sendMail(mailOptions);
   } catch (err) {
     console.error("Failed to send wire reminder email", err);
-  }
-}
-
-export async function sendOrderCancelledEmail(to: string, orderCode: string) {
-  if (!transporter) {
-    console.warn("Email transport not configured; skipping order cancelled email");
-    return;
-  }
-
-  const mailOptions = {
-    from: process.env.SMTP_FROM || user,
-    to,
-    subject: `Order #${orderCode} Cancelled`,
-    text:
-      `Your order #${orderCode} has been cancelled because payment was not received within 48 hours. This may result in a strike on your account.`,
-  } as nodemailer.SendMailOptions;
-
-  try {
-    await transporter.sendMail(mailOptions);
-  } catch (err) {
-    console.error("Failed to send order cancelled email", err);
   }
 }
 export async function sendSellerPayoutEmail(

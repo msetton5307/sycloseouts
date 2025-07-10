@@ -6,7 +6,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import {
   Select,
   SelectTrigger,
@@ -83,7 +83,7 @@ export default function AdminStrikesPage() {
       : days > 0
       ? `Your account has been suspended for ${days} day${days === 1 ? "" : "s"}.`
       : "";
-    return `<!DOCTYPE html><html><body style="margin:0;padding:20px;background:#f7f7f7;font-family:Arial,sans-serif;"><table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:auto;background:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 0 10px rgba(0,0,0,0.1);"><tr><td style="background:#222;padding:20px;text-align:center;"><h1 style="margin:0;color:#ffffff;font-size:24px;">SY Closeouts</h1><p style="margin:5px 0 0;color:#bbbbbb;">Account Strike Notice</p></td></tr><tr><td style="padding:20px;"><p style="margin-top:0;">You have received a strike for the following reason:</p><p style="font-weight:bold;">${r?.name || ""}</p>${message ? `<p>${message}</p>` : ""}<p>This is strike <strong>${count}</strong> of 3 on your account.</p><p>${consequences}</p>${suspensionText ? `<p>${suspensionText}</p>` : ""}</td></tr><tr><td style="background:#f9f9f9;padding:20px;"><p style="margin:0;">If you have questions please reply to this email.</p><p style="margin:5px 0 0;">Thank you for using <strong>SY Closeouts</strong>.</p></td></tr></table></body></html>`;
+    return `<!DOCTYPE html><html><body style="margin:0;padding:20px;background:#f7f7f7;font-family:Arial,sans-serif;"><table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:auto;background:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 0 10px rgba(0,0,0,0.1);"><tr><td style="background:#222;padding:20px;text-align:center;"><h1 style="margin:0;color:#ffffff;font-size:24px;">SY Closeouts</h1><p style="margin:5px 0 0;color:#bbbbbb;">Account Strike Notice</p></td></tr><tr><td style="padding:20px;"><p style="margin-top:0;">You have received a strike for the following reason:</p><p style="font-weight:bold;">${r?.name || ""}</p>${message ? message : ""}<p>This is strike <strong>${count}</strong> of 3 on your account.</p><p>${consequences}</p>${suspensionText ? `<p>${suspensionText}</p>` : ""}</td></tr><tr><td style="background:#f9f9f9;padding:20px;"><p style="margin:0;">If you have questions please reply to this email.</p><p style="margin:5px 0 0;">Thank you for using <strong>SY Closeouts</strong>.</p></td></tr></table></body></html>`;
   }
 
   function submit() {
@@ -184,7 +184,7 @@ export default function AdminStrikesPage() {
                 onChange={e => setTemplateName(e.target.value)}
               />
             )}
-            <Textarea rows={4} value={message} onChange={e => setMessage(e.target.value)} />
+            <RichTextEditor value={message} onChange={setMessage} />
             <Button
               variant="outline"
               onClick={() => {
@@ -292,12 +292,7 @@ export default function AdminStrikesPage() {
               value={newReasonName}
               onChange={e => setNewReasonName(e.target.value)}
             />
-            <Textarea
-              rows={4}
-              placeholder="Email message"
-              value={newReasonBody}
-              onChange={e => setNewReasonBody(e.target.value)}
-            />
+            <RichTextEditor value={newReasonBody} onChange={setNewReasonBody} />
             <Button onClick={saveReason} disabled={createReason.isPending}>
               Save
             </Button>
