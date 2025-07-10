@@ -2317,6 +2317,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
     },
   );
 
+  app.get("/api/admin/strike-candidates", isAuthenticated, isAdmin, async (_req, res) => {
+    try {
+      const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+      const [messages, questions, wireOrders, users] = await Promise.all([
+        storage.getMessagesSince(since),
+        storage.getProductQuestionsSince(since),
+        storage.getWireOrders(),
+        storage.getUsers(),
+      ]);
+      const userMap = new Map(users.map(u => [u.id, u]));
+      const candidates: Record<number, { userId: number; firstName: string; lastName: string; email: string; reasons: string[] }> = {};
+      const add = (id: number, reason: string) => {
+        const u = userMap.get(id);
+        if (!u) return;
+        if (!candidates[id]) {
+          candidates[id] = { userId: id, firstName: u.firstName, lastName: u.lastName, email: u.email, reasons: [] };
+        }
+        if (!candidates[id].reasons.includes(reason)) candidates[id].reasons.push(reason);
+      };
+      for (const m of messages) {
+        if (containsContactInfo(m.content)) add(m.senderId, "Shared contact info");
+      }
+      for (const q of questions) {
+        if (containsContactInfo(q.question)) add(q.buyerId, "Shared contact info");
+      }
+      const now = Date.now();
+      for (const o of wireOrders) {
+        if (new Date(o.created_at).getTime() + 48 * 60 * 60 * 1000 < now) {
+          add(o.buyer_id, "Wire payment overdue");
+        }
+      }
+      res.json(Object.values(candidates));
+    } catch (error) {
+      handleApiError(res, error);
+    }
+  });
+
   // Support ticket routes
   app.get("/api/support-tickets", isAuthenticated, async (req, res) => {
     try {

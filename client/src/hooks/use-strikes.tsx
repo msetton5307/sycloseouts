@@ -30,3 +30,7 @@ export function useCreateStrike() {
     },
   });
 }
+
+export function useStrikeCandidates() {
+  return useQuery<any[]>({ queryKey: ["/api/admin/strike-candidates"] });
+}

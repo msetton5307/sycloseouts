@@ -14,7 +14,7 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
-import { useStrikes, useCreateStrike, useUserStrikes } from "@/hooks/use-strikes";
+import { useStrikes, useCreateStrike, useUserStrikes, useStrikeCandidates } from "@/hooks/use-strikes";
 import {
   useStrikeReasons,
   useCreateStrikeReason,
@@ -37,6 +37,7 @@ export default function AdminStrikesPage() {
   });
 
   const { data: reasons = [] } = useStrikeReasons();
+  const { data: candidates = [] } = useStrikeCandidates();
   const createReason = useCreateStrikeReason();
   const updateReason = useUpdateStrikeReason();
   const deleteReason = useDeleteStrikeReason();
@@ -274,6 +275,39 @@ export default function AdminStrikesPage() {
                   <TableRow>
                     <TableCell colSpan={5} className="text-center text-gray-500">
                       No strikes
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Strike Candidates</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>User</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Reasons</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {candidates.map(c => (
+                  <TableRow key={c.userId}>
+                    <TableCell>{c.firstName} {c.lastName}</TableCell>
+                    <TableCell>{c.email}</TableCell>
+                    <TableCell>{c.reasons.join(', ')}</TableCell>
+                  </TableRow>
+                ))}
+                {candidates.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={3} className="text-center text-gray-500">
+                      No candidates
                     </TableCell>
                   </TableRow>
                 )}
