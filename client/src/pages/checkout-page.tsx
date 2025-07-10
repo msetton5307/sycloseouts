@@ -446,7 +446,7 @@ export default function CheckoutPage() {
                     htmlFor={`checkout-addr-${addr.id}`}
                     className="text-sm leading-none cursor-pointer"
                   >
-                    {addr.address}, {addr.city}
+                    {addr.address}, {addr.city}, {addr.state} {addr.zipCode}
                   </label>
                 </div>
               ))}

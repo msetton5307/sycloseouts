@@ -97,7 +97,7 @@ export default function BuyerProfilePage() {
                     <div key={addr.id} className="flex items-start space-x-2 border rounded-md p-4">
                       <RadioGroupItem value={String(addr.id)} id={`addr-${addr.id}`} />
                       <label htmlFor={`addr-${addr.id}`} className="text-sm leading-none cursor-pointer">
-                        {addr.name} - {addr.address}, {addr.city}
+                        {addr.name} - {addr.address}, {addr.city}, {addr.state} {addr.zipCode}
                       </label>
                     </div>
                   ))}

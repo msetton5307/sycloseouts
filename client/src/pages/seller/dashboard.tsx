@@ -876,7 +876,7 @@ export default function SellerDashboard() {
                         <div key={addr.id} className="flex items-start space-x-2 border rounded-md p-4">
                           <RadioGroupItem value={String(addr.id)} id={`seller-addr-${addr.id}`} />
                           <label htmlFor={`seller-addr-${addr.id}`} className="text-sm leading-none cursor-pointer">
-                            {addr.name} - {addr.address}, {addr.city}
+                            {addr.name} - {addr.address}, {addr.city}, {addr.state} {addr.zipCode}
                           </label>
                         </div>
                       ))}

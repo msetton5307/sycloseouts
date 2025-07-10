@@ -6,7 +6,7 @@ import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
 import { sendPasswordResetEmail } from "./email";
-import { User } from "@shared/schema";
+import { User, insertAddressSchema } from "@shared/schema";
 
 declare global {
   namespace Express {
@@ -146,7 +146,7 @@ export function setupAuth(app: Express) {
       });
 
       if (address && city && state && zipCode) {
-        await storage.createAddress({
+        const addrData = insertAddressSchema.parse({
           userId: user.id,
           name: `${user.firstName} ${user.lastName}`,
           company: user.company ?? undefined,
@@ -157,6 +157,7 @@ export function setupAuth(app: Express) {
           country: country || "United States",
           phone,
         });
+        await storage.createAddress(addrData);
       }
 
       await loginAndSaveSession(req, user);

@@ -56,10 +56,23 @@ export const addressesRelations = relations(addresses, ({ one }) => ({
   }),
 }));
 
-export const insertAddressSchema = createInsertSchema(addresses).omit({
-  id: true,
-  createdAt: true,
-});
+export const insertAddressSchema = createInsertSchema(addresses)
+  .omit({
+    id: true,
+    createdAt: true,
+  })
+  .extend({
+    address: z
+      .string()
+      .min(5, "Invalid address")
+      .refine(
+        (val) => /\d/.test(val) && /[A-Za-z]/.test(val),
+        "Invalid address"
+      ),
+    zipCode: z
+      .string()
+      .regex(/^\d{5}(?:-\d{4})?$/, "Invalid ZIP code"),
+  });
 
 // Payment methods schema
 export const paymentMethods = pgTable("payment_methods", {

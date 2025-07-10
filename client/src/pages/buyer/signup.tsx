@@ -256,7 +256,7 @@ export default function BuyerSignupPage() {
                         <FormItem>
                           <FormLabel>Street Address</FormLabel>
                           <FormControl>
-                            <Input placeholder="123 Main St" {...field} />
+                            <Input placeholder="123 Main St" autoComplete="street-address" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
