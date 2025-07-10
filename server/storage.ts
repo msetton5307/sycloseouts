@@ -20,7 +20,7 @@ import {
 } from "@shared/schema";
 import session from "express-session";
 import { db, pool } from "./db";
-import { eq, and, or, desc, SQL, ilike, lte, sql } from "drizzle-orm";
+import { eq, and, or, desc, SQL, ilike, lte, gte, sql } from "drizzle-orm";
 import connectPgSimple from "connect-pg-simple";
 import { generateOrderCode } from "./orderCode";
 import { randomBytes } from "crypto";
@@ -88,6 +88,7 @@ export interface IStorage {
   getLatestOrderBetweenUsers(buyerId: number, sellerId: number): Promise<Order | undefined>;
   getUnreadMessageCount(userId: number): Promise<number>;
   getMessagesForUser(userId: number): Promise<Message[]>;
+  getMessagesSince(since: Date): Promise<Message[]>;
 
   // Notification methods
   getNotifications(userId: number): Promise<Notification[]>;
@@ -104,6 +105,7 @@ export interface IStorage {
   // Product question methods
   createProductQuestion(question: InsertProductQuestion): Promise<ProductQuestion>;
   getProductQuestionsForSeller(sellerId: number): Promise<ProductQuestion[]>;
+  getProductQuestionsSince(since: Date): Promise<ProductQuestion[]>;
 
   // Offer methods
   createOffer(offer: InsertOffer): Promise<Offer>;
@@ -578,6 +580,14 @@ export class DatabaseStorage implements IStorage {
       .orderBy(messages.createdAt);
   }
 
+  async getMessagesSince(since: Date): Promise<Message[]> {
+    return await db
+      .select()
+      .from(messages)
+      .where(gte(messages.createdAt, since))
+      .orderBy(messages.createdAt);
+  }
+
   // Product question methods
   async createProductQuestion(insertQuestion: InsertProductQuestion): Promise<ProductQuestion> {
     const [q] = await db.insert(productQuestions).values(insertQuestion).returning();
@@ -590,6 +600,14 @@ export class DatabaseStorage implements IStorage {
       .from(productQuestions)
       .where(eq(productQuestions.sellerId, sellerId))
       .orderBy(desc(productQuestions.createdAt));
+  }
+
+  async getProductQuestionsSince(since: Date): Promise<ProductQuestion[]> {
+    return await db
+      .select()
+      .from(productQuestions)
+      .where(gte(productQuestions.createdAt, since))
+      .orderBy(productQuestions.createdAt);
   }
 
   // Offer methods
