@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLocation, Link } from "wouter";
 import { useCart } from "@/hooks/use-cart";
 import { useAuth } from "@/hooks/use-auth";
@@ -17,7 +17,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Loader2, CheckCircle, Building, Banknote, ShoppingCart } from "lucide-react";
+import { Loader2, CheckCircle, Building, Banknote, ShoppingCart, ImagePlus } from "lucide-react";
 import { InsertOrder, InsertOrderItem, CartItem } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -34,6 +34,10 @@ export default function CheckoutPage() {
   const [currentStep, setCurrentStep] = useState<"shipping" | "payment" | "confirmation">("shipping");
   const [order, setOrder] = useState<any | null>(null);
   const [orderedItems, setOrderedItems] = useState<CartItem[]>([]);
+
+  const [resaleCertUrl, setResaleCertUrl] = useState("");
+  const [uploadingCert, setUploadingCert] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   // Form states
   const [addresses, setAddresses] = useState<any[]>([]);
@@ -88,6 +92,28 @@ export default function CheckoutPage() {
   const [contactOption, setContactOption] = useState<"saved" | "new">(
     user?.phone || user?.email ? "saved" : "new"
   );
+
+  const handleResaleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingCert(true);
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      if (ev.target && ev.target.result) {
+        setResaleCertUrl(ev.target.result.toString());
+      }
+      setUploadingCert(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    };
+    reader.onerror = () => {
+      setUploadingCert(false);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const triggerResaleUpload = () => {
+    fileInputRef.current?.click();
+  };
 
   useEffect(() => {
     const fetchAddresses = async () => {
@@ -199,6 +225,15 @@ export default function CheckoutPage() {
       return;
     }
 
+    if (user.role === "seller" && !user.resaleCertUrl && !resaleCertUrl) {
+      toast({
+        title: "Resale certificate required",
+        description: "Please upload your resale certificate to continue",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsProcessing(true);
 
     try {
@@ -215,6 +250,18 @@ export default function CheckoutPage() {
         queryClient.invalidateQueries({ queryKey: ["/api/user"] });
       } catch (err) {
         console.error("Failed to save contact info", err);
+      }
+
+      if (user.role === "seller" && !user.resaleCertUrl && resaleCertUrl) {
+        try {
+          await apiRequest("PUT", "/api/users/me", {
+            resaleCertUrl,
+            resaleCertStatus: "pending",
+          });
+          queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+        } catch (err) {
+          console.error("Failed to save resale certificate", err);
+        }
       }
 
       // Save or update shipping address
@@ -586,6 +633,42 @@ export default function CheckoutPage() {
             }
           />
         </div>
+
+        {user?.role === "seller" && !user.resaleCertUrl && (
+          <div>
+            <Label>Resale Certificate</Label>
+            <input type="hidden" value={resaleCertUrl} readOnly />
+            <Button
+              type="button"
+              variant="outline"
+              className="mt-2 w-full"
+              onClick={triggerResaleUpload}
+              disabled={uploadingCert}
+            >
+              {uploadingCert ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Uploading...
+                </>
+              ) : (
+                <>
+                  <ImagePlus className="mr-2 h-4 w-4" />
+                  {resaleCertUrl ? "Replace File" : "Upload File"}
+                </>
+              )}
+            </Button>
+            {resaleCertUrl && (
+              <p className="text-xs text-gray-500 mt-1">File attached</p>
+            )}
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleResaleUpload}
+              className="hidden"
+              accept="application/pdf,image/*"
+            />
+          </div>
+        )}
 
         <Button type="submit" className="w-full">
           Continue to Payment

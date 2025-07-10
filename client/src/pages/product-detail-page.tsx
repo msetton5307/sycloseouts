@@ -155,7 +155,7 @@ export default function ProductDetailPage() {
       ? product.variationPrices[varKey]
       : product?.price ?? 0;
   const unitPrice =
-    product && (!user || user.role === "buyer")
+    product && (!user || user.role === "buyer" || user.role === "seller")
       ? addServiceFee(basePrice)
       : basePrice;
   const totalCost = product ? unitPrice * quantity : 0;

@@ -60,7 +60,7 @@ export default function BannerCarousel() {
           <CarouselContent className="h-full">
             {inStockProducts.map((product) => {
               const price =
-                !user || user.role === "buyer"
+                !user || user.role === "buyer" || user.role === "seller"
                   ? addServiceFee(product.price)
                   : product.price;
               return (

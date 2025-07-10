@@ -445,8 +445,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const user = req.user as Express.User;
 
-      if (user.role !== "buyer") {
-        return res.status(403).json({ message: "Only buyers can create orders" });
+      if (user.role !== "buyer" && user.role !== "seller") {
+        return res
+          .status(403)
+          .json({ message: "Only buyers or sellers can create orders" });
       }
 
       let orderData = insertOrderSchema.parse({
@@ -2101,14 +2103,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/users/me", isAuthenticated, async (req, res) => {
     try {
       const user = req.user as Express.User;
-      const updatedUser = await storage.updateUser(user.id, {
+      const updateData: any = {
         firstName: req.body.firstName,
         lastName: req.body.lastName,
         company: req.body.company,
         phone: req.body.phone,
         address: req.body.address,
         avatarUrl: req.body.avatarUrl,
-      });
+      };
+
+      if (req.body.resaleCertUrl) {
+        updateData.resaleCertUrl = req.body.resaleCertUrl;
+        updateData.resaleCertStatus = "pending";
+      }
+
+      const updatedUser = await storage.updateUser(user.id, updateData);
 
       if (!updatedUser) {
         return res.status(404).json({ message: "User not found" });
