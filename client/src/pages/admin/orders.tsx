@@ -28,6 +28,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2, ArrowLeft } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { formatCurrency, formatDate } from "@/lib/utils";
+import { formatDistanceToNowStrict } from "date-fns";
 import { Order } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 
@@ -47,6 +48,18 @@ export default function AdminOrdersPage() {
     },
     onError: (err: Error) => {
       toast({ title: "Update failed", description: err.message, variant: "destructive" });
+    },
+  });
+
+  const { mutate: cancelOrder } = useMutation({
+    mutationFn: (id: number) =>
+      apiRequest("POST", `/api/admin/orders/${id}/cancel`).then(r => r.json()),
+    onSuccess: () => {
+      toast({ title: "Order cancelled" });
+      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+    },
+    onError: (err: Error) => {
+      toast({ title: "Action failed", description: err.message, variant: "destructive" });
     },
   });
 
@@ -80,10 +93,12 @@ export default function AdminOrdersPage() {
                       <TableHead>Buyer</TableHead>
                       <TableHead>Seller</TableHead>
                       <TableHead>Status</TableHead>
+                      <TableHead>Wire Time Left</TableHead>
                       <TableHead>Shipping</TableHead>
                       <TableHead>Tracking #</TableHead>
                       <TableHead>Label</TableHead>
                       <TableHead className="text-right">Total</TableHead>
+                      <TableHead>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -97,7 +112,7 @@ export default function AdminOrdersPage() {
                         </TableCell>
                         <TableCell>#{o.buyerId}</TableCell>
                         <TableCell>#{o.sellerId}</TableCell>
-                        <TableCell>
+                      <TableCell>
                           <Select value={o.status} onValueChange={s => updateStatus({ id: o.id, status: s })}>
                             <SelectTrigger className="w-[160px]">
                               <SelectValue />
@@ -112,6 +127,16 @@ export default function AdminOrdersPage() {
                             </SelectContent>
                           </Select>
                         </TableCell>
+                        <TableCell>
+                          {o.status === "awaiting_wire"
+                            ? (() => {
+                                const expires = new Date(o.createdAt).getTime() + 48 * 60 * 60 * 1000;
+                                return expires > Date.now()
+                                  ? `${formatDistanceToNowStrict(expires)} left`
+                                  : "Expired";
+                              })()
+                            : "-"}
+                        </TableCell>
                         <TableCell>{o.shippingChoice || "-"}</TableCell>
                         <TableCell>{o.trackingNumber || "-"}</TableCell>
                         <TableCell>
@@ -124,6 +149,13 @@ export default function AdminOrdersPage() {
                           )}
                         </TableCell>
                         <TableCell className="text-right">{formatCurrency(o.totalAmount)}</TableCell>
+                        <TableCell>
+                          {o.status === "awaiting_wire" && (
+                            <Button size="sm" variant="outline" onClick={() => cancelOrder(o.id)}>
+                              Cancel
+                            </Button>
+                          )}
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
