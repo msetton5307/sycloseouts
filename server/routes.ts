@@ -2099,15 +2099,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/strikes", isAuthenticated, isAdmin, async (req, res) => {
     try {
-      const { userId, reason } = req.body as { userId: number; reason: string };
+      const { userId, reason, suspensionDays, permanent } = req.body as {
+        userId: number;
+        reason: string;
+        suspensionDays?: number;
+        permanent?: boolean;
+      };
       if (!userId || !reason) {
         return res.status(400).json({ message: "Missing userId or reason" });
       }
       const user = await storage.getUser(Number(userId));
       if (!user) return res.status(404).json({ message: "User not found" });
 
+      const prev = await storage.getUserStrikes(Number(userId));
+      const strikeNumber = prev.length + 1;
+
       const strike = await storage.createUserStrike({ userId: Number(userId), reason });
-      await sendStrikeEmail(user.email, reason);
+
+      if (permanent) {
+        const until = new Date(Date.now() + 36500 * 86400000);
+        await storage.updateUser(user.id, { suspendedUntil: until });
+        await sendSuspensionEmail(user.email);
+      } else if (suspensionDays && suspensionDays > 0) {
+        const until = new Date(Date.now() + suspensionDays * 86400000);
+        await storage.updateUser(user.id, { suspendedUntil: until });
+        await sendSuspensionEmail(user.email, suspensionDays);
+      }
+
+      await sendStrikeEmail(user.email, reason, strikeNumber, suspensionDays, permanent);
       res.status(201).json(strike);
     } catch (error) {
       handleApiError(res, error);

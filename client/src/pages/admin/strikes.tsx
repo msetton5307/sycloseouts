@@ -5,8 +5,7 @@ import Footer from "@/components/layout/footer";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
-import { useStrikes, useCreateStrike } from "@/hooks/use-strikes";
+import { useStrikes, useCreateStrike, useUserStrikes } from "@/hooks/use-strikes";
 import { User } from "@shared/schema";
 
 export default function AdminStrikesPage() {
@@ -14,7 +13,8 @@ export default function AdminStrikesPage() {
   const { data: users = [] } = useQuery<User[]>({ queryKey: ["/api/users"] });
   const create = useCreateStrike();
 
-  const [selectedUser, setSelectedUser] = useState("");
+  const [selectedUser, setSelectedUser] = useState<number>();
+  const [search, setSearch] = useState("");
   const [reason, setReason] = useState("late/missed shipment");
 
   const reasonOptions = [
@@ -24,9 +24,18 @@ export default function AdminStrikesPage() {
     "inaccurate listing/shipping information",
   ];
 
+  const { data: userStrikes = [] } = useUserStrikes(selectedUser ?? 0);
+  const [suspensionDays, setSuspensionDays] = useState<string>("");
+  const [permanent, setPermanent] = useState(false);
+
   function submit() {
     if (!selectedUser) return;
-    create.mutate({ userId: Number(selectedUser), reason });
+    create.mutate({
+      userId: selectedUser,
+      reason,
+      suspensionDays: suspensionDays ? Number(suspensionDays) : undefined,
+      permanent,
+    });
   }
 
   return (
@@ -38,18 +47,40 @@ export default function AdminStrikesPage() {
             <CardTitle>Issue Strike</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
-            <Select value={selectedUser} onValueChange={setSelectedUser}>
-              <SelectTrigger className="w-[300px]">
-                <SelectValue placeholder="Select user" />
-              </SelectTrigger>
-              <SelectContent>
-                {users.map(u => (
-                  <SelectItem key={u.id} value={String(u.id)}>
-                    {u.firstName} {u.lastName} ({u.email})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <input
+              className="border rounded p-2 w-full md:w-72"
+              placeholder="Search users"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+            />
+            {search && (
+              <div className="border rounded p-2 max-h-40 overflow-y-auto bg-white shadow">
+                {users
+                  .filter(u =>
+                    `${u.firstName} ${u.lastName} ${u.email}`
+                      .toLowerCase()
+                      .includes(search.toLowerCase()),
+                  )
+                  .map(u => (
+                    <div
+                      key={u.id}
+                      className="px-2 py-1 hover:bg-gray-100 cursor-pointer"
+                      onClick={() => {
+                        setSelectedUser(u.id);
+                        setSearch("");
+                      }}
+                    >
+                      {u.firstName} {u.lastName} ({u.email})
+                    </div>
+                  ))}
+              </div>
+            )}
+            {selectedUser && (
+              <div className="text-sm text-gray-600">
+                Selected: {users.find(u => u.id === selectedUser)?.firstName} {" "}
+                {users.find(u => u.id === selectedUser)?.lastName} - {userStrikes.length} strike{userStrikes.length === 1 ? "" : "s"}
+              </div>
+            )}
             <Select value={reason} onValueChange={setReason}>
               <SelectTrigger className="w-[300px]">
                 <SelectValue />
@@ -60,6 +91,25 @@ export default function AdminStrikesPage() {
                 ))}
               </SelectContent>
             </Select>
+            {selectedUser && (
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  className="border rounded p-2 w-32"
+                  placeholder="Suspend days"
+                  value={suspensionDays}
+                  onChange={e => setSuspensionDays(e.target.value)}
+                />
+                <label className="flex items-center gap-1 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={permanent}
+                    onChange={e => setPermanent(e.target.checked)}
+                  />
+                  Permanent
+                </label>
+              </div>
+            )}
             <Button onClick={submit} disabled={create.isPending || !selectedUser}>
               Add Strike
             </Button>

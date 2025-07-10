@@ -16,8 +16,14 @@ export function useUserStrikes(userId: number) {
 export function useCreateStrike() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (data: { userId: number; reason: string }) =>
-      apiRequest("POST", "/api/strikes", data).then(r => r.json()),
+    mutationFn: (
+      data: {
+        userId: number;
+        reason: string;
+        suspensionDays?: number;
+        permanent?: boolean;
+      },
+    ) => apiRequest("POST", "/api/strikes", data).then(r => r.json()),
     onSuccess: (_res, variables) => {
       qc.invalidateQueries({ queryKey: ["/api/strikes"] });
       qc.invalidateQueries({ queryKey: ["/api/users/" + variables.userId + "/strikes"] });
