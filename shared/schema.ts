@@ -468,6 +468,27 @@ export const insertUserStrikeSchema = createInsertSchema(userStrikes).omit({
   createdAt: true,
 });
 
+// Notes created by admins about a user
+export const userNotes = pgTable("user_notes", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  adminId: integer("admin_id").notNull(),
+  relatedUserId: integer("related_user_id"),
+  note: text("note").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const userNotesRelations = relations(userNotes, ({ one }) => ({
+  user: one(users, { fields: [userNotes.userId], references: [users.id] }),
+  admin: one(users, { fields: [userNotes.adminId], references: [users.id] }),
+  relatedUser: one(users, { fields: [userNotes.relatedUserId], references: [users.id] }),
+}));
+
+export const insertUserNoteSchema = createInsertSchema(userNotes).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Predefined strike reasons with custom email text
 export const strikeReasons = pgTable("strike_reasons", {
   id: serial("id").primaryKey(),
@@ -534,6 +555,9 @@ export type InsertNotification = z.infer<typeof insertNotificationSchema>;
 
 export type UserStrike = typeof userStrikes.$inferSelect;
 export type InsertUserStrike = z.infer<typeof insertUserStrikeSchema>;
+
+export type UserNote = typeof userNotes.$inferSelect;
+export type InsertUserNote = z.infer<typeof insertUserNoteSchema>;
 
 export type StrikeReason = typeof strikeReasons.$inferSelect;
 export type InsertStrikeReason = z.infer<typeof insertStrikeReasonSchema>;

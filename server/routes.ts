@@ -28,6 +28,8 @@ import {
   insertSupportTicketSchema,
   insertEmailTemplateSchema,
   insertStrikeReasonSchema,
+  insertUserNoteSchema,
+  type InsertUserNote,
   insertOfferSchema,
   offers as offersTable,
   orders as ordersTable,
@@ -858,6 +860,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         const msgs = await storage.getConversationMessages(userA, userB);
         res.json(msgs);
+      } catch (error) {
+        handleApiError(res, error);
+      }
+    },
+  );
+
+  app.get(
+    "/api/admin/users/:userId/notes",
+    isAuthenticated,
+    isAdmin,
+    async (req, res) => {
+      try {
+        const userId = parseInt(req.params.userId, 10);
+        if (Number.isNaN(userId)) {
+          return res.status(400).json({ message: "Invalid user ID" });
+        }
+        const notes = await storage.getUserNotes(userId);
+        res.json(notes);
+      } catch (error) {
+        handleApiError(res, error);
+      }
+    },
+  );
+
+  app.post(
+    "/api/admin/users/:userId/notes",
+    isAuthenticated,
+    isAdmin,
+    async (req, res) => {
+      try {
+        const userId = parseInt(req.params.userId, 10);
+        if (Number.isNaN(userId)) {
+          return res.status(400).json({ message: "Invalid user ID" });
+        }
+        const admin = req.user as Express.User;
+        const noteText = String(req.body.note || "").trim();
+        const related = req.body.relatedUserId
+          ? parseInt(req.body.relatedUserId, 10)
+          : undefined;
+        if (!noteText) {
+          return res.status(400).json({ message: "Missing note" });
+        }
+        const data = insertUserNoteSchema.parse({
+          userId,
+          adminId: admin.id,
+          note: noteText,
+          relatedUserId: Number.isNaN(related) ? undefined : related,
+        }) as InsertUserNote;
+        const newNote = await storage.createUserNote(data);
+        res.status(201).json(newNote);
       } catch (error) {
         handleApiError(res, error);
       }
