@@ -491,23 +491,110 @@ export async function sendPasswordResetEmail(to: string, code: string) {
   }
 }
 
-export async function sendSuspensionEmail(to: string, days: number) {
+export async function sendSuspensionEmail(to: string, days?: number) {
   if (!transporter) {
     console.warn("Email transport not configured; skipping suspension email");
     return;
   }
 
+  const text =
+    days && days > 0
+      ? `Your account has been suspended for ${days} day${days === 1 ? "" : "s"}.`
+      : "Your account has been suspended.";
   const mailOptions = {
     from: process.env.SMTP_FROM || user,
     to,
     subject: "Account Suspension Notice",
-    text: `Your account has been suspended for ${days} day${days === 1 ? "" : "s"}.`,
-  };
+    text,
+  } as nodemailer.SendMailOptions;
 
   try {
     await transporter.sendMail(mailOptions);
   } catch (err) {
     console.error("Failed to send suspension email", err);
+  }
+}
+
+export async function sendStrikeEmail(
+  to: string,
+  reason: string,
+  count: number,
+  suspensionDays?: number,
+  permanent?: boolean,
+) {
+  if (!transporter) {
+    console.warn("Email transport not configured; skipping strike email");
+    return;
+  }
+
+  const consequences =
+    count === 1
+      ? "This is a warning."
+      : count === 2
+      ? "Further violations may lead to suspension or removal."
+      : "Your account is at risk of permanent suspension.";
+
+  const suspensionText = permanent
+    ? "Your account has been suspended permanently."
+    : suspensionDays && suspensionDays > 0
+    ? `Your account has been suspended for ${suspensionDays} day${
+        suspensionDays === 1 ? "" : "s"
+      }.`
+    : "";
+
+  const html = `<!DOCTYPE html>
+  <html lang="en">
+    <head>
+      <meta charset="UTF-8" />
+      <title>SY Closeouts Strike Notice</title>
+    </head>
+    <body style="margin:0;padding:20px;background:#f7f7f7;font-family:Arial,sans-serif;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:auto;background:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 0 10px rgba(0,0,0,0.1);">
+        <tr>
+          <td style="background:#222;padding:20px;text-align:center;">
+            <img src="cid:logo" alt="SY Closeouts" style="max-height:50px;margin-bottom:10px;" />
+            <h1 style="margin:0;color:#ffffff;font-size:24px;">SY Closeouts</h1>
+            <p style="margin:5px 0 0;color:#bbbbbb;">Account Strike Notice</p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:20px;">
+            <p style="margin-top:0;">You have received a strike for the following reason:</p>
+            <p style="font-weight:bold;">${reason}</p>
+            <p>This is strike <strong>${count}</strong> of 3 on your account.</p>
+            <p>${consequences}</p>
+            ${suspensionText ? `<p>${suspensionText}</p>` : ""}
+          </td>
+        </tr>
+        <tr>
+          <td style="background:#f9f9f9;padding:20px;">
+            <p style="margin:0;">If you have questions please reply to this email.</p>
+            <p style="margin:5px 0 0;">Thank you for using <strong>SY Closeouts</strong>.</p>
+          </td>
+        </tr>
+      </table>
+    </body>
+  </html>`;
+
+  const logo = await getLogoAttachment();
+  const text =
+    `You have received a strike for: ${reason}\n` +
+    `Strike ${count} of 3. ${consequences}` +
+    (suspensionText ? `\n${suspensionText}` : "");
+
+  const mailOptions = {
+    from: process.env.SMTP_FROM || user,
+    to,
+    subject: `Account Strike ${count} of 3`,
+    text,
+    html,
+    attachments: [logo],
+  } as nodemailer.SendMailOptions;
+
+  try {
+    await transporter.sendMail(mailOptions);
+  } catch (err) {
+    console.error("Failed to send strike email", err);
   }
 }
 

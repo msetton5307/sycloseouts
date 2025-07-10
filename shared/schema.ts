@@ -450,6 +450,23 @@ export const insertNotificationSchema = createInsertSchema(notifications).omit({
   createdAt: true,
 });
 
+// Strikes issued by admins to buyers or sellers
+export const userStrikes = pgTable("user_strikes", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  reason: text("reason").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const userStrikesRelations = relations(userStrikes, ({ one }) => ({
+  user: one(users, { fields: [userStrikes.userId], references: [users.id] }),
+}));
+
+export const insertUserStrikeSchema = createInsertSchema(userStrikes).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Site-wide settings key/value store
 export const siteSettings = pgTable("site_settings", {
   key: text("key").primaryKey(),
@@ -500,6 +517,9 @@ export type InsertSupportTicketMessage = z.infer<typeof insertSupportTicketMessa
 
 export type Notification = typeof notifications.$inferSelect;
 export type InsertNotification = z.infer<typeof insertNotificationSchema>;
+
+export type UserStrike = typeof userStrikes.$inferSelect;
+export type InsertUserStrike = z.infer<typeof insertUserStrikeSchema>;
 
 export type EmailTemplate = typeof emailTemplates.$inferSelect;
 export type InsertEmailTemplate = z.infer<typeof insertEmailTemplateSchema>;
