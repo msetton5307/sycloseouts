@@ -1,51 +1,114 @@
 import { useState, useEffect } from "react";
 import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
-import { Loader2 } from "lucide-react";
+import {
+  Table,
+  TableHeader,
+  TableRow,
+  TableHead,
+  TableBody,
+  TableCell,
+} from "@/components/ui/table";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
+import { Loader2, X } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   useEmailTemplates,
   useCreateEmailTemplate,
   useUpdateEmailTemplate,
   useDeleteEmailTemplate,
-  useSendEmailTemplate,
 } from "@/hooks/use-email-templates";
-import { EmailTemplate } from "@shared/schema";
+import { apiRequest } from "@/lib/queryClient";
+import { EmailTemplate, User } from "@shared/schema";
 
 export default function AdminEmailTemplatesPage() {
   const { data: templates = [], isLoading } = useEmailTemplates();
   const create = useCreateEmailTemplate();
   const update = useUpdateEmailTemplate();
   const remove = useDeleteEmailTemplate();
-  const send = useSendEmailTemplate();
 
-  const [editing, setEditing] = useState<EmailTemplate | null>(null);
-  const [name, setName] = useState("{}");
-  const [subject, setSubject] = useState("{}");
-  const [body, setBody] = useState("{}");
+  const { data: users = [] } = useQuery<User[]>({ queryKey: ["/api/users"] });
+  const qc = useQueryClient();
+
+  const [search, setSearch] = useState("");
+  const [selectedUsers, setSelectedUsers] = useState<User[]>([]);
+  const [templateId, setTemplateId] = useState<number>();
+  const [creatingNew, setCreatingNew] = useState(false);
+  const [name, setName] = useState("");
+  const [subject, setSubject] = useState("");
+  const [body, setBody] = useState("");
 
   useEffect(() => {
-    if (editing) {
-      setName(editing.name);
-      setSubject(editing.subject);
-      setBody(editing.body);
-    } else {
-      setName("");
-      setSubject("");
-      setBody("");
+    if (templates.length > 0 && templateId === undefined && !creatingNew) {
+      setTemplateId(templates[0].id);
+      setSubject(templates[0].subject);
+      setBody(templates[0].body);
     }
-  }, [editing]);
+  }, [templates, creatingNew]);
 
-  function submit() {
-    if (editing) {
-      update.mutate({ id: editing.id, values: { name, subject, body } });
-      setEditing(null);
-    } else {
+  useEffect(() => {
+    if (creatingNew) return;
+    const t = templates.find(t => t.id === templateId);
+    if (t) {
+      setSubject(t.subject);
+      setBody(t.body);
+    }
+  }, [templateId, templates, creatingNew]);
+
+  function applyPlaceholders(html: string, user?: User) {
+    if (!user) return html;
+    return html
+      .replace(/\{\{\{first_name\}\}\}/gi, user.firstName)
+      .replace(/\{\{\{last_name\}\}\}/gi, user.lastName)
+      .replace(/\{\{\{name\}\}\}/gi, `${user.firstName} ${user.lastName}`)
+      .replace(/\{\{\{company\}\}\}/gi, user.company || "");
+  }
+
+  function buildPreview() {
+    const html = applyPlaceholders(body, selectedUsers[0]);
+    return `<!DOCTYPE html><html><body>${html}</body></html>`;
+  }
+
+  const sendEmail = useMutation(
+    async () => {
+      for (const u of selectedUsers) {
+        const html = applyPlaceholders(body, u);
+        await apiRequest(`POST`, `/api/admin/users/${u.id}/email`, {
+          subject,
+          message: html,
+          html,
+        });
+      }
+    },
+    {
+      onSuccess: () => {
+        qc.invalidateQueries({ queryKey: [] });
+      },
+    },
+  );
+
+  function saveTemplate() {
+    if (creatingNew) {
       create.mutate({ name, subject, body });
+      setCreatingNew(false);
+    } else if (templateId) {
+      update.mutate({ id: templateId, values: { subject, body } });
     }
   }
 
@@ -55,28 +118,120 @@ export default function AdminEmailTemplatesPage() {
       <main className="max-w-7xl mx-auto px-4 py-8 space-y-6">
         <Card>
           <CardHeader>
-            <CardTitle>{editing ? "Edit Template" : "New Template"}</CardTitle>
+            <CardTitle>Send Email</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
-            <Input placeholder="Name" value={name} onChange={e => setName(e.target.value)} />
-            <Input placeholder="Subject" value={subject} onChange={e => setSubject(e.target.value)} />
-            <Textarea rows={6} placeholder="HTML Body" value={body} onChange={e => setBody(e.target.value)} />
-            <div className="flex gap-2">
-              <Button onClick={submit} disabled={create.isPending || update.isPending}>Save</Button>
-              {editing && (
-                <Button variant="outline" onClick={() => setEditing(null)}>Cancel</Button>
-              )}
-            </div>
+            <input
+              className="border rounded p-2 w-full md:w-72"
+              placeholder="Search users"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+            />
+            {search && (
+              <div className="border rounded p-2 max-h-40 overflow-y-auto bg-white shadow">
+                {users
+                  .filter(u =>
+                    `${u.firstName} ${u.lastName} ${u.email}`
+                      .toLowerCase()
+                      .includes(search.toLowerCase()),
+                  )
+                  .map(u => (
+                    <div
+                      key={u.id}
+                      className="px-2 py-1 hover:bg-gray-100 cursor-pointer"
+                      onClick={() => {
+                        if (!selectedUsers.find(s => s.id === u.id)) {
+                          setSelectedUsers([...selectedUsers, u]);
+                        }
+                        setSearch("");
+                      }}
+                    >
+                      {u.firstName} {u.lastName} ({u.email})
+                    </div>
+                  ))}
+              </div>
+            )}
+            {selectedUsers.length > 0 && (
+              <div className="flex flex-wrap gap-1">
+                {selectedUsers.map(u => (
+                  <Badge key={u.id} className="flex items-center gap-1">
+                    {u.firstName} {u.lastName}
+                    <X
+                      className="h-3 w-3 cursor-pointer"
+                      onClick={() =>
+                        setSelectedUsers(selectedUsers.filter(s => s.id !== u.id))
+                      }
+                    />
+                  </Badge>
+                ))}
+              </div>
+            )}
+            <Select
+              value={creatingNew ? "new" : templateId?.toString()}
+              onValueChange={v => {
+                if (v === "new") {
+                  setCreatingNew(true);
+                  setTemplateId(undefined);
+                  setName("");
+                  setSubject("");
+                  setBody("");
+                } else {
+                  setCreatingNew(false);
+                  setTemplateId(Number(v));
+                }
+              }}
+            >
+              <SelectTrigger className="w-[300px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {templates.map(t => (
+                  <SelectItem key={t.id} value={t.id.toString()}>{t.name}</SelectItem>
+                ))}
+                <SelectItem value="new">New template...</SelectItem>
+              </SelectContent>
+            </Select>
+            {creatingNew && (
+              <Input
+                placeholder="Template name"
+                value={name}
+                onChange={e => setName(e.target.value)}
+              />
+            )}
+            <Input
+              placeholder="Subject"
+              value={subject}
+              onChange={e => setSubject(e.target.value)}
+            />
+            <RichTextEditor value={body} onChange={setBody} />
+            <Button
+              variant="outline"
+              onClick={saveTemplate}
+              disabled={
+                creatingNew ? !name || create.isPending : !templateId || update.isPending
+              }
+            >
+              Save Template
+            </Button>
+            <div
+              className="border rounded p-4"
+              dangerouslySetInnerHTML={{ __html: buildPreview() }}
+            />
+            <Button onClick={() => sendEmail.mutate()} disabled={sendEmail.isPending || selectedUsers.length === 0}>
+              Send Email
+            </Button>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle>Saved Templates</CardTitle>
+            <CardTitle>Manage Templates</CardTitle>
           </CardHeader>
           <CardContent>
             {isLoading ? (
-              <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin" /></div>
+              <div className="flex justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin" />
+              </div>
             ) : templates.length > 0 ? (
               <div className="overflow-x-auto">
                 <Table>
@@ -93,10 +248,15 @@ export default function AdminEmailTemplatesPage() {
                         <TableCell>{t.name}</TableCell>
                         <TableCell>{t.subject}</TableCell>
                         <TableCell className="space-x-2">
-                          <Button size="sm" variant="outline" onClick={() => setEditing(t)}>Edit</Button>
-                          <Button size="sm" variant="outline" onClick={() => remove.mutate(t.id)}>Delete</Button>
-                          <Button size="sm" onClick={() => send.mutate({ id: t.id, group: "buyers" })}>Buyers</Button>
-                          <Button size="sm" variant="secondary" onClick={() => send.mutate({ id: t.id, group: "sellers" })}>Sellers</Button>
+                          <Button size="sm" variant="outline" onClick={() => {
+                            setCreatingNew(false);
+                            setTemplateId(t.id);
+                          }}>
+                            Edit
+                          </Button>
+                          <Button size="sm" variant="outline" onClick={() => remove.mutate(t.id)}>
+                            Delete
+                          </Button>
                         </TableCell>
                       </TableRow>
                     ))}
