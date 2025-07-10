@@ -177,7 +177,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (containsContactInfo(req.body.question)) {
         await sendAdminAlertEmail(
           "Blocked contact info in product question",
-          `User #${user.id} attempted to share contact info in a question for product #${id}.\n\n${req.body.question}`
+          `${user.firstName} ${user.lastName} (${user.email}) attempted to share contact info with ${seller.firstName} ${seller.lastName} (${seller.email}) in question for product "${product.title}".\n\n${req.body.question}`
         );
         return res.status(400).json({ message: "Sharing contact information is not allowed" });
       }
@@ -752,7 +752,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (containsContactInfo(req.body.message)) {
         await sendAdminAlertEmail(
           "Blocked contact info in order message",
-          `User #${user.id} attempted to share contact info with user #${receiverId} in order #${order.code}.\n\n${req.body.message}`
+          `${user.firstName} ${user.lastName} (${user.email}) attempted to share contact info with ${receiver.firstName} ${receiver.lastName} (${receiver.email}) in order #${order.code}.\n\n${req.body.message}`
         );
         return res.status(400).json({ message: "Sharing contact information is not allowed" });
       }
@@ -816,7 +816,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (containsContactInfo(req.body.message)) {
         await sendAdminAlertEmail(
           "Blocked contact info in conversation",
-          `User #${user.id} attempted to share contact info with user #${otherId} in a conversation.\n\n${req.body.message}`
+          `${user.firstName} ${user.lastName} (${user.email}) attempted to share contact info with ${receiver.firstName} ${receiver.lastName} (${receiver.email}) in a conversation.\n\n${req.body.message}`
         );
         return res.status(400).json({ message: "Sharing contact information is not allowed" });
       }

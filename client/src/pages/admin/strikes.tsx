@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -13,12 +13,20 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 import { useStrikes, useCreateStrike, useUserStrikes } from "@/hooks/use-strikes";
+import { apiRequest } from "@/lib/queryClient";
 import { User } from "@shared/schema";
 
 export default function AdminStrikesPage() {
   const { data: strikes = [] } = useStrikes();
   const { data: users = [] } = useQuery<User[]>({ queryKey: ["/api/users"] });
   const create = useCreateStrike();
+  const queryClient = useQueryClient();
+  const reinstate = useMutation({
+    mutationFn: (id: number) => apiRequest("POST", `/api/users/${id}/reinstate`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/strikes"] });
+    },
+  });
 
   const [selectedUser, setSelectedUser] = useState<number>();
   const [search, setSearch] = useState("");
@@ -85,7 +93,7 @@ export default function AdminStrikesPage() {
             {selectedUser && (
               <div className="text-sm text-gray-600">
                 Selected: {users.find(u => u.id === selectedUser)?.firstName} {" "}
-                {users.find(u => u.id === selectedUser)?.lastName} - {userStrikes.length} strike{userStrikes.length === 1 ? "" : "s"}
+                {users.find(u => u.id === selectedUser)?.lastName} ({users.find(u => u.id === selectedUser)?.email}) - {userStrikes.length} strike{userStrikes.length === 1 ? "" : "s"}
               </div>
             )}
             <Select value={reason} onValueChange={setReason}>
@@ -132,8 +140,10 @@ export default function AdminStrikesPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>User</TableHead>
+                  <TableHead>Email</TableHead>
                   <TableHead>Reason</TableHead>
                   <TableHead>Date</TableHead>
+                  <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -142,13 +152,26 @@ export default function AdminStrikesPage() {
                     <TableCell>
                       {s.first_name ? `${s.first_name} ${s.last_name}` : `User #${s.user_id}`}
                     </TableCell>
+                    <TableCell>{s.email}</TableCell>
                     <TableCell>{s.reason}</TableCell>
                     <TableCell>{new Date(s.created_at).toLocaleDateString()}</TableCell>
+                    <TableCell>
+                      {s.suspended_until && new Date(s.suspended_until) > new Date() && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => reinstate.mutate(s.user_id)}
+                          disabled={reinstate.isPending}
+                        >
+                          Unsuspend
+                        </Button>
+                      )}
+                    </TableCell>
                   </TableRow>
                 ))}
                 {strikes.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={3} className="text-center text-gray-500">
+                    <TableCell colSpan={5} className="text-center text-gray-500">
                       No strikes
                     </TableCell>
                   </TableRow>

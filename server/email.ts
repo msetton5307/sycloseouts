@@ -439,12 +439,33 @@ export async function sendAdminAlertEmail(subject: string, body: string) {
     return;
   }
 
+  const html = `<!DOCTYPE html>
+  <html lang="en">
+    <head>
+      <meta charset="UTF-8" />
+      <title>${subject}</title>
+    </head>
+    <body style="margin:0;padding:20px;background:#f7f7f7;font-family:Arial,sans-serif;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:auto;background:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 0 10px rgba(0,0,0,0.1);">
+        <tr>
+          <td style="background:#222;padding:20px;text-align:center;color:#ffffff;">
+            <h1 style="margin:0;font-size:20px;">${subject}</h1>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:20px;">${body.replace(/\n/g, '<br>')}</td>
+        </tr>
+      </table>
+    </body>
+  </html>`;
+
   const mailOptions = {
     from: process.env.SMTP_FROM || user,
     to: admin,
     subject,
     text: body,
-  };
+    html,
+  } as nodemailer.SendMailOptions;
 
   try {
     await transporter.sendMail(mailOptions);
