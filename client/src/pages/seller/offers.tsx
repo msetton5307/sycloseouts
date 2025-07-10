@@ -24,19 +24,21 @@ export default function SellerOffersPage() {
     queryKey: ["/api/offers"],
   });
 
-  type Status = "pending" | "countered" | "accepted" | "rejected";
+  type Status = "pending" | "countered" | "accepted" | "rejected" | "expired";
   const [status, setStatus] = useState<Status>("pending");
 
   const pending = offers.filter((o) => o.status === "pending");
   const countered = offers.filter((o) => o.status === "countered");
   const accepted = offers.filter((o) => o.status === "accepted");
   const rejected = offers.filter((o) => o.status === "rejected");
+  const expired = offers.filter((o) => o.status === "expired");
 
   const listMap: Record<Status, OfferWithProduct[]> = {
     pending,
     countered,
     accepted,
     rejected,
+    expired,
   };
 
   const counterOffer = useMutation({
@@ -104,6 +106,7 @@ export default function SellerOffersPage() {
                   { label: "Countered", key: "countered", color: "bg-blue-600" },
                   { label: "Accepted", key: "accepted", color: "bg-green-600" },
                   { label: "Rejected", key: "rejected", color: "bg-red-600" },
+                  { label: "Expired", key: "expired", color: "bg-gray-600" },
                 ] as { label: string; key: Status; color: string }[]).map(
                   ({ label, key, color }) => (
                     <Button
@@ -152,7 +155,7 @@ export default function SellerOffersPage() {
                           </div>
                         </div>
                       </div>
-                      {status !== "accepted" && status !== "rejected" && (
+                      {status !== "accepted" && status !== "rejected" && status !== "expired" && (
                         <div className="space-x-2">
                           <Button size="sm" onClick={() => handleAccept(o.id)}>
                             Accept

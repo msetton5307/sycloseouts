@@ -17,6 +17,7 @@ import {
   sendSellerPayoutEmail,
   sendSupportTicketEmail,
   sendStrikeEmail,
+  sendOrderCancelledEmail,
 } from "./email";
 import { generateInvoicePdf, generateSalesReportPdf } from "./pdf";
 import {
@@ -1336,6 +1337,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
     },
   );
 
+  app.post(
+    "/api/admin/orders/:id/cancel",
+    isAuthenticated,
+    isAdmin,
+    async (req, res) => {
+      try {
+        const id = parseInt(req.params.id, 10);
+        if (Number.isNaN(id)) {
+          return res.status(400).json({ message: "Invalid order ID" });
+        }
+        const order = await storage.getOrder(id);
+        if (!order) {
+          return res.status(404).json({ message: "Order not found" });
+        }
+        if (order.status !== "awaiting_wire") {
+          return res.status(400).json({ message: "Order cannot be cancelled" });
+        }
+
+        const updatedOrder = await storage.updateOrder(id, { status: "cancelled" });
+        res.json(updatedOrder);
+
+        const buyer = await storage.getUser(order.buyerId);
+        if (buyer) {
+          sendOrderCancelledEmail(buyer.email, order.code).catch(console.error);
+        }
+
+        await storage.createNotification({
+          userId: updatedOrder.buyerId,
+          type: 'order',
+          content: `Order #${updatedOrder.code} was cancelled`,
+          link: `/buyer/orders/${updatedOrder.id}`,
+        });
+        await storage.createNotification({
+          userId: updatedOrder.sellerId,
+          type: 'order',
+          content: `Order #${updatedOrder.code} was cancelled`,
+          link: `/seller/orders`,
+        });
+      } catch (error) {
+        handleApiError(res, error);
+      }
+    },
+  );
+
   app.post("/api/conversations/:userId/messages/read", isAuthenticated, async (req, res) => {
     try {
       const otherId = parseInt(req.params.userId, 10);
@@ -1508,6 +1553,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       else if (user.role === 'seller') filter.sellerId = user.id;
       if (req.query.status) filter.status = String(req.query.status);
       const offers = await storage.getOffers(filter);
+      const now = new Date();
+      for (const o of offers) {
+        if (o.status === 'accepted') {
+          if ((o.expiresAt && new Date(o.expiresAt) < now) || o.productAvailableUnits === 0) {
+            await storage.updateOffer(o.id, { status: 'expired' });
+            o.status = 'expired';
+          }
+        }
+      }
       res.json(offers);
     } catch (error) {
       handleApiError(res, error);
@@ -1533,7 +1587,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Offer already processed" });
       }
 
-      const updated = await storage.updateOffer(offerId, { status: 'accepted' });
+      const updated = await storage.updateOffer(offerId, {
+        status: 'accepted',
+        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+      });
 
       await storage.createNotification({
         userId: offer.buyerId,
@@ -1615,7 +1672,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'Offer is not countered' });
       }
 
-      const updated = await storage.updateOffer(offerId, { status: 'accepted' });
+      const updated = await storage.updateOffer(offerId, {
+        status: 'accepted',
+        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+      });
 
       await storage.createNotification({
         userId: offer.sellerId,
