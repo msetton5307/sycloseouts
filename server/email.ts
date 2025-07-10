@@ -511,6 +511,26 @@ export async function sendSuspensionEmail(to: string, days: number) {
   }
 }
 
+export async function sendStrikeEmail(to: string, reason: string) {
+  if (!transporter) {
+    console.warn("Email transport not configured; skipping strike email");
+    return;
+  }
+
+  const mailOptions = {
+    from: process.env.SMTP_FROM || user,
+    to,
+    subject: "Account Strike Issued",
+    text: `You have received a strike for: ${reason}`,
+  } as nodemailer.SendMailOptions;
+
+  try {
+    await transporter.sendMail(mailOptions);
+  } catch (err) {
+    console.error("Failed to send strike email", err);
+  }
+}
+
 export async function sendAdminUserEmail(
   to: string,
   subject: string,

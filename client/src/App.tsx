@@ -51,6 +51,7 @@ import AdminMessagesPage from "@/pages/admin/messages";
 import AdminUserProfilePage from "@/pages/admin/user-profile";
 import AdminEmailTemplatesPage from "@/pages/admin/email-templates";
 import AdminSettingsPage from "@/pages/admin/settings";
+import AdminStrikesPage from "@/pages/admin/strikes";
 import AboutPage from "@/pages/about-page";
 import SellerAgreementPage from "@/pages/seller-agreement";
 import BuyerAgreementPage from "@/pages/buyer-agreement";
@@ -127,6 +128,7 @@ function Router() {
       <ProtectedRoute path="/admin/settings" component={AdminSettingsPage} allowedRoles={["admin"]} />
       <ProtectedRoute path="/admin/messages" component={AdminMessagesPage} allowedRoles={["admin"]} />
       <ProtectedRoute path="/admin/email-templates" component={AdminEmailTemplatesPage} allowedRoles={["admin"]} />
+      <ProtectedRoute path="/admin/strikes" component={AdminStrikesPage} allowedRoles={["admin"]} />
       <ProtectedRoute path="/admin/tickets" component={AdminTicketsPage} allowedRoles={["admin"]} />
 
       {/* Fallback to 404 */}

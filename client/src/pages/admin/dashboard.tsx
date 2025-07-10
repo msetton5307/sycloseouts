@@ -31,7 +31,8 @@ import {
   Package,
   Star,
   DollarSign,
-  Mail
+  Mail,
+  AlertTriangle
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { formatCurrency, calculateOrderCommission } from "@/lib/utils";
@@ -179,6 +180,12 @@ export default function AdminDashboard() {
               <Button variant="outline" className="flex items-center">
                 <Mail className="mr-2 h-4 w-4" />
                 Email Templates
+              </Button>
+            </Link>
+            <Link href="/admin/strikes">
+              <Button variant="outline" className="flex items-center">
+                <AlertTriangle className="mr-2 h-4 w-4" />
+                Strikes
               </Button>
             </Link>
           </div>

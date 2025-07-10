@@ -13,7 +13,8 @@ import {
   supportTickets, SupportTicket, InsertSupportTicket,
   notifications, Notification, InsertNotification,
   emailTemplates, EmailTemplate, InsertEmailTemplate,
-  siteSettings
+  siteSettings,
+  userStrikes, UserStrike, InsertUserStrike
 } from "@shared/schema";
 import session from "express-session";
 import { db, pool } from "./db";
@@ -121,6 +122,11 @@ export interface IStorage {
   createEmailTemplate(t: InsertEmailTemplate): Promise<EmailTemplate>;
   updateEmailTemplate(id: number, t: Partial<EmailTemplate>): Promise<EmailTemplate | undefined>;
   deleteEmailTemplate(id: number): Promise<void>;
+
+  // Strike methods
+  getAllStrikes(): Promise<any[]>;
+  getUserStrikes(userId: number): Promise<UserStrike[]>;
+  createUserStrike(strike: InsertUserStrike): Promise<UserStrike>;
 
   // Cart methods
   getCart(userId: number): Promise<Cart | undefined>;
@@ -810,6 +816,31 @@ export class DatabaseStorage implements IStorage {
 
   async deleteEmailTemplate(id: number): Promise<void> {
     await db.delete(emailTemplates).where(eq(emailTemplates.id, id));
+  }
+
+  // Strike methods
+  async getAllStrikes(): Promise<any[]> {
+    const result = await pool.query(
+      `SELECT s.id, s.user_id, s.reason, s.created_at,
+              u.first_name, u.last_name, u.email
+         FROM user_strikes s
+         JOIN users u ON u.id = s.user_id
+        ORDER BY s.created_at DESC`,
+    );
+    return result.rows;
+  }
+
+  async getUserStrikes(userId: number): Promise<UserStrike[]> {
+    return await db
+      .select()
+      .from(userStrikes)
+      .where(eq(userStrikes.userId, userId))
+      .orderBy(desc(userStrikes.createdAt));
+  }
+
+  async createUserStrike(strike: InsertUserStrike): Promise<UserStrike> {
+    const [s] = await db.insert(userStrikes).values(strike).returning();
+    return s;
   }
 
   // Cart methods
