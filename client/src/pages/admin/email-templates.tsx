@@ -85,8 +85,8 @@ export default function AdminEmailTemplatesPage() {
     return `<!DOCTYPE html><html><body>${html}</body></html>`;
   }
 
-  const sendEmail = useMutation(
-    async () => {
+  const sendEmail = useMutation({
+    mutationFn: async () => {
       for (const u of selectedUsers) {
         const html = applyPlaceholders(body, u);
         await apiRequest(`POST`, `/api/admin/users/${u.id}/email`, {
@@ -96,12 +96,10 @@ export default function AdminEmailTemplatesPage() {
         });
       }
     },
-    {
-      onSuccess: () => {
-        qc.invalidateQueries({ queryKey: [] });
-      },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: [] });
     },
-  );
+  });
 
   function saveTemplate() {
     if (creatingNew) {
