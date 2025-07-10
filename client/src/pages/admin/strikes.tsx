@@ -5,6 +5,13 @@ import Footer from "@/components/layout/footer";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
 import { useStrikes, useCreateStrike, useUserStrikes } from "@/hooks/use-strikes";
 import { User } from "@shared/schema";
 
