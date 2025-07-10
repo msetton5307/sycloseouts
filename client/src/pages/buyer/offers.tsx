@@ -7,10 +7,38 @@ import { getServiceFeeRate } from "@/hooks/use-settings";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useCart } from "@/hooks/use-cart";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import MakeOfferDialog from "@/components/products/make-offer-dialog";
+import { Clock } from "lucide-react";
+
+function ExpirationTimer({ expiresAt }: { expiresAt: string }) {
+  const [time, setTime] = useState("0m");
+
+  useEffect(() => {
+    function update() {
+      const diff = new Date(expiresAt).getTime() - Date.now();
+      if (diff <= 0) {
+        setTime("0m");
+        return;
+      }
+      const h = Math.floor(diff / 1000 / 60 / 60);
+      const m = Math.floor((diff / 1000 / 60) % 60);
+      setTime(`${h}h ${m}m`);
+    }
+    update();
+    const id = setInterval(update, 60000);
+    return () => clearInterval(id);
+  }, [expiresAt]);
+
+  return (
+    <p className="text-red-600 text-sm flex items-center">
+      <Clock className="w-4 h-4 mr-1" />
+      {time} left
+    </p>
+  );
+}
 
 export default function BuyerOffersPage() {
   type OfferWithProduct = Offer & { productTitle: string; productImages: string[] };
@@ -73,19 +101,21 @@ export default function BuyerOffersPage() {
     }
   }
 
-  type Status = "pending" | "countered" | "accepted" | "rejected";
+  type Status = "pending" | "countered" | "accepted" | "rejected" | "expired";
   const [status, setStatus] = useState<Status>("pending");
 
   const pending = offers.filter((o) => o.status === "pending");
   const accepted = offers.filter((o) => o.status === "accepted");
   const rejected = offers.filter((o) => o.status === "rejected");
   const countered = offers.filter((o) => o.status === "countered");
+  const expired = offers.filter((o) => o.status === "expired");
 
   const listMap: Record<Status, OfferWithProduct[]> = {
     pending,
     countered,
     accepted,
     rejected,
+    expired,
   };
 
   return (
@@ -98,12 +128,13 @@ export default function BuyerOffersPage() {
             <p>Loading...</p>
           ) : (
             <>
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 mb-4">
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-5 mb-4">
                 {([
                   { label: "Pending", key: "pending", color: "bg-yellow-600" },
                   { label: "Countered", key: "countered", color: "bg-blue-600" },
                   { label: "Accepted", key: "accepted", color: "bg-green-600" },
                   { label: "Rejected", key: "rejected", color: "bg-red-600" },
+                  { label: "Expired", key: "expired", color: "bg-gray-600" },
                 ] as { label: string; key: Status; color: string }[]).map(
                   ({ label, key, color }) => (
                     <Button
@@ -165,13 +196,18 @@ export default function BuyerOffersPage() {
                         </div>
                       )}
                       {status === "accepted" && (
-                        <Button
-                          size="sm"
-                          onClick={() => handleAddToCart(o)}
-                          disabled={items.some((it) => it.offerId === o.id)}
-                        >
-                          {items.some((it) => it.offerId === o.id) ? "In Cart" : "Add to Cart"}
-                        </Button>
+                        <div className="space-y-2">
+                          {o.expiresAt && (
+                            <ExpirationTimer expiresAt={o.expiresAt as string} />
+                          )}
+                          <Button
+                            size="sm"
+                            onClick={() => handleAddToCart(o)}
+                            disabled={items.some((it) => it.offerId === o.id)}
+                          >
+                            {items.some((it) => it.offerId === o.id) ? "In Cart" : "Add to Cart"}
+                          </Button>
+                        </div>
                       )}
                     </div>
                   ))
