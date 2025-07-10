@@ -610,6 +610,7 @@ export class DatabaseStorage implements IStorage {
         selectedVariations: offers.selectedVariations,
         status: offers.status,
         orderId: offers.orderId,
+        expiresAt: offers.expiresAt,
         createdAt: offers.createdAt,
         productTitle: products.title,
         productAvailableUnits: products.availableUnits,

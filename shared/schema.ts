@@ -354,8 +354,9 @@ export const offers = pgTable("offers", {
   price: doublePrecision("price").notNull(),
   quantity: integer("quantity").notNull(),
   selectedVariations: jsonb("selected_variations"),
-  status: text("status").notNull().default("pending"), // pending, accepted, rejected, countered
+  status: text("status").notNull().default("pending"), // pending, accepted, rejected, countered, expired
   orderId: integer("order_id"),
+  expiresAt: timestamp("expires_at"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -367,7 +368,7 @@ export const offersRelations = relations(offers, ({ one }) => ({
 }));
 
 export const insertOfferSchema = createInsertSchema(offers)
-  .omit({ id: true, status: true, orderId: true, createdAt: true })
+  .omit({ id: true, status: true, orderId: true, expiresAt: true, createdAt: true })
   .extend({ selectedVariations: z.record(z.string()).optional().nullable() });
 
 // Support tickets that buyers and sellers can create

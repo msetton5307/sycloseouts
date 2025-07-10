@@ -1553,6 +1553,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       else if (user.role === 'seller') filter.sellerId = user.id;
       if (req.query.status) filter.status = String(req.query.status);
       const offers = await storage.getOffers(filter);
+      const now = new Date();
+      for (const o of offers) {
+        if (o.status === 'accepted') {
+          if ((o.expiresAt && new Date(o.expiresAt) < now) || o.productAvailableUnits === 0) {
+            await storage.updateOffer(o.id, { status: 'expired' });
+            o.status = 'expired';
+          }
+        }
+      }
       res.json(offers);
     } catch (error) {
       handleApiError(res, error);
@@ -1578,7 +1587,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Offer already processed" });
       }
 
-      const updated = await storage.updateOffer(offerId, { status: 'accepted' });
+      const updated = await storage.updateOffer(offerId, {
+        status: 'accepted',
+        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+      });
 
       await storage.createNotification({
         userId: offer.buyerId,
@@ -1660,7 +1672,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'Offer is not countered' });
       }
 
-      const updated = await storage.updateOffer(offerId, { status: 'accepted' });
+      const updated = await storage.updateOffer(offerId, {
+        status: 'accepted',
+        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+      });
 
       await storage.createNotification({
         userId: offer.sellerId,
