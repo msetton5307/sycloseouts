@@ -33,8 +33,10 @@ import {
   useCreateEmailTemplate,
   useUpdateEmailTemplate,
   useDeleteEmailTemplate,
+  useEmailLogs,
 } from "@/hooks/use-email-templates";
 import { apiRequest } from "@/lib/queryClient";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { EmailTemplate, User } from "@shared/schema";
 
 export default function AdminEmailTemplatesPage() {
@@ -53,6 +55,8 @@ export default function AdminEmailTemplatesPage() {
   const [name, setName] = useState("");
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
+  const { data: logs = [] } = useEmailLogs(templateId);
+  const [openLog, setOpenLog] = useState<string | null>(null);
 
   useEffect(() => {
     if (templates.length > 0 && templateId === undefined && !creatingNew) {
@@ -82,7 +86,23 @@ export default function AdminEmailTemplatesPage() {
 
   function buildPreview() {
     const html = applyPlaceholders(body, selectedUsers[0]);
-    return `<!DOCTYPE html><html><body>${html}</body></html>`;
+    return `<!DOCTYPE html>
+    <html lang="en">
+      <head>
+        <meta charset="UTF-8" />
+        <title>${subject}</title>
+      </head>
+      <body style="margin:0;padding:20px;background:#f7f7f7;font-family:Arial,sans-serif;">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:auto;background:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 0 10px rgba(0,0,0,0.1);">
+          <tr>
+            <td style="background:#222;padding:20px;text-align:center;color:#fff;font-size:20px;">SY Closeouts</td>
+          </tr>
+          <tr>
+            <td style="padding:20px;">${html}</td>
+          </tr>
+        </table>
+      </body>
+    </html>`;
   }
 
   const sendEmail = useMutation({
@@ -93,11 +113,12 @@ export default function AdminEmailTemplatesPage() {
           subject,
           message: html,
           html,
+          templateId,
         });
       }
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: [] });
+      qc.invalidateQueries({ queryKey: ["/api/admin/email-templates", templateId, "logs"] });
     },
   });
 
@@ -114,6 +135,7 @@ export default function AdminEmailTemplatesPage() {
     <>
       <Header />
       <main className="max-w-7xl mx-auto px-4 py-8 space-y-6">
+        <h1 className="text-3xl font-bold">Admin Email Templates</h1>
         <Card>
           <CardHeader>
             <CardTitle>Send Email</CardTitle>
@@ -212,7 +234,7 @@ export default function AdminEmailTemplatesPage() {
               Save Template
             </Button>
             <div
-              className="border rounded p-4"
+              className="border rounded p-4 bg-white shadow"
               dangerouslySetInnerHTML={{ __html: buildPreview() }}
             />
             <Button onClick={() => sendEmail.mutate()} disabled={sendEmail.isPending || selectedUsers.length === 0}>
@@ -266,6 +288,46 @@ export default function AdminEmailTemplatesPage() {
             )}
           </CardContent>
         </Card>
+
+        {templateId && logs.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Sent Emails</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Recipient</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {logs.map(l => (
+                    <TableRow key={l.id}>
+                      <TableCell>{l.user.firstName} {l.user.lastName}</TableCell>
+                      <TableCell>{new Date(l.createdAt).toLocaleString()}</TableCell>
+                      <TableCell>
+                        <Dialog open={openLog === String(l.id)} onOpenChange={o => !o && setOpenLog(null)}>
+                          <DialogTrigger asChild>
+                            <Button size="sm" variant="outline" onClick={() => setOpenLog(String(l.id))}>View</Button>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-3xl">
+                            <DialogHeader>
+                              <DialogTitle>Email Preview</DialogTitle>
+                            </DialogHeader>
+                            <div className="max-h-[70vh] overflow-y-auto" dangerouslySetInnerHTML={{ __html: l.html }} />
+                          </DialogContent>
+                        </Dialog>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        )}
       </main>
       <Footer />
     </>

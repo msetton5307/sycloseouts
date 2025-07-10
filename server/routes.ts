@@ -980,6 +980,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
 
         await sendAdminUserEmail(user.email, subject, message, html);
+        await storage.createEmailLog({
+          templateId: req.body.templateId,
+          userId: user.id,
+          subject,
+          html: html || message,
+        });
         res.sendStatus(204);
       } catch (error) {
         handleApiError(res, error);
@@ -1047,8 +1053,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
           .replace(/\[name\]/gi, `${u.firstName} ${u.lastName}`)
           .replace(/\[company\]/gi, u.company || "");
         await sendHtmlEmail(u.email, template.subject, html);
+        await storage.createEmailLog({
+          templateId: template.id,
+          userId: u.id,
+          subject: template.subject,
+          html,
+        });
       }
       res.sendStatus(204);
+    } catch (error) {
+      handleApiError(res, error);
+    }
+  });
+
+  app.get("/api/admin/email-templates/:id/logs", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id, 10);
+      if (Number.isNaN(id)) return res.status(400).json({ message: "Invalid template ID" });
+      const logs = await storage.getEmailLogs(id);
+      res.json(logs);
     } catch (error) {
       handleApiError(res, error);
     }

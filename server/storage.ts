@@ -13,6 +13,7 @@ import {
   supportTickets, SupportTicket, InsertSupportTicket,
   notifications, Notification, InsertNotification,
   emailTemplates, EmailTemplate, InsertEmailTemplate,
+  emailLogs, EmailLog, InsertEmailLog,
   siteSettings,
   userStrikes, UserStrike, InsertUserStrike,
   strikeReasons, StrikeReason, InsertStrikeReason,
@@ -150,6 +151,10 @@ export interface IStorage {
   // Site setting methods
   getSiteSetting(key: string): Promise<string | undefined>;
   setSiteSetting(key: string, value: string): Promise<void>;
+
+  // Email log methods
+  getEmailLogs(templateId: number): Promise<(EmailLog & { user: User })[]>;
+  createEmailLog(log: InsertEmailLog): Promise<EmailLog>;
   
   // Session store
   sessionStore: session.Store;
@@ -848,6 +853,37 @@ export class DatabaseStorage implements IStorage {
 
   async deleteEmailTemplate(id: number): Promise<void> {
     await db.delete(emailTemplates).where(eq(emailTemplates.id, id));
+  }
+
+  // Email log methods
+  async getEmailLogs(templateId: number): Promise<(EmailLog & { user: User })[]> {
+    const result = await pool.query(
+      `SELECT l.*, u.first_name, u.last_name, u.email
+         FROM email_logs l
+         JOIN users u ON u.id = l.user_id
+        WHERE l.template_id = $1
+        ORDER BY l.created_at DESC`,
+      [templateId],
+    );
+    return result.rows.map((r: any) => ({
+      id: r.id,
+      templateId: r.template_id,
+      userId: r.user_id,
+      subject: r.subject,
+      html: r.html,
+      createdAt: r.created_at,
+      user: {
+        id: r.user_id,
+        firstName: r.first_name,
+        lastName: r.last_name,
+        email: r.email,
+      } as User,
+    }));
+  }
+
+  async createEmailLog(log: InsertEmailLog): Promise<EmailLog> {
+    const [l] = await db.insert(emailLogs).values(log).returning();
+    return l;
   }
 
   // Strike reason methods

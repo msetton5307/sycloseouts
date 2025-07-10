@@ -36,6 +36,32 @@ async function getLogoAttachment() {
   return { filename: "logo.png", path: path.resolve(__dirname, "..", "generated-icon.png"), cid: "logo" };
 }
 
+function wrapTemplate(subject: string, bodyHtml: string) {
+  return `<!DOCTYPE html>
+  <html lang="en">
+    <head>
+      <meta charset="UTF-8" />
+      <title>${subject}</title>
+    </head>
+    <body style="margin:0;padding:20px;background:#f7f7f7;font-family:Arial,sans-serif;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:auto;background:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 0 10px rgba(0,0,0,0.1);">
+        <tr>
+          <td style="background:#222;padding:20px;text-align:center;">
+            <img src="cid:logo" alt="SY Closeouts" style="max-height:50px;margin-bottom:10px;" />
+            <h1 style="margin:0;color:#ffffff;font-size:24px;">SY Closeouts</h1>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:20px;">${bodyHtml}</td>
+        </tr>
+        <tr>
+          <td style="background:#f9f9f9;padding:20px;text-align:center;font-size:12px;color:#888;">&copy; ${new Date().getFullYear()} SY Closeouts</td>
+        </tr>
+      </table>
+    </body>
+  </html>`;
+}
+
 interface InvoiceItem {
   title: string;
   quantity: number;
@@ -634,12 +660,15 @@ export async function sendAdminUserEmail(
     return;
   }
 
+  const logo = await getLogoAttachment();
+  const finalHtml = wrapTemplate(subject, html ?? body.replace(/\n/g, "<br>"));
   const mailOptions = {
     from: process.env.SMTP_FROM || user,
     to,
     subject,
-    text: body,
-    ...(html ? { html } : {}),
+    text: (html ?? body).replace(/<[^>]*>/g, ""),
+    html: finalHtml,
+    attachments: [logo],
   } as nodemailer.SendMailOptions;
 
   try {
@@ -655,13 +684,16 @@ export async function sendHtmlEmail(to: string, subject: string, html: string) {
     return;
   }
 
-  const text = html.replace(/<[^>]*>/g, "");
+  const logo = await getLogoAttachment();
+  const wrapped = wrapTemplate(subject, html);
+  const text = wrapped.replace(/<[^>]*>/g, "");
   const mailOptions = {
     from: process.env.SMTP_FROM || user,
     to,
     subject,
     text,
-    html,
+    html: wrapped,
+    attachments: [logo],
   };
 
   try {
