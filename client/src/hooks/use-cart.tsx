@@ -52,10 +52,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
           let price = item.price;
           let includesFee = item.priceIncludesFee ?? false;
 
-          if (!includesFee && (!user || user.role === "buyer")) {
+          const buyerLike = !user || user.role === "buyer" || user.role === "seller";
+
+          if (!includesFee && buyerLike) {
             price = addServiceFee(price);
             includesFee = true;
-          } else if (includesFee && user && user.role !== "buyer") {
+          } else if (includesFee && !buyerLike) {
             price = removeServiceFee(price);
             includesFee = false;
           }
@@ -159,7 +161,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         : product.variationPrices && product.variationPrices[varKey] !== undefined
         ? product.variationPrices[varKey]
         : product.price;
-    const priceIncludesFee = !user || user.role === "buyer";
+    const priceIncludesFee = !user || user.role === "buyer" || user.role === "seller";
     const priceWithFee = priceIncludesFee ? addServiceFee(basePrice) : basePrice;
 
       setItems(prevItems => {

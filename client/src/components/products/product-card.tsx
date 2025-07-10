@@ -24,7 +24,7 @@ export default function ProductCard({ product }: ProductCardProps) {
   const { addToCart } = useCart();
   const { user } = useAuth();
   const displayPrice =
-    !user || user.role === "buyer"
+    !user || user.role === "buyer" || user.role === "seller"
       ? addServiceFee(product.price)
       : product.price;
   

@@ -170,7 +170,7 @@ export default function ProductsPage() {
                   <div className="ml-4 flex flex-col flex-1">
                     <h3 className="text-sm font-medium text-gray-900 line-clamp-2">{product.title}</h3>
                     <p className="text-base font-semibold text-green-600">
-                      {formatCurrency((!user || user.role === 'buyer') ? addServiceFee(product.price) : product.price)}
+                      {formatCurrency((!user || user.role === 'buyer' || user.role === 'seller') ? addServiceFee(product.price) : product.price)}
                       /unit
                     </p>
                     {product.retailMsrp && (
