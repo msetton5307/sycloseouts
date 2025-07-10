@@ -924,3 +924,25 @@ export async function sendSupportTicketEmail(to: string, ticketId: number) {
     console.error("Failed to send support ticket email", err);
   }
 }
+
+export async function sendOrderCancelledEmail(to: string, orderCode: string) {
+  if (!transporter) {
+    console.warn("Email transport not configured; skipping order cancelled email");
+    return;
+  }
+
+  const mailOptions = {
+    from: process.env.SMTP_FROM || user,
+    to,
+    subject: `Order #${orderCode} Cancelled`,
+    text:
+      `Your order #${orderCode} has been cancelled. ` +
+      `If you have any questions, please reply to this email.`,
+  } as nodemailer.SendMailOptions;
+
+  try {
+    await transporter.sendMail(mailOptions);
+  } catch (err) {
+    console.error("Failed to send order cancelled email", err);
+  }
+}
