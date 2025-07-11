@@ -21,6 +21,13 @@ function escapeHtml(str: string) {
     .replace(/'/g, "&#39;");
 }
 
+function toAbsolute(url: string, req: express.Request): string {
+  if (/^https?:\/\//i.test(url)) return url;
+  const base = `${req.protocol}://${req.get("host")}`;
+  if (url.startsWith("/")) return base + url;
+  return `${base}/${url}`;
+}
+
 function injectMeta(
   template: string,
   meta: { title?: string; image?: string; description?: string; url?: string },
@@ -125,7 +132,7 @@ export async function setupVite(app: Express, server: Server) {
       );
       template = injectMeta(template, {
         title: product.title,
-        image: product.images[0],
+        image: toAbsolute(product.images[0], req),
         description: product.description,
         url: `${req.protocol}://${req.get("host")}${req.originalUrl}`,
       });
@@ -182,7 +189,7 @@ export function serveStatic(app: Express) {
       let template = await fs.promises.readFile(templatePath, "utf-8");
       template = injectMeta(template, {
         title: product.title,
-        image: product.images[0],
+        image: toAbsolute(product.images[0], req),
         description: product.description,
         url: `${req.protocol}://${req.get("host")}${req.originalUrl}`,
       });
