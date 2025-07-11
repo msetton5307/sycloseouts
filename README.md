@@ -31,3 +31,13 @@ The invoice and seller notification emails are sent once the order status is upd
 
 ## Support Tickets
 When a user submits a support ticket they receive an email confirming the ticket number. Set `SUPPORT_EMAIL_FROM` to control the "from" address for these messages and `SUPPORT_EMAIL_CC` to copy another address on every ticket email.
+
+## Deploying with Nginx
+The `docs/nginx_proxy.conf` file contains an example Nginx configuration that
+terminates TLS and forwards every request to the Express server. This allows the
+server to inject dynamic Open Graph meta tags for product pages. Copy the file to
+`/etc/nginx/sites-available` (adjusting paths to your certificates) and enable it
+with a symlink in `sites-enabled`.
+
+The Express app serves the built client and all API routes on the same port
+(default `5000`), so Nginx only needs to proxy to `http://localhost:5000`.
