@@ -21,7 +21,17 @@ function escapeHtml(str: string) {
     .replace(/'/g, "&#39;");
 }
 
-function injectMeta(template: string, meta: { title?: string; image?: string }) {
+function toAbsolute(url: string, req: express.Request): string {
+  if (/^https?:\/\//i.test(url)) return url;
+  const base = `${req.protocol}://${req.get("host")}`;
+  if (url.startsWith("/")) return base + url;
+  return `${base}/${url}`;
+}
+
+function injectMeta(
+  template: string,
+  meta: { title?: string; image?: string; description?: string; url?: string },
+) {
   if (meta.title) {
     const safeTitle = escapeHtml(meta.title);
     template = template.replace(/<title>.*?<\/title>/, `<title>${safeTitle}<\/title>`);
@@ -29,6 +39,27 @@ function injectMeta(template: string, meta: { title?: string; image?: string }) 
       /<meta property="og:title"[^>]*>/,
       `<meta property="og:title" content="${safeTitle}" />`,
     );
+  }
+  if (meta.description) {
+    const safeDesc = escapeHtml(meta.description);
+    template = template.replace(
+      /<meta property="og:description"[^>]*>/,
+      `<meta property="og:description" content="${safeDesc}" />`,
+    );
+  }
+  if (meta.url) {
+    const safeUrl = escapeHtml(meta.url);
+    if (template.match(/<meta property="og:url"/)) {
+      template = template.replace(
+        /<meta property="og:url"[^>]*>/,
+        `<meta property="og:url" content="${safeUrl}" />`,
+      );
+    } else {
+      template = template.replace(
+        /<meta property="og:type"[^>]*>/,
+        `$&\n    <meta property="og:url" content="${safeUrl}" />`,
+      );
+    }
   }
   if (meta.image) {
     const safeImg = escapeHtml(meta.image);
@@ -101,7 +132,9 @@ export async function setupVite(app: Express, server: Server) {
       );
       template = injectMeta(template, {
         title: product.title,
-        image: product.images[0],
+        image: toAbsolute(product.images[0], req),
+        description: product.description,
+        url: `${req.protocol}://${req.get("host")}${req.originalUrl}`,
       });
       const page = await vite.transformIndexHtml(url, template);
       res.status(200).set({ "Content-Type": "text/html" }).end(page);
@@ -156,7 +189,9 @@ export function serveStatic(app: Express) {
       let template = await fs.promises.readFile(templatePath, "utf-8");
       template = injectMeta(template, {
         title: product.title,
-        image: product.images[0],
+        image: toAbsolute(product.images[0], req),
+        description: product.description,
+        url: `${req.protocol}://${req.get("host")}${req.originalUrl}`,
       });
       res.status(200).set({ "Content-Type": "text/html" }).end(template);
     } catch (e) {
