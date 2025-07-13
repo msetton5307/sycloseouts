@@ -31,6 +31,7 @@ import {
   insertAddressSchema,
   insertUserNoteSchema,
   type InsertUserNote,
+  type Order,
   insertOfferSchema,
   offers as offersTable,
   orders as ordersTable,
@@ -421,15 +422,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const items = await storage.getOrderItemsWithProducts(id);
-      const invoiceItems = items.map((i) => ({
+      let invoiceItems = items.map((i) => ({
         title: i.productTitle,
         quantity: i.quantity,
         unitPrice: i.unitPrice,
         totalPrice: i.totalPrice,
         selectedVariations: i.selectedVariations,
       }));
+      let invoiceOrder: Order = order;
 
-      const pdf = generateInvoicePdf(order, invoiceItems);
+      if (user.role === "seller") {
+        const rate = await getServiceFeeRate();
+        const itemsNoFee = items.map((i) => ({
+          title: i.productTitle,
+          quantity: i.quantity,
+          unitPrice: removeServiceFee(i.unitPrice, rate),
+          totalPrice: removeServiceFee(i.totalPrice, rate),
+          selectedVariations: i.selectedVariations,
+        }));
+        const subtotal = itemsNoFee.reduce((sum, it) => sum + it.totalPrice, 0);
+        const productTotalWithFee = items.reduce((sum, it) => sum + Number(it.totalPrice), 0);
+        const shipping = Math.max(order.totalAmount - productTotalWithFee, 0);
+        const sellerTotal = Math.round((subtotal + shipping) * 100) / 100;
+        invoiceItems = itemsNoFee;
+        invoiceOrder = { ...order, totalAmount: sellerTotal } as Order;
+      }
+
+      const pdf = generateInvoicePdf(invoiceOrder, invoiceItems);
       res.setHeader("Content-Type", "application/pdf");
       res.setHeader(
         "Content-Disposition",
