@@ -348,12 +348,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         orders.map(async (o) => {
           const items = await storage.getOrderItemsWithProducts(o.id);
           const previewImage = items[0]?.productImages[0] || null;
-          const orderWithItems = { ...o, previewImage, items };
+          let buyer;
+          if (user.role === "seller" || user.role === "admin") {
+            buyer = await storage.getUser(o.buyerId);
+          }
+          const orderWithItems: any = {
+            ...o,
+            previewImage,
+            items,
+            ...(buyer && {
+              buyerFirstName: buyer.firstName,
+              buyerLastName: buyer.lastName,
+            }),
+          };
           if (user.role === "seller") {
             if (o.shippingChoice === "seller") {
               return orderWithItems;
             }
-            const { shippingDetails, ...rest } = orderWithItems as any;
+            const { shippingDetails, ...rest } = orderWithItems;
             return rest;
           }
           return orderWithItems;
@@ -373,6 +385,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       const user = req.user as Express.User;
       const order = await storage.getOrder(id);
+      let buyer;
+      if (order && (user.role === "seller" || user.role === "admin")) {
+        buyer = await storage.getUser(order.buyerId);
+      }
 
       if (!order) {
         return res.status(404).json({ message: "Order not found" });
@@ -385,15 +401,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Get order items with product info
       const orderItems = await storage.getOrderItemsWithProducts(id);
+      const baseOrder: any = {
+        ...order,
+        ...(buyer && { buyerFirstName: buyer.firstName, buyerLastName: buyer.lastName }),
+      };
       if (user.role === "seller") {
         if (order.shippingChoice === "seller") {
-          res.json({ ...order, items: orderItems });
+          res.json({ ...baseOrder, items: orderItems });
         } else {
-          const { shippingDetails, ...rest } = order as any;
+          const { shippingDetails, ...rest } = baseOrder;
           res.json({ ...rest, items: orderItems });
         }
       } else {
-        res.json({ ...order, items: orderItems });
+        res.json({ ...baseOrder, items: orderItems });
       }
     } catch (error) {
       handleApiError(res, error);
