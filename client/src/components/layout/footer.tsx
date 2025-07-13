@@ -10,10 +10,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { useSettings, DEFAULT_SITE_TITLE } from "@/hooks/use-settings";
 
 export default function Footer() {
   const [email, setEmail] = useState("");
   const { toast } = useToast();
+  const { data: settings } = useSettings();
   
   const handleSubscribe = (e: React.FormEvent) => {
     e.preventDefault();
@@ -96,7 +98,7 @@ export default function Footer() {
           </div>
         </div>
         <div className="mt-12 border-t border-gray-700 pt-8">
-          <p className="text-base text-gray-400 text-center">&copy; {new Date().getFullYear()} {settings?.siteTitle ?? 'SY Closeouts'}. All rights reserved.</p>
+          <p className="text-base text-gray-400 text-center">&copy; {new Date().getFullYear()} {settings?.siteTitle ?? DEFAULT_SITE_TITLE}. All rights reserved.</p>
         </div>
       </div>
     </footer>
