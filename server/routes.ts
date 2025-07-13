@@ -239,13 +239,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Quantity exceeds available stock" });
       }
 
-      const rate = await getServiceFeeRate();
       const offerData = insertOfferSchema.parse({
         ...req.body,
-        // Convert the buyer's total price to the seller's base price using the
-        // current service fee rate and round down so addServiceFee(base)
-        // matches the offered total.
-        price: Math.floor((req.body.price / (1 + rate)) * 100) / 100,
+        // Store the buyer's offered price directly. The service fee will be
+        // applied later when the buyer checks out.
+        price: req.body.price,
         productId: id,
         buyerId: user.id,
         sellerId: product.sellerId,
