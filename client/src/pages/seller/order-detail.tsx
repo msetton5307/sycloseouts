@@ -20,7 +20,7 @@ import OrderStatus from "@/components/buyer/order-status";
 import {
   formatCurrency,
   formatDate,
-  removeServiceFee,
+  subtractServiceFee,
   calculateSellerPayout,
   calculateShippingTotal,
 } from "@/lib/utils";
@@ -122,9 +122,9 @@ export default function SellerOrderDetailPage() {
                     </div>
                     <div className="text-right text-sm space-y-1">
                       <p>Qty: {item.quantity}</p>
-                      <p>{formatCurrency(removeServiceFee(item.unitPrice))} each</p>
+                      <p>{formatCurrency(subtractServiceFee(item.unitPrice))} each</p>
                       <p className="font-medium">
-                        {formatCurrency(removeServiceFee(item.totalPrice))}
+                        {formatCurrency(subtractServiceFee(item.totalPrice))}
                       </p>
                     </div>
                   </li>

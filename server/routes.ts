@@ -57,6 +57,10 @@ function removeServiceFee(priceWithFee: number, rate: number): number {
   return Math.floor((priceWithFee / (1 + rate)) * 100) / 100;
 }
 
+function subtractServiceFee(amount: number, rate: number): number {
+  return Math.round(amount * (1 - rate) * 100) / 100;
+}
+
 async function fetchTrackingStatus(trackingNumber: string): Promise<string | undefined> {
   try {
     const apiKey = process.env.TRACKTRY_API_KEY;
@@ -456,8 +460,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const itemsNoFee = items.map((i) => ({
           title: i.productTitle,
           quantity: i.quantity,
-          unitPrice: removeServiceFee(i.unitPrice, rate),
-          totalPrice: removeServiceFee(i.totalPrice, rate),
+          unitPrice: subtractServiceFee(i.unitPrice, rate),
+          totalPrice: subtractServiceFee(i.totalPrice, rate),
           selectedVariations: i.selectedVariations,
         }));
         const subtotal = itemsNoFee.reduce((sum, it) => sum + it.totalPrice, 0);
@@ -1247,7 +1251,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // product total. Use the same rounding logic as when the fee was
         // applied so the amount matches what sellers expect.
         const payoutAmount =
-          Math.round((removeServiceFee(productTotalWithFee, rate) + shippingTotal) * 100) / 100;
+          Math.round((subtractServiceFee(productTotalWithFee, rate) + shippingTotal) * 100) / 100;
         groups[key].orders.push({ id: o.id, code: o.code, total_amount: payoutAmount });
         groups[key].total += payoutAmount;
       }
@@ -1292,7 +1296,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const shippingTotal = Number(p.total_amount) - productTotalWithFee;
         const rate = await getServiceFeeRate();
         const payoutAmount =
-          Math.round((removeServiceFee(productTotalWithFee, rate) + shippingTotal) * 100) /
+          Math.round((subtractServiceFee(productTotalWithFee, rate) + shippingTotal) * 100) /
           100;
         groups[p.seller_id].payouts.push({
           id: p.id,
