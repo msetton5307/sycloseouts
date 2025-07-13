@@ -7,38 +7,12 @@ import { getServiceFeeRate } from "@/hooks/use-settings";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useCart } from "@/hooks/use-cart";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import MakeOfferDialog from "@/components/products/make-offer-dialog";
-import { Clock } from "lucide-react";
+import ExpirationTimer from "@/components/offers/expiration-timer";
 
-function ExpirationTimer({ expiresAt }: { expiresAt: string }) {
-  const [time, setTime] = useState("0m");
-
-  useEffect(() => {
-    function update() {
-      const diff = new Date(expiresAt).getTime() - Date.now();
-      if (diff <= 0) {
-        setTime("0m");
-        return;
-      }
-      const h = Math.floor(diff / 1000 / 60 / 60);
-      const m = Math.floor((diff / 1000 / 60) % 60);
-      setTime(`${h}h ${m}m`);
-    }
-    update();
-    const id = setInterval(update, 60000);
-    return () => clearInterval(id);
-  }, [expiresAt]);
-
-  return (
-    <p className="text-red-600 text-sm flex items-center">
-      <Clock className="w-4 h-4 mr-1" />
-      {time} left
-    </p>
-  );
-}
 
 export default function BuyerOffersPage() {
   type OfferWithProduct = Offer & { productTitle: string; productImages: string[] };
@@ -94,7 +68,8 @@ export default function BuyerOffersPage() {
         o.selectedVariations ?? {},
         o.price,
         o.quantity,
-        o.id
+        o.id,
+        o.expiresAt as string | undefined
       );
     } catch (err) {
       console.error(err);

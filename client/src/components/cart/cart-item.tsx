@@ -6,6 +6,7 @@ import { formatCurrency } from "@/lib/utils";
 import { Minus, Plus, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useCart } from "@/hooks/use-cart";
+import ExpirationTimer from "@/components/offers/expiration-timer";
 
 interface CartItemProps {
   item: CartItemType;
@@ -93,6 +94,9 @@ export default function CartItem({ item }: CartItemProps) {
           <p className="mt-1 text-sm text-gray-500">
             {item.quantity} units @ {formatCurrency(item.price)}/unit
           </p>
+          {isOfferItem && item.offerExpiresAt && (
+            <ExpirationTimer expiresAt={item.offerExpiresAt} />
+          )}
         </div>
         <div className="flex-1 flex items-end justify-between text-sm">
           <div className="flex items-center">

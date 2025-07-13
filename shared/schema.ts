@@ -624,5 +624,7 @@ export interface CartItem {
   priceIncludesFee?: boolean;
   offerId?: number;
   offerQuantity?: number;
+  offerExpiresAt?: string;
   selectedVariations?: Record<string, string>;
-  variationKey?: string;}
+  variationKey?: string;
+}

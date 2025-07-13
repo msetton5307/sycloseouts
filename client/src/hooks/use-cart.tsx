@@ -12,7 +12,8 @@ interface CartContextType {
     variations?: Record<string, string>,
     priceOverride?: number,
     offerQuantity?: number,
-    offerId?: number
+    offerId?: number,
+    offerExpiresAt?: string
   ) => void;
   removeFromCart: (productId: number, variationKey?: string, offerId?: number) => void;
   updateQuantity: (
@@ -106,7 +107,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
     variations: Record<string, string> = {},
     priceOverride?: number,
     offerQuantity?: number,
-    offerId?: number
+    offerId?: number,
+    offerExpiresAt?: string
   ) => {
     if (quantity <= 0) return;
 
@@ -221,7 +223,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
             selectedVariations: variations,
             variationKey: varKey,
             offerId,
-            offerQuantity
+            offerQuantity,
+            offerExpiresAt
           }
         ];
       }
@@ -248,7 +251,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
         offer.selectedVariations ?? {},
         offer.price,
         offer.quantity,
-        offer.id
+        offer.id,
+        offer.expiresAt as string | undefined
       );
     } catch {
       /* ignore */
