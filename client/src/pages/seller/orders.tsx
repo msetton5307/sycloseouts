@@ -273,8 +273,14 @@ export default function SellerOrdersPage() {
                         size="sm"
                         onClick={() => handleOpenPackageDetails(order)}
                       >
-                        Upload Package Details
-                        <AlertCircle className="ml-1 h-4 w-4 text-red-500" />
+                        {order.shippingChoice === "buyer" ? (
+                          <>
+                            Upload Package Details
+                            <AlertCircle className="ml-1 h-4 w-4 text-red-500" />
+                          </>
+                        ) : (
+                          "Package Details"
+                        )}
                       </Button>
                       <Button variant="outline" size="sm" asChild>
                         <Link href={`/seller/orders/${order.id}`}>View Details</Link>
