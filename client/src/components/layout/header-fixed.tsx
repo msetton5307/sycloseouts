@@ -74,6 +74,10 @@ export default function Header() {
                     ? { label: 'Sell with Us', href: '/seller/apply' }
                     : null,
                   { label: 'About', href: '/about' },
+                  (user?.role === 'buyer' || user?.role === 'seller') && {
+                    label: 'Support',
+                    href: '/help',
+                  },
                 ]
                   .filter(Boolean)
                   .map(({ label, href }) => (
@@ -212,13 +216,23 @@ export default function Header() {
                 </div>
               </Link>
               <Link href="/about">
-                <div 
+                <div
                   className={`${isActive('/about') ? 'bg-primary border-primary text-white' : 'border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800'} block pl-3 pr-4 py-2 border-l-4 text-base font-medium`}
                   onClick={() => setIsMenuOpen(false)}
                 >
                   About
                 </div>
               </Link>
+              {(user?.role === 'buyer' || user?.role === 'seller') && (
+                <Link href="/help">
+                  <div
+                    className={`${isActive('/help') ? 'bg-primary border-primary text-white' : 'border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800'} block pl-3 pr-4 py-2 border-l-4 text-base font-medium`}
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Support
+                  </div>
+                </Link>
+              )}
             </div>
             
             {user ? (
