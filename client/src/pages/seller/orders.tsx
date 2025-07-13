@@ -37,6 +37,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { apiRequest } from "@/lib/queryClient";
 import { formatCurrency, formatDate, calculateSellerPayout } from "@/lib/utils";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import SendMessageDialog from "@/components/messages/send-message-dialog";
 import {
   CalendarIcon,
@@ -55,6 +56,11 @@ export default function SellerOrdersPage() {
     queryKey: ["/api/orders"],
     enabled: !!user,
   });
+
+  const [tab, setTab] = useState("seller");
+
+  const sellerOrders = orders.filter((o) => o.shippingChoice === "seller");
+  const buyerOrders = orders.filter((o) => o.shippingChoice === "buyer");
 
   const updateOrder = useMutation({
     mutationFn: ({ id, update }: { id: number; update: Partial<Order> }) =>
@@ -181,7 +187,115 @@ export default function SellerOrdersPage() {
 
   const labelOrder = orders.find((o) => o.id === labelOrderId);
 
+  function renderOrders(list: OrderWithPreview[]) {
+    if (isLoading) {
+      return (
+        <div className="flex justify-center py-8">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      );
+    }
+    return list.length > 0 ? (
+      <div className="space-y-6">
+        {list.map((order) => (
+          <div key={order.id} className="border rounded-lg p-4">
+            <div className="flex gap-4">
+              {order.previewImage && (
+                <img
+                  src={order.previewImage}
+                  alt={`Order ${order.code} item`}
+                  className="w-20 h-20 object-cover rounded"
+                />
+              )}
+              <div className="flex flex-col sm:flex-row sm:justify-between mb-4 gap-2 flex-1">
+                <div>
+                  <h3 className="font-medium">Order #{order.code}</h3>
+                  <p className="text-sm text-gray-500 flex items-center">
+                    <CalendarIcon className="h-3 w-3 mr-1" />
+                    Placed on {formatDate(order.createdAt, true)}
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    Customer: {order.buyerFirstName ? `${order.buyerFirstName} ${order.buyerLastName}` : `Buyer #${order.buyerId}`}
+                  </p>
+                </div>
+                <div className="text-left sm:text-right">
+                  <p className="font-medium">{formatCurrency(calculateSellerPayout(order))}</p>
+                  <span
+                    className={`text-xs px-2 py-1 rounded-full ${
+                      order.status === "delivered"
+                        ? "bg-green-100 text-green-800"
+                        : order.status === "shipped" || order.status === "out_for_delivery"
+                        ? "bg-blue-100 text-blue-800"
+                        : "bg-yellow-100 text-yellow-800"
+                    }`}
+                  >
+                    {order.status.charAt(0).toUpperCase() + order.status.slice(1).replace("_", " ")}
+                  </span>
+                </div>
+              </div>
+            </div>
 
+            <div className="bg-gray-50 p-4 rounded-lg mb-4">
+              <h4 className="font-medium mb-2">Order Status</h4>
+              <div className="flex flex-wrap gap-2">
+                {order.shippingChoice === "buyer" ? (
+                  <Button
+                    size="sm"
+                    variant={order.status === "ordered" ? "default" : "outline"}
+                    disabled={order.status !== "ordered"}
+                    onClick={() => handleViewLabelAndShip(order.id)}
+                  >
+                    View Label &amp; Ship
+                  </Button>
+                ) : (
+                  <Button
+                    size="sm"
+                    variant={order.status === "ordered" ? "default" : "outline"}
+                    disabled={order.status !== "ordered"}
+                    onClick={() => handleMarkAsShipped(order.id)}
+                  >
+                    Mark as Shipped
+                  </Button>
+                )}
+              </div>
+            </div>
+
+            <div className="flex flex-wrap gap-2 justify-end">
+              <Button variant="outline" size="sm" onClick={() => handleOpenPackageDetails(order)}>
+                {order.shippingChoice === "buyer" ? (
+                  <>
+                    Upload Package Details
+                    <AlertCircle className="ml-1 h-4 w-4 text-red-500" />
+                  </>
+                ) : (
+                  "Package Details"
+                )}
+              </Button>
+              <Button variant="outline" size="sm" asChild>
+                <Link href={`/seller/orders/${order.id}`}>View Details</Link>
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => handleCancelOrder(order.id)}>
+                Cancel Order
+              </Button>
+              <SendMessageDialog
+                trigger={<Button variant="outline" size="sm">Contact Buyer</Button>}
+                onSubmit={(msg) => messageBuyer.mutate({ buyerId: order.buyerId, message: msg })}
+                title="Message Buyer"
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+    ) : (
+      <div className="text-center py-8">
+        <ListOrdered className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+        <h3 className="text-lg font-medium text-gray-900 mb-1">No orders yet</h3>
+        <p className="text-gray-500">
+          When customers place orders for your products, they'll appear here
+        </p>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -202,112 +316,14 @@ export default function SellerOrdersPage() {
             <CardDescription>View and process customer orders</CardDescription>
           </CardHeader>
           <CardContent>
-            {isLoading ? (
-              <div className="flex justify-center py-8">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              </div>
-            ) : orders.length > 0 ? (
-              <div className="space-y-6">
-                {orders.map((order) => (
-                  <div key={order.id} className="border rounded-lg p-4">
-                    <div className="flex gap-4">
-                      {order.previewImage && (
-                        <img
-                          src={order.previewImage}
-                          alt={`Order ${order.code} item`}
-                          className="w-20 h-20 object-cover rounded"
-                        />
-                      )}
-                      <div className="flex flex-col sm:flex-row sm:justify-between mb-4 gap-2 flex-1">
-                        <div>
-                          <h3 className="font-medium">Order #{order.code}</h3>
-                          <p className="text-sm text-gray-500 flex items-center">
-                            <CalendarIcon className="h-3 w-3 mr-1" />
-                            Placed on {formatDate(order.createdAt)}
-                          </p>
-                          <p className="text-sm text-gray-500">Customer: Buyer #{order.buyerId}</p>
-                        </div>
-                        <div className="text-left sm:text-right">
-                          <p className="font-medium">{formatCurrency(calculateSellerPayout(order))}</p>
-                          <span className={`text-xs px-2 py-1 rounded-full ${
-                            order.status === "delivered"
-                              ? "bg-green-100 text-green-800"
-                              : order.status === "shipped" || order.status === "out_for_delivery"
-                              ? "bg-blue-100 text-blue-800"
-                              : "bg-yellow-100 text-yellow-800"
-                          }`}>
-                            {order.status.charAt(0).toUpperCase() + order.status.slice(1).replace("_", " ")}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="bg-gray-50 p-4 rounded-lg mb-4">
-                      <h4 className="font-medium mb-2">Order Status</h4>
-                      <div className="flex flex-wrap gap-2">
-                        {order.shippingChoice === "buyer" ? (
-                          <Button
-                            size="sm"
-                            variant={order.status === "ordered" ? "default" : "outline"}
-                            disabled={order.status !== "ordered"}
-                            onClick={() => handleViewLabelAndShip(order.id)}
-                          >
-                            View Label &amp; Ship
-                          </Button>
-                        ) : (
-                          <Button
-                            size="sm"
-                            variant={order.status === "ordered" ? "default" : "outline"}
-                            disabled={order.status !== "ordered"}
-                            onClick={() => handleMarkAsShipped(order.id)}
-                          >
-                            Mark as Shipped
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="flex flex-wrap gap-2 justify-end">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleOpenPackageDetails(order)}
-                      >
-                        {order.shippingChoice === "buyer" ? (
-                          <>
-                            Upload Package Details
-                            <AlertCircle className="ml-1 h-4 w-4 text-red-500" />
-                          </>
-                        ) : (
-                          "Package Details"
-                        )}
-                      </Button>
-                      <Button variant="outline" size="sm" asChild>
-                        <Link href={`/seller/orders/${order.id}`}>View Details</Link>
-                      </Button>
-                      <Button variant="outline" size="sm" onClick={() => handleCancelOrder(order.id)}>
-                        Cancel Order
-                      </Button>
-                      <SendMessageDialog
-                        trigger={<Button variant="outline" size="sm">Contact Buyer</Button>}
-                        onSubmit={(msg) =>
-                          messageBuyer.mutate({ buyerId: order.buyerId, message: msg })
-                        }
-                        title="Message Buyer"
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8">
-                <ListOrdered className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-1">No orders yet</h3>
-                <p className="text-gray-500">
-                  When customers place orders for your products, they'll appear here
-                </p>
-              </div>
-            )}
+            <Tabs value={tab} onValueChange={setTab} className="space-y-4">
+              <TabsList>
+                <TabsTrigger value="seller">Fulfilled by Seller</TabsTrigger>
+                <TabsTrigger value="buyer">Fulfilled by Buyer</TabsTrigger>
+              </TabsList>
+              <TabsContent value="seller">{renderOrders(sellerOrders)}</TabsContent>
+              <TabsContent value="buyer">{renderOrders(buyerOrders)}</TabsContent>
+            </Tabs>
           </CardContent>
         </Card>
       </main>
