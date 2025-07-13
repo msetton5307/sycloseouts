@@ -25,6 +25,11 @@ export function addServiceFee(basePrice: number, rate: number = getServiceFeeRat
   return roundUpToCent(basePrice * (1 + rate));
 }
 
+// Subtract the service fee from a price and round to the nearest cent
+export function subtractServiceFee(amount: number, rate: number = getServiceFeeRate()): number {
+  return Math.round(amount * (1 - rate) * 100) / 100;
+}
+
 export function formatCurrency(amount: number): string {
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
@@ -94,18 +99,18 @@ export function calculateOrderCommission(
   order: { items: { totalPrice: number }[] },
   rate: number = getServiceFeeRate(),
 ): number {
-  const productTotalWithFee = order.items.reduce((sum, i) => sum + i.totalPrice, 0);
-  const productTotalWithoutFee = removeServiceFee(productTotalWithFee, rate);
-  return Math.round((productTotalWithFee - productTotalWithoutFee) * 100) / 100;
+  const productTotal = order.items.reduce((sum, i) => sum + i.totalPrice, 0);
+  const payoutTotal = subtractServiceFee(productTotal, rate);
+  return Math.round((productTotal - payoutTotal) * 100) / 100;
 }
 
 export function calculateSellerPayout(
   order: { items: { totalPrice: number }[]; totalAmount: number },
   rate: number = getServiceFeeRate(),
 ): number {
-  const productTotalWithFee = order.items.reduce((sum, i) => sum + i.totalPrice, 0);
-  const shippingTotal = order.totalAmount - productTotalWithFee;
-  return Math.round((removeServiceFee(productTotalWithFee, rate) + shippingTotal) * 100) / 100;
+  const productTotal = order.items.reduce((sum, i) => sum + i.totalPrice, 0);
+  const shippingTotal = order.totalAmount - productTotal;
+  return Math.round((subtractServiceFee(productTotal, rate) + shippingTotal) * 100) / 100;
 }
 
 export function calculateShippingTotal(order: { items: { totalPrice: number }[]; totalAmount: number }): number {

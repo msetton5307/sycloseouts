@@ -77,8 +77,8 @@ async function getServiceFeeRate(): Promise<number> {
   return Number.isFinite(num) ? num : 0.035;
 }
 
-function removeServiceFee(priceWithFee: number, rate: number): number {
-  return Math.floor((priceWithFee / (1 + rate)) * 100) / 100;
+function subtractServiceFee(amount: number, rate: number): number {
+  return Math.round(amount * (1 - rate) * 100) / 100;
 }
 
 export async function sendInvoiceEmail(
@@ -241,8 +241,8 @@ export async function sendSellerOrderEmail(
 
   const itemsNoFee = items.map((i) => ({
     ...i,
-    unitPrice: removeServiceFee(i.unitPrice, rate),
-    totalPrice: removeServiceFee(i.totalPrice, rate),
+    unitPrice: subtractServiceFee(i.unitPrice, rate),
+    totalPrice: subtractServiceFee(i.totalPrice, rate),
   }));
 
   const itemLines = itemsNoFee

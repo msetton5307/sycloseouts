@@ -13,7 +13,8 @@ interface CartContextType {
     priceOverride?: number,
     offerQuantity?: number,
     offerId?: number,
-    offerExpiresAt?: string
+    offerExpiresAt?: string,
+    priceIncludesFeeOverride?: boolean
   ) => void;
   removeFromCart: (productId: number, variationKey?: string, offerId?: number) => void;
   updateQuantity: (
@@ -108,7 +109,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
     priceOverride?: number,
     offerQuantity?: number,
     offerId?: number,
-    offerExpiresAt?: string
+    offerExpiresAt?: string,
+    priceIncludesFeeOverride?: boolean
   ) => {
     if (quantity <= 0) return;
 
@@ -163,7 +165,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         : product.variationPrices && product.variationPrices[varKey] !== undefined
         ? product.variationPrices[varKey]
         : product.price;
-    const priceIncludesFee = !user || user.role === "buyer" || user.role === "seller";
+    const priceIncludesFee = priceIncludesFeeOverride ?? (!user || user.role === "buyer" || user.role === "seller");
     const priceWithFee = priceIncludesFee ? addServiceFee(basePrice) : basePrice;
 
       setItems(prevItems => {
@@ -252,7 +254,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
         offer.price,
         offer.quantity,
         offer.id,
-        offer.expiresAt as string | undefined
+        offer.expiresAt as string | undefined,
+        false
       );
     } catch {
       /* ignore */
