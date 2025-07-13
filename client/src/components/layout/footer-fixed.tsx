@@ -167,7 +167,7 @@ export default function Footer() {
               </form>
             </div>
             <div className="flex items-center md:justify-end">
-              <p className="text-base text-gray-400">&copy; {new Date().getFullYear()} SY Closeouts. All rights reserved.</p>
+              <p className="text-base text-gray-400">&copy; {new Date().getFullYear()} {settings?.siteTitle ?? 'SY Closeouts'}. All rights reserved.</p>
             </div>
           </div>
         </div>

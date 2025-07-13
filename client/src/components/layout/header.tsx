@@ -65,7 +65,9 @@ export default function Header({ dashboardTabs, onProfileClick }: HeaderProps) {
                       className="h-full max-h-16 w-auto object-contain"
                     />
                   ) : (
-                    <span className="text-primary font-bold text-2xl cursor-pointer">SY Closeouts</span>
+                    <span className="text-primary font-bold text-2xl cursor-pointer">
+                      {settings?.siteTitle ?? "SY Closeouts"}
+                    </span>
                   )}
                 </Link>
               </div>

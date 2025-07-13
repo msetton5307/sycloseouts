@@ -4,9 +4,13 @@ import { apiRequest } from "@/lib/queryClient";
 export interface SiteSettings {
   commissionRate: number;
   logo?: string | null;
+  siteTitle: string;
+  favicon?: string | null;
 }
 
 export const DEFAULT_SERVICE_FEE_RATE = 0.035;
+export const DEFAULT_SITE_TITLE =
+  "SY Closeouts - B2B Wholesale Liquidation Marketplace";
 
 let serviceFeeRate = DEFAULT_SERVICE_FEE_RATE;
 export function setServiceFeeRate(rate: number) {

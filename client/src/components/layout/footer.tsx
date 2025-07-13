@@ -96,7 +96,7 @@ export default function Footer() {
           </div>
         </div>
         <div className="mt-12 border-t border-gray-700 pt-8">
-          <p className="text-base text-gray-400 text-center">&copy; {new Date().getFullYear()} SY Closeouts. All rights reserved.</p>
+          <p className="text-base text-gray-400 text-center">&copy; {new Date().getFullYear()} {settings?.siteTitle ?? 'SY Closeouts'}. All rights reserved.</p>
         </div>
       </div>
     </footer>

@@ -66,6 +66,15 @@ function SettingsLoader() {
     if (data && data.commissionRate !== undefined) {
       setServiceFeeRate(data.commissionRate);
     }
+    if (data) {
+      document.title = data.siteTitle;
+      const faviconEl = document.getElementById(
+        "site-favicon"
+      ) as HTMLLinkElement | null;
+      if (faviconEl && data.favicon) {
+        faviconEl.href = data.favicon;
+      }
+    }
   }, [data]);
   return null;
 }
