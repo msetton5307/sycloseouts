@@ -2,8 +2,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { Offer } from "@shared/schema";
 import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
-import { formatCurrency, cn } from "@/lib/utils";
-import { getServiceFeeRate } from "@/hooks/use-settings";
+import { formatCurrency, cn, addServiceFee } from "@/lib/utils";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useCart } from "@/hooks/use-cart";
@@ -153,7 +152,7 @@ export default function BuyerOffersPage() {
                             <p className="text-sm">Quantity: {o.quantity}</p>
                           </div>
                           <div className="text-right space-y-1">
-                            <p>{formatCurrency(o.price * (1 + getServiceFeeRate()))}</p>
+                            <p>{formatCurrency(addServiceFee(o.price))}</p>
                             <span className="text-xs capitalize">{o.status}</span>
                           </div>
                         </div>
