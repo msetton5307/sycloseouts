@@ -55,13 +55,16 @@ export function CartProvider({ children }: { children: ReactNode }) {
           let includesFee = item.priceIncludesFee ?? false;
 
           const buyerLike = !user || user.role === "buyer" || user.role === "seller";
+          const hasOffer = item.offerId !== undefined;
 
-          if (!includesFee && buyerLike) {
-            price = addServiceFee(price);
-            includesFee = true;
-          } else if (includesFee && !buyerLike) {
-            price = removeServiceFee(price);
-            includesFee = false;
+          if (!hasOffer) {
+            if (!includesFee && buyerLike) {
+              price = addServiceFee(price);
+              includesFee = true;
+            } else if (includesFee && !buyerLike) {
+              price = removeServiceFee(price);
+              includesFee = false;
+            }
           }
 
           return {
