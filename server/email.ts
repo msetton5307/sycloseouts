@@ -71,6 +71,16 @@ interface InvoiceItem {
   selectedVariations?: Record<string, string>;
 }
 
+async function getServiceFeeRate(): Promise<number> {
+  const val = await storage.getSiteSetting("commission_rate");
+  const num = parseFloat(val ?? "0.035");
+  return Number.isFinite(num) ? num : 0.035;
+}
+
+function removeServiceFee(priceWithFee: number, rate: number): number {
+  return Math.floor((priceWithFee / (1 + rate)) * 100) / 100;
+}
+
 export async function sendInvoiceEmail(
   to: string,
   order: Order,
@@ -163,7 +173,7 @@ export async function sendInvoiceEmail(
                 <td colspan="2" align="right" style="padding-top:10px;"><strong>Subtotal:</strong></td>
                 <td align="right" style="padding-top:10px;">$${subtotal.toFixed(2)}</td>
               </tr>
-              ${shipping > 0 ? `<tr><td colspan="2" align="right">Shipping:</td><td align="right">$${shipping.toFixed(2)}</td></tr>` : ""}
+              ${shippingTotal > 0 ? `<tr><td colspan="2" align="right">Shipping:</td><td align="right">$${shippingTotal.toFixed(2)}</td></tr>` : ""}
               <tr>
                 <td colspan="2" align="right"><strong>Total:</strong></td>
                 <td align="right"><strong>$${order.totalAmount.toFixed(2)}</strong></td>
@@ -227,8 +237,15 @@ export async function sendSellerOrderEmail(
     console.warn("Email transport not configured; skipping seller order email");
     return;
   }
+  const rate = await getServiceFeeRate();
 
-  const itemLines = items
+  const itemsNoFee = items.map((i) => ({
+    ...i,
+    unitPrice: removeServiceFee(i.unitPrice, rate),
+    totalPrice: removeServiceFee(i.totalPrice, rate),
+  }));
+
+  const itemLines = itemsNoFee
     .map((i) => {
       const variationText = i.selectedVariations
         ? ` (${Object.entries(i.selectedVariations)
@@ -241,7 +258,7 @@ export async function sendSellerOrderEmail(
     })
     .join("\n");
 
-  const itemRows = items
+  const itemRows = itemsNoFee
     .map((i) => {
       const variationText = i.selectedVariations
         ? ` <div style="font-size:12px;color:#555;">(${Object.entries(
@@ -267,12 +284,13 @@ export async function sendSellerOrderEmail(
     })
     .join("\n");
 
-  const subtotal = items.reduce((sum, i) => sum + i.totalPrice, 0);
+  const subtotal = itemsNoFee.reduce((sum, i) => sum + i.totalPrice, 0);
+  const productTotalWithFee = items.reduce((sum, i) => sum + i.totalPrice, 0);
+  const shippingTotal = Math.max(order.totalAmount - productTotalWithFee, 0);
+  const total = Math.round((subtotal + shippingTotal) * 100) / 100;
 
   const buyerName = buyer ? `${buyer.firstName} ${buyer.lastName}`.trim() : "";
   const sellerName = seller ? `${seller.firstName} ${seller.lastName}`.trim() : "";
-
-  const shipping = order.shippingDetails as Record<string, any> | undefined;
 
   const shippingMethod =
     order.shippingChoice === "buyer"
@@ -316,10 +334,10 @@ export async function sendSellerOrderEmail(
                 <td colspan="2" align="right" style="padding-top:10px;"><strong>Subtotal:</strong></td>
                 <td align="right" style="padding-top:10px;">$${subtotal.toFixed(2)}</td>
               </tr>
-              ${shipping > 0 ? `<tr><td colspan="2" align="right">Shipping:</td><td align="right">$${shipping.toFixed(2)}</td></tr>` : ""}
+              ${shippingTotal > 0 ? `<tr><td colspan="2" align="right">Shipping:</td><td align="right">$${shippingTotal.toFixed(2)}</td></tr>` : ""}
               <tr>
                 <td colspan="2" align="right"><strong>Total:</strong></td>
-                <td align="right"><strong>$${order.totalAmount.toFixed(2)}</strong></td>
+                <td align="right"><strong>$${total.toFixed(2)}</strong></td>
               </tr>
             </tbody>
           </table>
@@ -356,8 +374,8 @@ export async function sendSellerOrderEmail(
     text:
       `You have a new order!\n\n` +
       `Order ID: ${order.code}\n` +
-      `Total: $${order.totalAmount.toFixed(2)}\n` +
-      (shipping > 0 ? `Shipping: $${shipping.toFixed(2)}\n` : "") +
+      `Total: $${total.toFixed(2)}\n` +
+      (shippingTotal > 0 ? `Shipping: $${shippingTotal.toFixed(2)}\n` : "") +
       `Shipping Method: ${shippingMethod}\n` +
       `\nItems:\n${itemLines}\n`,
     html,
