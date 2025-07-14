@@ -1,55 +1,19 @@
-import { useState } from "react";
 import { Link, useLocation } from "wouter";
-import { Home, ShoppingBag, ShoppingCart, User, ListOrdered, MessageCircle, DollarSign, CalendarIcon } from "lucide-react";
+import { ShoppingBag, ShoppingCart, ListOrdered, MessageCircle, DollarSign, CalendarIcon } from "lucide-react";
 import { useCart } from "@/hooks/use-cart";
 import { useAuth } from "@/hooks/use-auth";
 import { Badge } from "@/components/ui/badge";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
 
 export default function MobileNav() {
   const [location] = useLocation();
   const { itemCount, setIsCartOpen } = useCart();
-  const { user, logoutMutation } = useAuth();
-  const [openAccount, setOpenAccount] = useState(false);
-
-  const profileLink = user
-    ? user.role === "seller"
-      ? "/seller/dashboard#profile"
-      : "/buyer/profile"
-    : "/auth";
-
-  const accountLink = user
-    ? user.role === "seller"
-      ? "/seller/dashboard"
-      : user.role === "admin"
-      ? "/admin/dashboard"
-      : "/buyer/home"
-    : "/auth";
+  const { user } = useAuth();
 
   const isActive = (path: string) => location === path;
 
   return (
-    <Sheet open={openAccount} onOpenChange={setOpenAccount}>
-      {user ? (
-        <SheetContent side="bottom" className="p-6 space-y-4 sm:hidden">
-          <Button className="w-full" onClick={() => (window.location.href = profileLink)}>
-            Profile
-          </Button>
-          <Button variant="outline" className="w-full" onClick={() => logoutMutation.mutate()}>
-            Sign Out
-          </Button>
-        </SheetContent>
-      ) : (
-        <SheetContent side="bottom" className="p-6 space-y-4 sm:hidden">
-          <Link href="/auth">
-            <Button className="w-full">Sign In</Button>
-          </Link>
-        </SheetContent>
-      )}
-
-      <nav className="fixed bottom-0 inset-x-0 z-50 border-t bg-white shadow sm:hidden">
-      <ul className="grid grid-cols-3 gap-y-2 p-2">
+      <nav className="fixed bottom-0 inset-x-0 z-50 border-t bg-white shadow pb-2 [padding-bottom:env(safe-area-inset-bottom)] sm:hidden">
+      <ul className="flex justify-around p-2">
         <li>
           <Link
             href="/products"
@@ -139,28 +103,7 @@ export default function MobileNav() {
             </Badge>
           )}
         </li>
-        <li>
-          {user ? (
-            <SheetTrigger asChild>
-              <button
-                className={`flex flex-col items-center py-2 text-xs ${isActive(accountLink) ? "text-primary" : "text-gray-500"} w-full`}
-              >
-                <User className="h-5 w-5" />
-                {user.role === "seller" ? "Dashboard" : "Account"}
-              </button>
-            </SheetTrigger>
-          ) : (
-            <Link
-              href={accountLink}
-              className={`flex flex-col items-center py-2 text-xs ${isActive(accountLink) ? "text-primary" : "text-gray-500"}`}
-            >
-              <User className="h-5 w-5" />
-              Account
-            </Link>
-          )}
-        </li>
       </ul>
     </nav>
-    </Sheet>
   );
 }
