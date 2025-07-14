@@ -7,8 +7,9 @@ import ProductCard from "@/components/products/product-card";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function FeaturedProducts() {
+  // Fetch only products marked as featured by the admin
   const { data: products, isLoading, error } = useQuery<Product[]>({
-    queryKey: ["/api/products"],
+    queryKey: ["/api/banner-products"],
   });
 
   const inStockProducts = products?.filter(p => p.availableUnits > 0) || [];
