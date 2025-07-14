@@ -1,30 +1,14 @@
 import { Link } from "wouter";
 import { 
-  Facebook, 
-  Instagram, 
-  Twitter, 
-  Linkedin, 
-  Mail
+  Facebook,
+  Instagram,
+  Twitter,
+  Linkedin
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { useSettings } from "@/hooks/use-settings";
-import { useState } from "react";
-import { useToast } from "@/hooks/use-toast";
 
 export default function Footer() {
-  const [email, setEmail] = useState("");
-  const { toast } = useToast();
   const { data: settings } = useSettings();
-  
-  const handleSubscribe = (e: React.FormEvent) => {
-    e.preventDefault();
-    toast({
-      title: "Thank you for subscribing!",
-      description: "You will receive our newsletter updates.",
-    });
-    setEmail("");
-  };
 
   return (
     <footer className="bg-gray-900 text-white">
@@ -144,28 +128,7 @@ export default function Footer() {
           </div>
         </div>
         <div className="mt-12 border-t border-gray-800 pt-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div>
-              <h3 className="text-sm font-semibold text-gray-300 tracking-wider uppercase">Subscribe to our newsletter</h3>
-              <p className="mt-2 text-base text-gray-400">
-                Get the latest updates on new products and upcoming sales.
-              </p>
-              <form className="mt-4 sm:flex sm:max-w-md" onSubmit={handleSubscribe}>
-                <Input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Enter your email"
-                  className="w-full sm:max-w-xs bg-gray-800 text-white border-gray-700 focus:border-primary"
-                />
-                <div className="mt-3 rounded-md sm:mt-0 sm:ml-3 sm:flex-shrink-0">
-                  <Button type="submit" className="w-full flex justify-center py-2 px-4">
-                    Subscribe
-                  </Button>
-                </div>
-              </form>
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-1 gap-8">
             <div className="flex items-center md:justify-end">
               <p className="text-base text-gray-400">&copy; {new Date().getFullYear()} {settings?.siteTitle ?? 'SY Closeouts'}. All rights reserved.</p>
             </div>
