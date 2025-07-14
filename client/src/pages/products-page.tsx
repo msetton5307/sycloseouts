@@ -4,16 +4,14 @@ import { Product } from "@shared/schema";
 import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
 import ProductCard from "@/components/products/product-card";
+import ProductListItem from "@/components/products/product-list-item";
 import ProductFilter from "@/components/products/product-filter";
 import { Button } from "@/components/ui/button";
-import { Loader2, Grid3X3, List, ShoppingCart } from "lucide-react";
-import { formatCurrency, addServiceFee } from "@/lib/utils";
+import { Loader2, Grid3X3, List } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
-import { useCart } from "@/hooks/use-cart";
 
 export default function ProductsPage() {
   const { user } = useAuth();
-  const { addToCart } = useCart();
   const [viewMode, setViewMode] = useState<"grid" | "list">(
     () => (window.innerWidth < 640 ? "list" : "grid")
   );
@@ -148,50 +146,18 @@ export default function ProductsPage() {
             </Button>
           </div>
         ) : sortedProducts && sortedProducts.length > 0 ? (
-          <div className={viewMode === "grid" 
-            ? "grid grid-cols-1 gap-y-10 gap-x-6 sm:grid-cols-2 lg:grid-cols-4 xl:gap-x-8"
-            : "space-y-6"
-          }>
-            {sortedProducts.map(product => 
+          <div
+            className={
+              viewMode === "grid"
+                ? "grid grid-cols-1 gap-y-10 gap-x-6 sm:grid-cols-2 lg:grid-cols-4 xl:gap-x-8"
+                : "space-y-4"
+            }
+          >
+            {sortedProducts.map(product =>
               viewMode === "grid" ? (
                 <ProductCard key={product.id} product={product} />
               ) : (
-                <div
-                  key={product.id}
-                  className="flex items-center p-2 border rounded-lg bg-white shadow-sm hover:shadow-md transition-shadow duration-300"
-                >
-                  <div className="w-24 h-24 flex-shrink-0">
-                    <img
-                      src={product.images[0]}
-                      alt={product.title}
-                      className="w-full h-full object-contain"
-                    />
-                  </div>
-                  <div className="ml-4 flex flex-col flex-1">
-                    <h3 className="text-sm font-medium text-gray-900 line-clamp-2">{product.title}</h3>
-                    <p className="text-base font-semibold text-green-600">
-                      {formatCurrency((!user || user.role === 'buyer' || user.role === 'seller') ? addServiceFee(product.price) : product.price)}
-                      /unit
-                    </p>
-                    {product.retailMsrp && (
-                      <p className="text-xs text-gray-500">MSRP: {formatCurrency(product.retailMsrp)}</p>
-                    )}
-                    <div className="mt-2 flex gap-2">
-                      <Button
-                        size="sm"
-                        className="flex items-center"
-                        onClick={() => addToCart(product, product.minOrderQuantity, {})}
-                      >
-                        <ShoppingCart className="mr-1 h-4 w-4" /> Add to Cart
-                      </Button>
-                      <a href={`/products/${product.id}`}>
-                        <Button size="sm" variant="outline">
-                          Details
-                        </Button>
-                      </a>
-                    </div>
-                  </div>
-                </div>
+                <ProductListItem key={product.id} product={product} />
               )
             )}
           </div>
