@@ -250,6 +250,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
       const res = await fetch(`/api/products/${offer.productId}`);
       if (!res.ok) return;
       const product: Product = await res.json();
+      // Use the stored service fee so the buyer pays the exact offer amount
+      // while the seller receives the net price without rounding errors.
       addToCart(
         product,
         offer.quantity,
