@@ -28,8 +28,6 @@ export default function ProductListItem({ product }: ProductListItemProps) {
       ? addServiceFee(product.price)
       : product.price;
 
-  const isNew =
-    Date.now() - new Date(product.createdAt).getTime() < 7 * 24 * 60 * 60 * 1000;
 
   function handleAddToCart() {
     addToCart(product, product.minOrderQuantity, {});
@@ -41,11 +39,6 @@ export default function ProductListItem({ product }: ProductListItemProps) {
         href={`/products/${product.id}`}
         className="relative w-32 shrink-0 border-r flex items-center justify-center bg-background"
       >
-        {isNew && (
-          <Badge className="absolute top-2 left-2 z-10 bg-blue-500 text-white">
-            New
-          </Badge>
-        )}
         <img
           src={product.images[0]}
           alt={product.title}
