@@ -177,7 +177,7 @@ export async function sendInvoiceEmail(
                 <td colspan="2" align="right" style="padding-top:10px;"><strong>Subtotal:</strong></td>
                 <td align="right" style="padding-top:10px;">$${subtotal.toFixed(2)}</td>
               </tr>
-              ${shippingTotal > 0 ? `<tr><td colspan="2" align="right">Shipping:</td><td align="right">$${shippingTotal.toFixed(2)}</td></tr>` : ""}
+              ${shipping > 0 ? `<tr><td colspan="2" align="right">Shipping:</td><td align="right">$${shipping.toFixed(2)}</td></tr>` : ""}
               <tr>
                 <td colspan="2" align="right"><strong>Total:</strong></td>
                 <td align="right"><strong>$${order.totalAmount.toFixed(2)}</strong></td>
