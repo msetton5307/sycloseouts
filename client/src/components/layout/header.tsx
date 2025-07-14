@@ -73,7 +73,6 @@ export default function Header({ dashboardTabs, onProfileClick }: HeaderProps) {
               </div>
               <nav className="hidden sm:ml-6 sm:flex sm:space-x-8 items-center">
                 {[
-                  !(user && user.role === "seller") && user?.role !== "admin" && { label: "Home", href: "/" },
                   { label: "Products", href: "/products" },
                   user?.role === "buyer" && {
                     label: "My Orders",
@@ -240,15 +239,72 @@ export default function Header({ dashboardTabs, onProfileClick }: HeaderProps) {
         {/* Mobile menu */}
         {isMenuOpen && (
           <div className="sm:hidden">
-            <div className="pt-2 pb-3 space-y-1">
-              <Link href="/">
-                <div
-                  className={`${isActive("/") ? "bg-primary border-primary text-white" : "border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800"} block pl-3 pr-4 py-2 border-l-4 text-base font-medium`}
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Home
+            {user ? (
+              <div className="pt-4 pb-3 border-b border-gray-200 space-y-3">
+                <div className="flex items-center px-4">
+                  <div className="flex-shrink-0">
+                    <Avatar className="h-10 w-10">
+                      <AvatarImage src={user.avatarUrl || undefined} alt={user.username} />
+                      <AvatarFallback>
+                        {user.firstName.charAt(0)}
+                        {user.lastName.charAt(0)}
+                      </AvatarFallback>
+                    </Avatar>
+                  </div>
+                  <div className="ml-3">
+                    <div className="text-base font-medium text-gray-800">
+                      {user.firstName} {user.lastName}
+                    </div>
+                    <div className="text-sm font-medium text-gray-500">{user.email}</div>
+                  </div>
                 </div>
-              </Link>
+                <div className="flex justify-around px-4">
+                  <Link href={profileLink} onClick={() => setIsMenuOpen(false)}>
+                    <Button variant="ghost" className="flex flex-col items-center">
+                      <UserIcon className="h-5 w-5" />
+                      Profile
+                    </Button>
+                  </Link>
+                  <Link href={user.role === "buyer" ? "/buyer/messages" : "/seller/messages"}>
+                    <Button variant="ghost" size="icon" className="relative">
+                      <MessageCircle className="h-5 w-5" />
+                      {unread > 0 && (
+                        <Badge className="absolute -top-2 -right-2 bg-primary text-white text-xs h-5 w-5 flex items-center justify-center p-0">
+                          {unread}
+                        </Badge>
+                      )}
+                    </Button>
+                  </Link>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="relative"
+                    onClick={() => {
+                      setIsMenuOpen(false);
+                      setIsCartOpen(true);
+                    }}
+                  >
+                    <ShoppingCart className="h-5 w-5" />
+                    {itemCount > 0 && (
+                      <Badge className="absolute -top-2 -right-2 bg-red-500 text-white text-xs h-5 w-5 flex items-center justify-center p-0">
+                        {itemCount > 99 ? "99+" : itemCount}
+                      </Badge>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="pt-4 pb-3 border-b border-gray-200">
+                <div className="flex justify-center">
+                  <Link href="/auth">
+                    <Button className="w-full max-w-xs mx-4 bg-primary hover:bg-blue-700" onClick={() => setIsMenuOpen(false)}>
+                      Sign In
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            )}
+            <div className="pt-2 pb-3 space-y-1">
               <Link href="/products">
                 <div
                   className={`${isActive("/products") ? "bg-primary border-primary text-white" : "border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800"} block pl-3 pr-4 py-2 border-l-4 text-base font-medium`}
@@ -285,66 +341,6 @@ export default function Header({ dashboardTabs, onProfileClick }: HeaderProps) {
               )}
             </div>
 
-            {user ? (
-              <div className="pt-4 pb-3 border-t border-gray-200">
-                <div className="flex items-center px-4">
-                  <div className="flex-shrink-0">
-                    <Avatar className="h-10 w-10">
-                      <AvatarImage src={user.avatarUrl || undefined} alt={user.username} />
-                      <AvatarFallback>
-                        {user.firstName.charAt(0)}
-                        {user.lastName.charAt(0)}
-                      </AvatarFallback>
-                    </Avatar>
-                  </div>
-                  <div className="ml-3">
-                    <div className="text-base font-medium text-gray-800">
-                      {user.firstName} {user.lastName}
-                    </div>
-                    <div className="text-sm font-medium text-gray-500">{user.email}</div>
-                  </div>
-                  <div className="ml-auto flex space-x-4">
-                    <Link href={user.role === "buyer" ? "/buyer/messages" : "/seller/messages"}>
-                      <Button variant="ghost" size="icon" className="text-gray-400 hover:text-gray-500 relative">
-                        <MessageCircle className="h-5 w-5" />
-                        {unread > 0 && (
-                          <Badge className="absolute -top-2 -right-2 bg-primary text-white text-xs h-5 w-5 flex items-center justify-center p-0">
-                            {unread}
-                          </Badge>
-                        )}
-                        <span className="sr-only">Messages</span>
-                      </Button>
-                    </Link>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="text-gray-400 hover:text-gray-500 relative"
-                      onClick={() => {
-                        setIsMenuOpen(false);
-                        setIsCartOpen(true);
-                      }}
-                    >
-                      <ShoppingCart className="h-5 w-5" />
-                      {itemCount > 0 && (
-                        <Badge className="absolute -top-2 -right-2 bg-red-500 text-white text-xs h-5 w-5 flex items-center justify-center p-0">
-                          {itemCount > 99 ? "99+" : itemCount}
-                        </Badge>
-                      )}
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="pt-4 pb-3 border-t border-gray-200">
-                <div className="flex justify-center">
-                  <Link href="/auth">
-                    <Button className="w-full max-w-xs mx-4 bg-primary hover:bg-blue-700" onClick={() => setIsMenuOpen(false)}>
-                      Sign In
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-            )}
           </div>
         )}
       </header>
