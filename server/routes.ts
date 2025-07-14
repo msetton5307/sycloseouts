@@ -239,11 +239,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Quantity exceeds available stock" });
       }
 
+      const rate = await getServiceFeeRate();
       const offerData = insertOfferSchema.parse({
         ...req.body,
-        // Store the buyer's offered price directly. The service fee will be
-        // applied later when the buyer checks out.
-        price: req.body.price,
+        // Store the amount the seller will receive by removing the service fee
+        // from the buyer's offered total. The fee is added back when the buyer
+        // checks out.
+        price: removeServiceFee(req.body.price, rate),
         productId: id,
         buyerId: user.id,
         sellerId: product.sellerId,
@@ -1768,8 +1770,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'Quantity exceeds available stock' });
       }
 
+      const rate = await getServiceFeeRate();
       const updated = await storage.updateOffer(offerId, {
-        price,
+        price: removeServiceFee(price, rate),
         quantity,
         status: 'countered',
       });
