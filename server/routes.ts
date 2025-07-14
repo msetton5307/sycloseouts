@@ -1774,9 +1774,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const rate = await getServiceFeeRate();
+      // Sellers enter the net amount they wish to receive. Calculate the fee
+      // based on that amount and store it separately so buyers see the gross
+      // price while sellers see the net price.
       const fee = calculateServiceFee(price, rate);
       const updated = await storage.updateOffer(offerId, {
-        price: price - fee,
+        price,
         serviceFee: fee,
         quantity,
         status: 'countered',
