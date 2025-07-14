@@ -365,6 +365,7 @@ export const offers = pgTable("offers", {
   buyerId: integer("buyer_id").notNull(),
   sellerId: integer("seller_id").notNull(),
   price: doublePrecision("price").notNull(),
+  serviceFee: doublePrecision("service_fee").notNull(),
   quantity: integer("quantity").notNull(),
   selectedVariations: jsonb("selected_variations"),
   status: text("status").notNull().default("pending"), // pending, accepted, rejected, countered, expired

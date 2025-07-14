@@ -18,9 +18,6 @@ import {
   sendSupportTicketEmail,
   sendStrikeEmail,
   sendOrderCancelledEmail,
-  sendNewOfferEmail,
-  sendOfferAcceptedEmail,
-  sendOfferRejectedEmail,
 } from "./email";
 import { generateInvoicePdf, generateSalesReportPdf } from "./pdf";
 import {
@@ -62,6 +59,10 @@ function removeServiceFee(priceWithFee: number, rate: number): number {
 
 function subtractServiceFee(amount: number, rate: number): number {
   return Math.round(amount * (1 - rate) * 100) / 100;
+}
+
+function calculateServiceFee(amount: number, rate: number): number {
+  return Math.round(amount * rate * 100) / 100;
 }
 
 async function fetchTrackingStatus(trackingNumber: string): Promise<string | undefined> {
@@ -243,12 +244,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const rate = await getServiceFeeRate();
+      const fee = calculateServiceFee(req.body.price, rate);
       const offerData = insertOfferSchema.parse({
         ...req.body,
-        // Store the amount the seller will receive by removing the service fee
-        // from the buyer's offered total. The fee is added back when the buyer
-        // checks out.
-        price: removeServiceFee(req.body.price, rate),
+        price: req.body.price - fee,
+        serviceFee: fee,
         productId: id,
         buyerId: user.id,
         sellerId: product.sellerId,
@@ -262,11 +262,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         content: `New offer for ${product.title}`,
         link: `/seller/offers`,
       });
-
-      const sellerUser = await storage.getUser(product.sellerId);
-      if (sellerUser) {
-        sendNewOfferEmail(sellerUser.email, product.title).catch(console.error);
-      }
 
       res.status(201).json(offer);
     } catch (error) {
@@ -1742,12 +1737,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         link: `/buyer/offers`,
       });
 
-      const buyerUser = await storage.getUser(offer.buyerId);
-      const offerProduct = await storage.getProduct(offer.productId);
-      if (buyerUser && offerProduct) {
-        sendOfferAcceptedEmail(buyerUser.email, offerProduct.title).catch(console.error);
-      }
-
       res.json(updated);
     } catch (error) {
       handleApiError(res, error);
@@ -1785,8 +1774,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const rate = await getServiceFeeRate();
+      const fee = calculateServiceFee(price, rate);
       const updated = await storage.updateOffer(offerId, {
-        price: removeServiceFee(price, rate),
+        price: price - fee,
+        serviceFee: fee,
         quantity,
         status: 'countered',
       });
@@ -1903,8 +1894,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'Quantity exceeds available stock' });
       }
 
+      const rate = await getServiceFeeRate();
+      const fee = calculateServiceFee(price, rate);
       const updated = await storage.updateOffer(offerId, {
-        price,
+        price: price - fee,
+        serviceFee: fee,
         quantity,
         status: 'countered',
       });
@@ -1948,12 +1942,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         content: `Your offer for ${offer.quantity} units was rejected`,
         link: `/buyer/home`,
       });
-
-      const buyerRejUser = await storage.getUser(offer.buyerId);
-      const productRej = await storage.getProduct(offer.productId);
-      if (buyerRejUser && productRej) {
-        sendOfferRejectedEmail(buyerRejUser.email, productRej.title).catch(console.error);
-      }
 
       res.sendStatus(204);
     } catch (error) {

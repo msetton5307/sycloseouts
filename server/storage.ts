@@ -634,6 +634,7 @@ export class DatabaseStorage implements IStorage {
         buyerId: offers.buyerId,
         sellerId: offers.sellerId,
         price: offers.price,
+        serviceFee: offers.serviceFee,
         quantity: offers.quantity,
         selectedVariations: offers.selectedVariations,
         status: offers.status,
