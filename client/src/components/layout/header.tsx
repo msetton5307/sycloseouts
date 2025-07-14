@@ -305,6 +305,27 @@ export default function Header({ dashboardTabs, onProfileClick }: HeaderProps) {
                   </div>
                 </Link>
               )}
+              {user && (
+                <>
+                  <Link href={profileLink}>
+                    <div
+                      className="border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800 block pl-3 pr-4 py-2 border-l-4 text-base font-medium"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      Profile
+                    </div>
+                  </Link>
+                  <button
+                    onClick={() => {
+                      setIsMenuOpen(false);
+                      handleLogout();
+                    }}
+                    className="w-full text-left border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800 block pl-3 pr-4 py-2 border-l-4 text-base font-medium"
+                  >
+                    Sign Out
+                  </button>
+                </>
+              )}
             </div>
 
           </div>
