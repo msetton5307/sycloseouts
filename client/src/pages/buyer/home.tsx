@@ -3,16 +3,14 @@ import { Product } from "@shared/schema";
 import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
 import FeaturedProducts from "@/components/home/featured-products";
-import Categories from "@/components/home/categories";
-import BannerCarousel from "@/components/home/banner-carousel";
 import { useAuth } from "@/hooks/use-auth";
 
 export default function BuyerHomePage() {
   const { user } = useAuth();
 
-  // Prefetch product data for the featured section
+  // Prefetch featured product data for the homepage
   useQuery<Product[]>({
-    queryKey: ["/api/products"],
+    queryKey: ["/api/banner-products"],
     enabled: !!user,
   });
 
@@ -24,10 +22,8 @@ export default function BuyerHomePage() {
           Welcome back, {user?.firstName}
         </h1>
 
-        <BannerCarousel />
         <section className="space-y-6">
           <FeaturedProducts />
-          <Categories />
         </section>
       </main>
       <Footer />
