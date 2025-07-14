@@ -105,7 +105,7 @@ export default function ProductFilter({
   };
   
   return (
-    <div className="mb-6">
+    <div className="sticky top-16 z-40 mb-6 bg-background/90 backdrop-blur p-2 sm:p-4 rounded-md shadow">
       {/* Search Bar */}
       <form onSubmit={handleSearchSubmit} className="mb-4 flex space-x-2">
         <div className="relative flex-grow">
