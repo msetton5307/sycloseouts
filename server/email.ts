@@ -998,3 +998,69 @@ export async function sendOrderCancelledEmail(to: string, orderCode: string) {
     console.error("Failed to send order cancelled email", err);
   }
 }
+
+export async function sendOfferEmail(
+  to: string,
+  subject: string,
+  message: string,
+  buttonUrl: string,
+  buttonText: string,
+) {
+  if (!transporter) {
+    console.warn("Email transport not configured; skipping offer email");
+    return;
+  }
+
+  const htmlBody = `
+    <p style="margin-top:0;">${message}</p>
+    <p style="text-align:center;margin:20px 0;">
+      <a href="${buttonUrl}" style="background-color:#3498db;color:#ffffff;text-decoration:none;padding:12px 24px;border-radius:4px;display:inline-block;">${buttonText}</a>
+    </p>
+  `;
+
+  const logo = await getLogoAttachment();
+  const mailOptions = {
+    from: process.env.SMTP_FROM || user,
+    to,
+    subject,
+    text: `${message}\n${buttonUrl}`,
+    html: wrapTemplate(subject, htmlBody),
+    attachments: [logo],
+  } as nodemailer.SendMailOptions;
+
+  try {
+    await transporter.sendMail(mailOptions);
+  } catch (err) {
+    console.error("Failed to send offer email", err);
+  }
+}
+
+export async function sendNewOfferEmail(to: string, productTitle: string) {
+  await sendOfferEmail(
+    to,
+    `New offer for ${productTitle}`,
+    `You have received a new offer for ${productTitle}.`,
+    `https://sycloseouts.com/seller/offers`,
+    "View Offer",
+  );
+}
+
+export async function sendOfferAcceptedEmail(to: string, productTitle: string) {
+  await sendOfferEmail(
+    to,
+    `Offer for ${productTitle} accepted`,
+    `Your offer for ${productTitle} was accepted. You can add the item to your cart.`,
+    `https://sycloseouts.com/buyer/offers`,
+    "Add to Cart",
+  );
+}
+
+export async function sendOfferRejectedEmail(to: string, productTitle: string) {
+  await sendOfferEmail(
+    to,
+    `Offer for ${productTitle} rejected`,
+    `Your offer for ${productTitle} was rejected.`,
+    `https://sycloseouts.com/buyer/offers`,
+    "View Offer",
+  );
+}

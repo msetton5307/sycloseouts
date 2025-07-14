@@ -358,27 +358,11 @@ export default function ProductDetailPage() {
 
         <div className="mt-10">
           <Tabs defaultValue="description">
-            <TabsList className="grid grid-cols-3 w-full">
+            <TabsList className="grid grid-cols-1 w-full">
               <TabsTrigger value="description">Description</TabsTrigger>
-              <TabsTrigger value="shipping">Shipping</TabsTrigger>
-              <TabsTrigger value="seller">Seller</TabsTrigger>
             </TabsList>
             <TabsContent value="description" className="py-4">
               <p>{product.description}</p>
-            </TabsContent>
-            <TabsContent value="shipping" className="py-4">
-              <p>This product ships from {product.fobLocation || "seller's warehouse"}.</p>
-              <ul className="list-disc ml-5 mt-2 text-sm text-gray-700">
-                <li>Ships in 1–2 business days</li>
-                <li>Delivery in 3–7 days depending on location</li>
-              </ul>
-            </TabsContent>
-            <TabsContent value="seller" className="py-4">
-              <p>This item is sold by a verified SY Closeouts seller.</p>
-              <ul className="list-disc ml-5 mt-2 text-sm text-gray-700">
-                <li>Returns accepted within 14 days</li>
-                <li>Contact for bulk pricing options</li>
-              </ul>
             </TabsContent>
           </Tabs>
         </div>
