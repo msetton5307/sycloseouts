@@ -68,13 +68,13 @@ export default function ConversationPage() {
   return (
     <>
       <Header />
-      <main className="max-w-7xl mx-auto px-4 py-4 flex h-[calc(100vh-8rem)] gap-4">
-        <div className="hidden md:block w-64 border-r overflow-y-auto bg-white shadow-sm rounded-lg">
+      <main className="max-w-7xl mx-auto px-4 py-4 flex flex-col md:flex-row h-[calc(100dvh-8rem)] gap-4 overflow-hidden">
+        <div className="md:w-64 h-48 md:h-auto overflow-y-auto bg-white shadow-sm rounded-lg border md:border-r mb-4 md:mb-0">
           {others.map(id => (
             <ConversationPreview key={id} otherId={id} selected={id === otherId} />
           ))}
         </div>
-        <div className="flex-1 flex flex-col gap-2">
+        <div className="flex-1 flex flex-col gap-2 overflow-hidden">
           {listing && (
             <ListingBanner
               productId={listing.productId}
