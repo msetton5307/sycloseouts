@@ -49,19 +49,8 @@ export default function MobileNav() {
       )}
 
       <nav className="fixed bottom-0 inset-x-0 z-50 border-t bg-white shadow sm:hidden">
-      <ul className="flex justify-around">
-        {user?.role !== "seller" && (
-          <li className="flex-1">
-            <Link
-              href="/"
-              className={`flex flex-col items-center py-2 text-xs ${isActive("/") ? "text-primary" : "text-gray-500"}`}
-            >
-              <Home className="h-5 w-5" />
-              Home
-            </Link>
-          </li>
-        )}
-        <li className="flex-1">
+      <ul className="grid grid-cols-3 gap-y-2 p-2">
+        <li>
           <Link
             href="/products"
             className={`flex flex-col items-center py-2 text-xs ${isActive("/products") ? "text-primary" : "text-gray-500"}`}
@@ -71,7 +60,7 @@ export default function MobileNav() {
           </Link>
         </li>
         {user?.role === "buyer" && (
-          <li className="flex-1">
+          <li>
             <Link
               href="/buyer/orders"
               className={`flex flex-col items-center py-2 text-xs ${isActive("/buyer/orders") ? "text-primary" : "text-gray-500"}`}
@@ -82,7 +71,7 @@ export default function MobileNav() {
           </li>
         )}
         {user?.role === "buyer" && (
-          <li className="flex-1">
+          <li>
             <Link
               href="/buyer/offers"
               className={`flex flex-col items-center py-2 text-xs ${isActive("/buyer/offers") ? "text-primary" : "text-gray-500"}`}
@@ -93,7 +82,7 @@ export default function MobileNav() {
           </li>
         )}
         {user?.role === "seller" && (
-          <li className="flex-1">
+          <li>
             <Link
               href="/seller/orders"
               className={`flex flex-col items-center py-2 text-xs ${isActive("/seller/orders") ? "text-primary" : "text-gray-500"}`}
@@ -104,7 +93,7 @@ export default function MobileNav() {
           </li>
         )}
         {user?.role === "seller" && (
-          <li className="flex-1">
+          <li>
             <Link
               href="/seller/offers"
               className={`flex flex-col items-center py-2 text-xs ${isActive("/seller/offers") ? "text-primary" : "text-gray-500"}`}
@@ -115,7 +104,7 @@ export default function MobileNav() {
           </li>
         )}
         {user?.role === "seller" && (
-          <li className="flex-1">
+          <li>
             <Link
               href="/seller/payouts"
               className={`flex flex-col items-center py-2 text-xs ${isActive("/seller/payouts") ? "text-primary" : "text-gray-500"}`}
@@ -126,7 +115,7 @@ export default function MobileNav() {
           </li>
         )}
         {user && (
-          <li className="flex-1">
+          <li>
             <Link
               href={user.role === "buyer" ? "/buyer/messages" : "/seller/messages"}
               className={`flex flex-col items-center py-2 text-xs ${isActive(user.role === "buyer" ? "/buyer/messages" : "/seller/messages") ? "text-primary" : "text-gray-500"}`}
@@ -136,7 +125,7 @@ export default function MobileNav() {
             </Link>
           </li>
         )}
-        <li className="flex-1 relative">
+        <li className="relative">
           <button
             onClick={() => setIsCartOpen(true)}
             className="flex flex-col items-center py-2 text-xs text-gray-500 w-full"
@@ -150,7 +139,7 @@ export default function MobileNav() {
             </Badge>
           )}
         </li>
-        <li className="flex-1">
+        <li>
           {user ? (
             <SheetTrigger asChild>
               <button

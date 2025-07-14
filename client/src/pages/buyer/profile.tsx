@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Address } from "@shared/schema";
+import { Address, Order } from "@shared/schema";
 import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,13 +9,19 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useAuth } from "@/hooks/use-auth";
 import { ChangePasswordDialog } from "@/components/account/change-password-dialog";
 import { EditProfileDialog } from "@/components/account/edit-profile-dialog";
-import { formatDate } from "@/lib/utils";
+import { formatDate, formatCurrency } from "@/lib/utils";
+import { Link } from "wouter";
 
 export default function BuyerProfilePage() {
   const { user } = useAuth();
 
   const { data: addresses = [] } = useQuery<Address[]>({
     queryKey: ["/api/addresses"],
+    enabled: !!user,
+  });
+
+  const { data: orders = [], isLoading: loadingOrders } = useQuery<Order[]>({
+    queryKey: ["/api/orders"],
     enabled: !!user,
   });
 
@@ -104,6 +110,45 @@ export default function BuyerProfilePage() {
                 </RadioGroup>
               )}
               <Button variant="outline" className="mt-4">Add New Address</Button>
+            </CardContent>
+          </Card>
+
+          <Card className="md:col-span-3">
+            <CardHeader className="p-4 sm:p-6">
+              <CardTitle>Recent Orders</CardTitle>
+            </CardHeader>
+            <CardContent className="p-4 sm:p-6">
+              {loadingOrders ? (
+                <div className="space-y-4">
+                  {[...Array(3)].map((_, i) => (
+                    <div key={i} className="h-16 bg-gray-100 rounded" />
+                  ))}
+                </div>
+              ) : orders.length === 0 ? (
+                <p className="text-sm text-gray-500">No orders yet</p>
+              ) : (
+                <div className="space-y-4">
+                  {orders.slice(0, 3).map((order) => (
+                    <div key={order.id} className="flex justify-between items-center border rounded-md p-4">
+                      <div>
+                        <h4 className="font-medium">Order #{order.code}</h4>
+                        <p className="text-sm text-gray-500">Placed on {formatDate(order.createdAt)}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-medium">{formatCurrency(order.totalAmount)}</p>
+                        <span className="text-xs px-2 py-1 rounded-full bg-gray-100">
+                          {order.status.replace("_", " ")}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {orders.length > 0 && (
+                <Link href="/buyer/orders">
+                  <Button variant="outline" className="mt-4 w-full">View All Orders</Button>
+                </Link>
+              )}
             </CardContent>
           </Card>
 
