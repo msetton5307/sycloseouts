@@ -152,6 +152,10 @@ export interface IStorage {
   getSiteSetting(key: string): Promise<string | undefined>;
   setSiteSetting(key: string, value: string): Promise<void>;
 
+  // Push subscription methods
+  getPushSubscriptions(): Promise<any[]>;
+  addPushSubscription(sub: any): Promise<void>;
+
   // Email log methods
   getEmailLogs(templateId: number): Promise<(EmailLog & { user: User })[]>;
   createEmailLog(log: InsertEmailLog): Promise<EmailLog>;
@@ -1013,6 +1017,17 @@ export class DatabaseStorage implements IStorage {
     } else {
       await db.insert(siteSettings).values({ key, value: stored });
     }
+  }
+
+  async getPushSubscriptions(): Promise<any[]> {
+    const subs = await this.getSiteSetting("push_subscriptions");
+    return Array.isArray(subs) ? subs : [];
+  }
+
+  async addPushSubscription(sub: any): Promise<void> {
+    const subs = await this.getPushSubscriptions();
+    subs.push(sub);
+    await this.setSiteSetting("push_subscriptions", subs as any);
   }
 }
 // Export an instance of the storage

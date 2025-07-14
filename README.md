@@ -31,3 +31,6 @@ The invoice and seller notification emails are sent once the order status is upd
 
 ## Support Tickets
 When a user submits a support ticket they receive an email confirming the ticket number. Set `SUPPORT_EMAIL_FROM` to control the "from" address for these messages and `SUPPORT_EMAIL_CC` to copy another address on every ticket email.
+
+## Progressive Web App
+The client now includes a web manifest and service worker so the site can be added to the iOS Home Screen. The name "SY Closeouts" and the administrator defined icon are used when installed. Push notifications require VAPID keys configured with the `VAPID_PUBLIC_KEY` and `VAPID_PRIVATE_KEY` environment variables.

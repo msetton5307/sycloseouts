@@ -20,6 +20,7 @@ import {
   sendOrderCancelledEmail,
 } from "./email";
 import { generateInvoicePdf, generateSalesReportPdf } from "./pdf";
+import { addSubscription, sendPushNotification } from "./push";
 import {
   insertProductSchema,
   insertOrderSchema,
@@ -2569,6 +2570,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const ticket = await storage.updateSupportTicketStatus(id, status);
       if (!ticket) return res.status(404).json({ message: "Ticket not found" });
       res.json(ticket);
+    } catch (error) {
+      handleApiError(res, error);
+    }
+  });
+
+  app.post("/api/subscribe", async (req, res) => {
+    try {
+      await addSubscription(req.body);
+      res.sendStatus(201);
+    } catch (error) {
+      handleApiError(res, error);
+    }
+  });
+
+  app.post("/api/admin/send-push", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      await sendPushNotification(req.body);
+      res.sendStatus(204);
     } catch (error) {
       handleApiError(res, error);
     }
