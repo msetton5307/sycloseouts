@@ -121,20 +121,20 @@ export default function ProductsPage() {
           <div className="text-sm text-gray-500">
             {sortedProducts?.length || 0} products found
           </div>
-          <div className="flex space-x-2">
+          <div>
             <Button
-              variant={viewMode === "grid" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setViewMode("grid")}
+              variant="outline"
+              size="icon"
+              aria-label={viewMode === "grid" ? "Show list" : "Show grid"}
+              onClick={() =>
+                setViewMode((prev) => (prev === "grid" ? "list" : "grid"))
+              }
             >
-              <Grid3X3 className="h-4 w-4 mr-1" /> Grid
-            </Button>
-            <Button
-              variant={viewMode === "list" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setViewMode("list")}
-            >
-              <List className="h-4 w-4 mr-1" /> List
+              {viewMode === "grid" ? (
+                <List className="h-4 w-4" />
+              ) : (
+                <Grid3X3 className="h-4 w-4" />
+              )}
             </Button>
           </div>
         </div>
