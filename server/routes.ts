@@ -18,6 +18,9 @@ import {
   sendSupportTicketEmail,
   sendStrikeEmail,
   sendOrderCancelledEmail,
+  sendNewOfferEmail,
+  sendOfferAcceptedEmail,
+  sendOfferRejectedEmail,
 } from "./email";
 import { generateInvoicePdf, generateSalesReportPdf } from "./pdf";
 import {
@@ -259,6 +262,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         content: `New offer for ${product.title}`,
         link: `/seller/offers`,
       });
+
+      const sellerUser = await storage.getUser(product.sellerId);
+      if (sellerUser) {
+        sendNewOfferEmail(sellerUser.email, product.title).catch(console.error);
+      }
 
       res.status(201).json(offer);
     } catch (error) {
@@ -1734,6 +1742,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         link: `/buyer/offers`,
       });
 
+      const buyerUser = await storage.getUser(offer.buyerId);
+      const offerProduct = await storage.getProduct(offer.productId);
+      if (buyerUser && offerProduct) {
+        sendOfferAcceptedEmail(buyerUser.email, offerProduct.title).catch(console.error);
+      }
+
       res.json(updated);
     } catch (error) {
       handleApiError(res, error);
@@ -1934,6 +1948,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         content: `Your offer for ${offer.quantity} units was rejected`,
         link: `/buyer/home`,
       });
+
+      const buyerRejUser = await storage.getUser(offer.buyerId);
+      const productRej = await storage.getProduct(offer.productId);
+      if (buyerRejUser && productRej) {
+        sendOfferRejectedEmail(buyerRejUser.email, productRej.title).catch(console.error);
+      }
 
       res.sendStatus(204);
     } catch (error) {
