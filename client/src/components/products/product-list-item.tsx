@@ -28,6 +28,7 @@ export default function ProductListItem({ product }: ProductListItemProps) {
       ? addServiceFee(product.price)
       : product.price;
 
+
   function handleAddToCart() {
     addToCart(product, product.minOrderQuantity, {});
   }
@@ -44,11 +45,11 @@ export default function ProductListItem({ product }: ProductListItemProps) {
           className="absolute inset-0 w-full h-full object-contain p-4"
         />
       </Link>
-      <CardContent className="flex flex-col sm:flex-row flex-1 justify-between gap-4">
+      <CardContent className="flex flex-col sm:flex-row flex-1 justify-between gap-4 p-4">
         <div className="flex flex-col gap-1">
           <Link
             href={`/products/${product.id}`}
-            className="text-sm font-medium text-primary hover:underline line-clamp-2"
+            className="mt-1 text-sm font-medium text-primary hover:underline line-clamp-2"
           >
             {product.title}
           </Link>
@@ -78,7 +79,7 @@ export default function ProductListItem({ product }: ProductListItemProps) {
             </Badge>
           </div>
         </div>
-        <div className="flex flex-col items-start sm:items-end gap-2 shrink-0">
+        <div className="flex flex-col items-start sm:items-end gap-3 shrink-0 mt-2 sm:mt-0">
           <p className="text-base font-semibold text-gray-900">
             {formatCurrency(displayPrice)}{' '}
             <span className="text-xs font-normal text-gray-600">/unit</span>
