@@ -254,7 +254,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         product,
         offer.quantity,
         offer.selectedVariations ?? {},
-        offer.price,
+        offer.price + (offer.serviceFee ?? 0),
         offer.quantity,
         offer.id,
         offer.expiresAt as string | undefined,
