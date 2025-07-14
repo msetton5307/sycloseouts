@@ -61,6 +61,10 @@ function subtractServiceFee(amount: number, rate: number): number {
   return Math.round(amount * (1 - rate) * 100) / 100;
 }
 
+function calculateServiceFee(amount: number, rate: number): number {
+  return Math.round(amount * rate * 100) / 100;
+}
+
 async function fetchTrackingStatus(trackingNumber: string): Promise<string | undefined> {
   try {
     const apiKey = process.env.TRACKTRY_API_KEY;
@@ -239,11 +243,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Quantity exceeds available stock" });
       }
 
+      const rate = await getServiceFeeRate();
+      const fee = calculateServiceFee(req.body.price, rate);
       const offerData = insertOfferSchema.parse({
         ...req.body,
-        // Store the buyer's offered price directly. The service fee will be
-        // applied later when the buyer checks out.
-        price: req.body.price,
+        price: req.body.price - fee,
+        serviceFee: fee,
         productId: id,
         buyerId: user.id,
         sellerId: product.sellerId,
@@ -1768,8 +1773,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'Quantity exceeds available stock' });
       }
 
+      const rate = await getServiceFeeRate();
+      const fee = calculateServiceFee(price, rate);
       const updated = await storage.updateOffer(offerId, {
-        price,
+        price: price - fee,
+        serviceFee: fee,
         quantity,
         status: 'countered',
       });
@@ -1886,8 +1894,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'Quantity exceeds available stock' });
       }
 
+      const rate = await getServiceFeeRate();
+      const fee = calculateServiceFee(price, rate);
       const updated = await storage.updateOffer(offerId, {
-        price,
+        price: price - fee,
+        serviceFee: fee,
         quantity,
         status: 'countered',
       });

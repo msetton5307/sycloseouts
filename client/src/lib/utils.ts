@@ -25,6 +25,11 @@ export function addServiceFee(basePrice: number, rate: number = getServiceFeeRat
   return roundUpToCent(basePrice * (1 + rate));
 }
 
+// Calculate the service fee amount for a given price
+export function calculateServiceFee(amount: number, rate: number = getServiceFeeRate()): number {
+  return Math.round(amount * rate * 100) / 100;
+}
+
 // Subtract the service fee from a price and round to the nearest cent
 export function subtractServiceFee(amount: number, rate: number = getServiceFeeRate()): number {
   return Math.round(amount * (1 - rate) * 100) / 100;
