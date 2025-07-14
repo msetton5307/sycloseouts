@@ -258,7 +258,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         offer.quantity,
         offer.id,
         offer.expiresAt as string | undefined,
-        false
+        true
       );
     } catch {
       /* ignore */
