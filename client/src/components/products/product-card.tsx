@@ -60,9 +60,11 @@ export default function ProductCard({ product }: ProductCardProps) {
               MOQ: {product.minOrderQuantity}
             </Badge>
           )}
-          <Badge variant="outline" className="bg-purple-100 text-purple-800 hover:bg-purple-100">
-            Order by {product.orderMultiple}
-          </Badge>
+          {product.minOrderQuantity < product.totalUnits && (
+            <Badge variant="outline" className="bg-purple-100 text-purple-800 hover:bg-purple-100">
+              Order by {product.orderMultiple}
+            </Badge>
+          )}
           <Badge
             variant="outline"
             className={product.availableUnits > 0 ? "bg-green-100 text-green-800 hover:bg-green-100" : "bg-red-100 text-red-800 hover:bg-red-100"}
