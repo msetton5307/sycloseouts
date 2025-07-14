@@ -240,7 +240,7 @@ export default function Header({ dashboardTabs, onProfileClick }: HeaderProps) {
         {isMenuOpen && (
           <div className="sm:hidden">
             {user ? (
-              <div className="pt-4 pb-3 border-b border-gray-200 space-y-3">
+              <div className="pt-4 pb-3 border-b border-gray-200">
                 <div className="flex items-center px-4">
                   <div className="flex-shrink-0">
                     <Avatar className="h-10 w-10">
@@ -257,40 +257,6 @@ export default function Header({ dashboardTabs, onProfileClick }: HeaderProps) {
                     </div>
                     <div className="text-sm font-medium text-gray-500">{user.email}</div>
                   </div>
-                </div>
-                <div className="flex justify-around px-4">
-                  <Link href={profileLink} onClick={() => setIsMenuOpen(false)}>
-                    <Button variant="ghost" className="flex flex-col items-center">
-                      <UserIcon className="h-5 w-5" />
-                      Profile
-                    </Button>
-                  </Link>
-                  <Link href={user.role === "buyer" ? "/buyer/messages" : "/seller/messages"}>
-                    <Button variant="ghost" size="icon" className="relative">
-                      <MessageCircle className="h-5 w-5" />
-                      {unread > 0 && (
-                        <Badge className="absolute -top-2 -right-2 bg-primary text-white text-xs h-5 w-5 flex items-center justify-center p-0">
-                          {unread}
-                        </Badge>
-                      )}
-                    </Button>
-                  </Link>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="relative"
-                    onClick={() => {
-                      setIsMenuOpen(false);
-                      setIsCartOpen(true);
-                    }}
-                  >
-                    <ShoppingCart className="h-5 w-5" />
-                    {itemCount > 0 && (
-                      <Badge className="absolute -top-2 -right-2 bg-red-500 text-white text-xs h-5 w-5 flex items-center justify-center p-0">
-                        {itemCount > 99 ? "99+" : itemCount}
-                      </Badge>
-                    )}
-                  </Button>
                 </div>
               </div>
             ) : (
