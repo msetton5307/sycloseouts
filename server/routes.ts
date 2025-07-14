@@ -463,8 +463,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const itemsNoFee = items.map((i) => ({
           title: i.productTitle,
           quantity: i.quantity,
-          unitPrice: subtractServiceFee(i.unitPrice, rate),
-          totalPrice: subtractServiceFee(i.totalPrice, rate),
+          unitPrice: removeServiceFee(i.unitPrice, rate),
+          totalPrice: removeServiceFee(i.totalPrice, rate),
           selectedVariations: i.selectedVariations,
         }));
         const subtotal = itemsNoFee.reduce((sum, it) => sum + it.totalPrice, 0);
@@ -1254,7 +1254,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // product total. Use the same rounding logic as when the fee was
         // applied so the amount matches what sellers expect.
         const payoutAmount =
-          Math.round((subtractServiceFee(productTotalWithFee, rate) + shippingTotal) * 100) / 100;
+          Math.round((removeServiceFee(productTotalWithFee, rate) + shippingTotal) * 100) / 100;
         groups[key].orders.push({ id: o.id, code: o.code, total_amount: payoutAmount });
         groups[key].total += payoutAmount;
       }
@@ -1299,7 +1299,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const shippingTotal = Number(p.total_amount) - productTotalWithFee;
         const rate = await getServiceFeeRate();
         const payoutAmount =
-          Math.round((subtractServiceFee(productTotalWithFee, rate) + shippingTotal) * 100) /
+          Math.round((removeServiceFee(productTotalWithFee, rate) + shippingTotal) * 100) /
           100;
         groups[p.seller_id].payouts.push({
           id: p.id,

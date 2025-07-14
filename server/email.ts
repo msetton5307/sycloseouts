@@ -81,6 +81,10 @@ function subtractServiceFee(amount: number, rate: number): number {
   return Math.round(amount * (1 - rate) * 100) / 100;
 }
 
+function removeServiceFee(priceWithFee: number, rate: number): number {
+  return Math.floor((priceWithFee / (1 + rate)) * 100) / 100;
+}
+
 export async function sendInvoiceEmail(
   to: string,
   order: Order,
@@ -241,8 +245,8 @@ export async function sendSellerOrderEmail(
 
   const itemsNoFee = items.map((i) => ({
     ...i,
-    unitPrice: subtractServiceFee(i.unitPrice, rate),
-    totalPrice: subtractServiceFee(i.totalPrice, rate),
+    unitPrice: removeServiceFee(i.unitPrice, rate),
+    totalPrice: removeServiceFee(i.totalPrice, rate),
   }));
 
   const itemLines = itemsNoFee

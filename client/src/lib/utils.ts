@@ -105,7 +105,7 @@ export function calculateOrderCommission(
   rate: number = getServiceFeeRate(),
 ): number {
   const productTotal = order.items.reduce((sum, i) => sum + i.totalPrice, 0);
-  const payoutTotal = subtractServiceFee(productTotal, rate);
+  const payoutTotal = removeServiceFee(productTotal, rate);
   return Math.round((productTotal - payoutTotal) * 100) / 100;
 }
 
@@ -115,7 +115,7 @@ export function calculateSellerPayout(
 ): number {
   const productTotal = order.items.reduce((sum, i) => sum + i.totalPrice, 0);
   const shippingTotal = order.totalAmount - productTotal;
-  return Math.round((subtractServiceFee(productTotal, rate) + shippingTotal) * 100) / 100;
+  return Math.round((removeServiceFee(productTotal, rate) + shippingTotal) * 100) / 100;
 }
 
 export function calculateShippingTotal(order: { items: { totalPrice: number }[]; totalAmount: number }): number {
