@@ -9,12 +9,18 @@ import ProductFilter from "@/components/products/product-filter";
 import { Button } from "@/components/ui/button";
 import { Loader2, Grid3X3, List } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export default function ProductsPage() {
   const { user } = useAuth();
+  const isMobile = useIsMobile();
   const [viewMode, setViewMode] = useState<"grid" | "list">(
-    () => (window.innerWidth < 640 ? "list" : "grid")
+    () => (window.innerWidth < 768 ? "list" : "grid")
   );
+
+  useEffect(() => {
+    setViewMode(isMobile ? "list" : "grid");
+  }, [isMobile]);
   const [filters, setFilters] = useState({
     search: "",
     category: "All Categories",
