@@ -252,6 +252,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       const product: Product = await res.json();
       // Use the stored service fee so the buyer pays the exact offer amount
       // while the seller receives the net price without rounding errors.
+      // The provided price already includes the service fee so don't add it again.
       addToCart(
         product,
         offer.quantity,
@@ -260,7 +261,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         offer.quantity,
         offer.id,
         offer.expiresAt as string | undefined,
-        true
+        false
       );
     } catch {
       /* ignore */
