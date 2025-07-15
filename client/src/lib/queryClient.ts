@@ -51,7 +51,7 @@ export const queryClient = new QueryClient({
       retry: 1, // Allow one retry
     },
     mutations: {
-      retry: 1, // Allow one retry
+      retry: false, // Disable mutation retries to avoid duplicate actions
     },
   },
 });
