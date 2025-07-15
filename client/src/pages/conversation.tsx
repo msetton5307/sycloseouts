@@ -1,4 +1,4 @@
-import { useParams } from "wouter";
+import { useParams, Link } from "wouter";
 import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
 import { useConversation } from "@/hooks/use-messages";
@@ -7,7 +7,6 @@ import { useEffect, useRef } from "react";
 import ChatMessage from "@/components/messages/chat-message";
 import { useQuery } from "@tanstack/react-query";
 import { Order, OrderItem } from "@shared/schema";
-import ConversationPreview from "@/components/messages/conversation-preview";
 import ListingBanner from "@/components/messages/listing-banner";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -26,13 +25,17 @@ export default function ConversationPage() {
     queryKey: ["/api/orders"],
     enabled: !!user,
   });
-  const others = user?.role === "buyer"
-    ? Array.from(new Set(orders.map(o => o.sellerId)))
-    : Array.from(new Set(orders.map(o => o.buyerId)));
-  const { data: messages = [], isLoading, sendMessage, markRead } = useConversation(otherId);
+  const backHref =
+    user?.role === "buyer"
+      ? "/buyer/messages"
+      : user?.role === "seller"
+        ? "/seller/messages"
+        : "/admin/messages";
+  const { data: messages = [], isLoading, sendMessage, markRead } =
+    useConversation(otherId);
   const inputRef = useRef<HTMLInputElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
-  const initialScroll = useRef(true);
+  const initialLoad = useRef(true);
 
   const latestOrder = orders.find(o =>
     (user?.role === "buyer" ? o.sellerId === otherId : o.buyerId === otherId)
@@ -46,15 +49,17 @@ export default function ConversationPage() {
   }, [otherId]);
 
   useEffect(() => {
-    if (initialScroll.current) {
-      initialScroll.current = false;
+    if (initialLoad.current) {
+      if (!isLoading) {
+        initialLoad.current = false;
+      }
       return;
     }
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, [messages, isLoading]);
 
   useEffect(() => {
-    initialScroll.current = true;
+    initialLoad.current = true;
   }, [otherId]);
 
   function handleSubmit(e: React.FormEvent) {
@@ -68,13 +73,11 @@ export default function ConversationPage() {
   return (
     <>
       <Header />
-      <main className="max-w-7xl mx-auto px-4 py-4 flex h-[calc(100vh-8rem)] gap-4">
-        <div className="hidden md:block w-64 border-r overflow-y-auto bg-white shadow-sm rounded-lg">
-          {others.map(id => (
-            <ConversationPreview key={id} otherId={id} selected={id === otherId} />
-          ))}
-        </div>
-        <div className="flex-1 flex flex-col gap-2">
+      <main className="max-w-7xl mx-auto px-4 py-4 flex flex-col h-[calc(100dvh-8rem)] gap-4 overflow-hidden">
+        <div className="flex-1 flex flex-col gap-2 overflow-hidden">
+          <Link href={backHref} className="text-sm text-blue-600 hover:underline self-start">
+            ← Back to conversations
+          </Link>
           {listing && (
             <ListingBanner
               productId={listing.productId}
