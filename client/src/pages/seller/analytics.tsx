@@ -30,9 +30,13 @@ export default function SellerAnalyticsPage() {
   const { user } = useAuth();
   const [range, setRange] = useState(30);
 
-  const start = new Date(Date.now() - range * 86400000);
-  const startStr = start.toISOString().slice(0, 10);
-  const endStr = new Date().toISOString().slice(0, 10);
+  const endDate = new Date();
+  endDate.setHours(23, 59, 59, 999);
+  const startDate = new Date(endDate);
+  startDate.setDate(endDate.getDate() - range + 1);
+  startDate.setHours(0, 0, 0, 0);
+  const startStr = startDate.toISOString().slice(0, 10);
+  const endStr = endDate.toISOString().slice(0, 10);
 
   const { data: rows = [] } = useQuery<SummaryRow[]>({
     queryKey: [`/api/seller/sales?start=${startStr}&end=${endStr}`],

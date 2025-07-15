@@ -316,10 +316,13 @@ export default function SellerDashboard() {
   );
 
   const today = new Date();
+  today.setHours(0, 0, 0, 0);
   const weekStart = new Date(today);
   weekStart.setDate(today.getDate() - 6);
+  const weekEnd = new Date(today);
+  weekEnd.setHours(23, 59, 59, 999);
   const startStr = weekStart.toISOString().slice(0, 10);
-  const endStr = today.toISOString().slice(0, 10);
+  const endStr = weekEnd.toISOString().slice(0, 10);
 
   const { data: weeklySales = [] } = useQuery<{ date: string; orders: number; revenue: number }[]>({
     queryKey: [`/api/seller/sales?start=${startStr}&end=${endStr}`],
