@@ -760,16 +760,20 @@ export class DatabaseStorage implements IStorage {
     sellerId: number,
     start: Date,
     end: Date,
-  ): Promise<{ date: string; revenue: number }[]> {
+  ): Promise<{ date: string; orders: number; revenue: number }[]> {
     const result = await pool.query(
-      `SELECT DATE(created_at) AS date, SUM(total_amount) AS revenue
+      `SELECT DATE(created_at) AS date, COUNT(*) AS orders, SUM(total_amount) AS revenue
          FROM orders
         WHERE seller_id = $1 AND created_at BETWEEN $2 AND $3
         GROUP BY DATE(created_at)
         ORDER BY DATE(created_at)`,
       [sellerId, start, end],
     );
-    return result.rows.map((r) => ({ date: r.date, revenue: Number(r.revenue) }));
+    return result.rows.map((r) => ({
+      date: r.date,
+      orders: Number(r.orders),
+      revenue: Number(r.revenue),
+    }));
   }
 
   async getOrdersForBilling(): Promise<any[]> {
