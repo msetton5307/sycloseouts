@@ -31,11 +31,10 @@ export default function ConversationPage() {
       : user?.role === "seller"
         ? "/seller/messages"
         : "/admin/messages";
-  const { data: messages = [], isLoading, sendMessage, markRead } =
-    useConversation(otherId);
+  const { data: messages = [], isLoading, sendMessage, markRead } = useConversation(otherId);
   const inputRef = useRef<HTMLInputElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
-  const initialLoad = useRef(true);
+  const initialScroll = useRef(true);
 
   const latestOrder = orders.find(o =>
     (user?.role === "buyer" ? o.sellerId === otherId : o.buyerId === otherId)
@@ -49,17 +48,15 @@ export default function ConversationPage() {
   }, [otherId]);
 
   useEffect(() => {
-    if (initialLoad.current) {
-      if (!isLoading) {
-        initialLoad.current = false;
-      }
+    if (initialScroll.current) {
+      initialScroll.current = false;
       return;
     }
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, isLoading]);
+  }, [messages]);
 
   useEffect(() => {
-    initialLoad.current = true;
+    initialScroll.current = true;
   }, [otherId]);
 
   function handleSubmit(e: React.FormEvent) {
@@ -107,4 +104,3 @@ export default function ConversationPage() {
     </>
   );
 }
-
