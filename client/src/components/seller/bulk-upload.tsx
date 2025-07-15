@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Upload, Download } from "lucide-react";
+import * as XLSX from "xlsx";
 
 function parseCsv(text: string): Omit<InsertProduct, "sellerId">[] {
   const lines = text.trim().split(/\r?\n/);
@@ -41,7 +42,6 @@ function parseCsv(text: string): Omit<InsertProduct, "sellerId">[] {
 }
 
 async function parseXlsx(file: File): Promise<Omit<InsertProduct, "sellerId">[]> {
-  const XLSX = await import("xlsx");
   const data = new Uint8Array(await file.arrayBuffer());
   const workbook = XLSX.read(data, { type: "array" });
   const sheet = workbook.Sheets[workbook.SheetNames[0]];
