@@ -69,10 +69,10 @@ function SettingsLoader() {
     if (data) {
       document.title = data.siteTitle;
       const faviconEl = document.getElementById(
-        "site-favicon"
+        "site-favicon",
       ) as HTMLLinkElement | null;
-      if (faviconEl && data.favicon) {
-        faviconEl.href = data.favicon;
+      if (faviconEl) {
+        faviconEl.href = data.logo || "/generated-icon.png";
       }
     }
   }, [data]);
