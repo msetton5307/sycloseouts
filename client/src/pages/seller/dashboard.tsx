@@ -107,7 +107,9 @@ export default function SellerDashboard() {
     enabled: !!user,
   });
 
-  const pendingOffers = offers.filter((o) => o.status === "pending");
+  const actionOffers = offers.filter(
+    (o) => o.status === "pending" || o.status === "countered",
+  );
 
   const recentOffersCard = (
     <Card>
@@ -116,11 +118,11 @@ export default function SellerDashboard() {
         <CardDescription>Offers from buyers</CardDescription>
       </CardHeader>
       <CardContent>
-        {pendingOffers.length === 0 ? (
+        {actionOffers.length === 0 ? (
           <p className="text-sm text-gray-500">No offers yet.</p>
         ) : (
           <div className="space-y-4">
-            {pendingOffers.slice(0, 5).map((o) => (
+            {actionOffers.slice(0, 5).map((o) => (
               <div key={o.id} className="border rounded-lg p-4 flex gap-4 justify-between">
                 {o.productImages?.[0] && (
                   <img
@@ -139,7 +141,7 @@ export default function SellerDashboard() {
                     </p>
                   )}
                   <p className="text-sm">Qty: {o.quantity}</p>
-                  <p className="text-sm">{formatCurrency(o.price)}</p>
+                  <p className="text-sm">Price/Unit: {formatCurrency(o.price)}</p>
                 </div>
                 <div className="space-x-2 flex items-start">
                   <Button
@@ -402,7 +404,7 @@ export default function SellerDashboard() {
               Welcome back, {user?.firstName}
             </p>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
             <Link href="/seller/products" className="w-full">
               <Button variant="outline" className="flex items-center w-full justify-center text-xs sm:text-sm">
                 <Package className="mr-2 h-4 w-4" />
@@ -421,6 +423,12 @@ export default function SellerDashboard() {
                 Payouts
               </Button>
             </Link>
+            <Link href="/seller/offers" className="w-full">
+              <Button variant="outline" className="flex items-center w-full justify-center text-xs sm:text-sm">
+                <TrendingUp className="mr-2 h-4 w-4" />
+                Offers
+              </Button>
+            </Link>
             <Link href="/seller/products?action=new" className="w-full">
               <Button className="flex items-center w-full justify-center text-xs sm:text-sm">
                 <PlusCircle className="mr-2 h-4 w-4" />
@@ -431,7 +439,7 @@ export default function SellerDashboard() {
         </div>
         
         <TabsContent value="overview" className="space-y-6">
-            {pendingOffers.length > 0 && recentOffersCard}
+            {actionOffers.length > 0 && recentOffersCard}
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               <Card>
@@ -802,7 +810,7 @@ export default function SellerDashboard() {
             </Card>
 
             {/* Recent Offers */}
-            {pendingOffers.length === 0 && recentOffersCard}
+            {actionOffers.length === 0 && recentOffersCard}
           </TabsContent>
           
           

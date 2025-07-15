@@ -148,7 +148,7 @@ export default function SellerOffersPage() {
                               </p>
                             )}
                             <p className="text-sm">Quantity: {o.quantity}</p>
-                            <p className="text-sm">Price: {formatCurrency(o.price)}</p>
+                            <p className="text-sm">Price/Unit: {formatCurrency(o.price)}</p>
                           </div>
                           <div className="text-right space-y-1">
                             <span className="text-xs capitalize">{o.status}</span>

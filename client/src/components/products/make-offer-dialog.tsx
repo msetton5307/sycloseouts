@@ -76,7 +76,7 @@ export default function MakeOfferDialog({
             </div>
           )}
           <div>
-            <label className="block text-sm font-medium mb-1">Offer Price</label>
+            <label className="block text-sm font-medium mb-1">Price/Unit</label>
               <Input
               type="number"
               value={price}
