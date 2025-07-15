@@ -161,6 +161,14 @@ export async function setupVite(app: Express, server: Server) {
         `src="/src/main.tsx"`,
         `src="/src/main.tsx?v=${nanoid()}"`,
       );
+      const logo = (await storage.getSiteSetting("logo")) || "/generated-icon.png";
+      const title =
+        (await storage.getSiteSetting("site_title")) ||
+        "SY Closeouts - B2B Wholesale Liquidation Marketplace";
+      template = injectMeta(template, {
+        title,
+        image: toAbsolute(logo, req),
+      });
       const page = await vite.transformIndexHtml(url, template);
       res.status(200).set({ "Content-Type": "text/html" }).end(page);
     } catch (e) {
@@ -202,7 +210,21 @@ export function serveStatic(app: Express) {
   app.use(express.static(distPath));
 
   // fall through to index.html if the file doesn't exist
-  app.use("*", (_req, res) => {
-    res.sendFile(path.resolve(distPath, "index.html"));
+  app.use("*", async (req, res, next) => {
+    try {
+      const templatePath = path.resolve(distPath, "index.html");
+      let template = await fs.promises.readFile(templatePath, "utf-8");
+      const logo = (await storage.getSiteSetting("logo")) || "/generated-icon.png";
+      const title =
+        (await storage.getSiteSetting("site_title")) ||
+        "SY Closeouts - B2B Wholesale Liquidation Marketplace";
+      template = injectMeta(template, {
+        title,
+        image: toAbsolute(logo, req),
+      });
+      res.status(200).set({ "Content-Type": "text/html" }).end(template);
+    } catch (e) {
+      next(e);
+    }
   });
 }

@@ -13,18 +13,14 @@ export default function AdminSettingsPage() {
   const [rate, setRate] = useState(0.035);
   const [logo, setLogo] = useState<string | null>(null);
   const [siteTitle, setSiteTitle] = useState("SY Closeouts - B2B Wholesale Liquidation Marketplace");
-  const [favicon, setFavicon] = useState<string | null>(null);
   const logoFileRef = useRef<HTMLInputElement | null>(null);
-  const faviconFileRef = useRef<HTMLInputElement | null>(null);
   const [uploadingLogo, setUploadingLogo] = useState(false);
-  const [uploadingFavicon, setUploadingFavicon] = useState(false);
 
   useEffect(() => {
     if (data) {
       setRate(data.commissionRate);
       setLogo(data.logo ?? null);
       setSiteTitle(data.siteTitle);
-      setFavicon(data.favicon ?? null);
     }
   }, [data]);
 
@@ -43,30 +39,13 @@ export default function AdminSettingsPage() {
     reader.readAsDataURL(file);
   };
 
-  const handleFaviconFile = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setUploadingFavicon(true);
-    const reader = new FileReader();
-    reader.onload = ev => {
-      if (ev.target?.result) {
-        setFavicon(ev.target.result.toString());
-      }
-      setUploadingFavicon(false);
-    };
-    reader.onerror = () => setUploadingFavicon(false);
-    reader.readAsDataURL(file);
-  };
-
   const triggerLogo = () => logoFileRef.current?.click();
-  const triggerFavicon = () => faviconFileRef.current?.click();
 
   const save = () => {
     update.mutate({
       commissionRate: rate,
       logo,
       siteTitle,
-      favicon,
     });
   };
 
@@ -108,15 +87,6 @@ export default function AdminSettingsPage() {
             <div>
               <label className="block text-sm font-medium mb-1">Site Title</label>
               <Input value={siteTitle} onChange={e => setSiteTitle(e.target.value)} />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Favicon</label>
-              {favicon && <img src={favicon} alt="Favicon" className="h-8 w-8 mb-2" />}
-              <Input value={favicon || ""} onChange={e => setFavicon(e.target.value)} placeholder="Image URL or data" />
-              <input type="file" ref={faviconFileRef} className="hidden" accept="image/*" onChange={handleFaviconFile} />
-              <Button type="button" variant="outline" className="mt-2" onClick={triggerFavicon} disabled={uploadingFavicon}>
-                {uploadingFavicon ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin"/>Uploading...</>) : (<><ImagePlus className="mr-2 h-4 w-4"/>Upload Image</>)}
-              </Button>
             </div>
             <Button onClick={save} disabled={update.isPending}>
               {update.isPending ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin"/>Saving...</>) : "Save"}
