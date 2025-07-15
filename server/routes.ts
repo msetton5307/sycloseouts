@@ -18,6 +18,12 @@ import {
   sendSupportTicketEmail,
   sendStrikeEmail,
   sendOrderCancelledEmail,
+  sendNewOfferEmail,
+  sendOfferAcceptedEmail,
+  sendOfferRejectedEmail,
+  sendCounterOfferEmail,
+  sendCounterAcceptedEmail,
+  sendCounterRejectedEmail,
 } from "./email";
 import { generateInvoicePdf, generateSalesReportPdf } from "./pdf";
 import { addSubscription, sendPushNotification } from "./push";
@@ -263,6 +269,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         content: `New offer for ${product.title}`,
         link: `/seller/offers`,
       });
+
+      const seller = await storage.getUser(product.sellerId);
+      if (seller) {
+        sendNewOfferEmail(seller.email, product.title).catch(console.error);
+      }
 
       res.status(201).json(offer);
     } catch (error) {
@@ -1738,6 +1749,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         link: `/buyer/offers`,
       });
 
+      const buyer = await storage.getUser(offer.buyerId);
+      const product = await storage.getProduct(offer.productId);
+      if (buyer && product) {
+        sendOfferAcceptedEmail(buyer.email, product.title).catch(console.error);
+      }
+
       res.json(updated);
     } catch (error) {
       handleApiError(res, error);
@@ -1793,6 +1810,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         link: `/buyer/offers`,
       });
 
+      const buyer = await storage.getUser(offer.buyerId);
+      if (buyer) {
+        sendCounterOfferEmail(buyer.email, product.title, true).catch(console.error);
+      }
+
       res.json(updated);
     } catch (error) {
       handleApiError(res, error);
@@ -1829,6 +1851,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         link: `/seller/offers`,
       });
 
+      const seller = await storage.getUser(offer.sellerId);
+      const product = await storage.getProduct(offer.productId);
+      if (seller && product) {
+        sendCounterAcceptedEmail(seller.email, product.title).catch(console.error);
+      }
+
       res.json(updated);
     } catch (error) {
       handleApiError(res, error);
@@ -1861,6 +1889,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         content: `Counter offer rejected by buyer`,
         link: `/seller/offers`,
       });
+
+      const seller = await storage.getUser(offer.sellerId);
+      const product = await storage.getProduct(offer.productId);
+      if (seller && product) {
+        sendCounterRejectedEmail(seller.email, product.title).catch(console.error);
+      }
 
       res.sendStatus(204);
     } catch (error) {
@@ -1914,6 +1948,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         link: `/seller/offers`,
       });
 
+      const seller = await storage.getUser(offer.sellerId);
+      if (seller) {
+        sendCounterOfferEmail(seller.email, product.title, false).catch(console.error);
+      }
+
       res.json(updated);
     } catch (error) {
       handleApiError(res, error);
@@ -1946,6 +1985,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         content: `Your offer for ${offer.quantity} units was rejected`,
         link: `/buyer/home`,
       });
+
+      const buyer = await storage.getUser(offer.buyerId);
+      const product = await storage.getProduct(offer.productId);
+      if (buyer && product) {
+        sendOfferRejectedEmail(buyer.email, product.title).catch(console.error);
+      }
 
       res.sendStatus(204);
     } catch (error) {
