@@ -1192,8 +1192,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const title =
         (await storage.getSiteSetting("site_title")) ||
         "SY Closeouts - B2B Wholesale Liquidation Marketplace";
-      const favicon = await storage.getSiteSetting("favicon");
-      res.json({ commissionRate: rate, logo, siteTitle: title, favicon });
+      res.json({ commissionRate: rate, logo, siteTitle: title, favicon: logo });
     } catch (error) {
       handleApiError(res, error);
     }
@@ -1206,8 +1205,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const title =
         (await storage.getSiteSetting("site_title")) ||
         "SY Closeouts - B2B Wholesale Liquidation Marketplace";
-      const favicon = await storage.getSiteSetting("favicon");
-      res.json({ commissionRate: rate, logo, siteTitle: title, favicon });
+      res.json({ commissionRate: rate, logo, siteTitle: title, favicon: logo });
     } catch (error) {
       handleApiError(res, error);
     }
@@ -1223,9 +1221,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       if (req.body.siteTitle !== undefined) {
         await storage.setSiteSetting("site_title", req.body.siteTitle ?? "");
-      }
-      if (req.body.favicon !== undefined) {
-        await storage.setSiteSetting("favicon", req.body.favicon ?? "");
       }
       res.sendStatus(204);
     } catch (error) {
