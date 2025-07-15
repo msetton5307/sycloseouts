@@ -272,7 +272,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const seller = await storage.getUser(product.sellerId);
       if (seller) {
-        sendNewOfferEmail(seller.email, product.title).catch(console.error);
+        sendNewOfferEmail(
+          seller.email,
+          product.title,
+          req.body.price,
+          req.body.quantity,
+        ).catch(console.error);
       }
 
       res.status(201).json(offer);
@@ -1752,7 +1757,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const buyer = await storage.getUser(offer.buyerId);
       const product = await storage.getProduct(offer.productId);
       if (buyer && product) {
-        sendOfferAcceptedEmail(buyer.email, product.title).catch(console.error);
+        const priceOffered = offer.price + offer.serviceFee;
+        sendOfferAcceptedEmail(
+          buyer.email,
+          product.title,
+          priceOffered,
+          offer.quantity,
+        ).catch(console.error);
       }
 
       res.json(updated);
@@ -1812,7 +1823,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const buyer = await storage.getUser(offer.buyerId);
       if (buyer) {
-        sendCounterOfferEmail(buyer.email, product.title, true).catch(console.error);
+        const priceWithFee = updated.price + updated.serviceFee;
+        sendCounterOfferEmail(
+          buyer.email,
+          product.title,
+          priceWithFee,
+          updated.quantity,
+          true,
+        ).catch(console.error);
       }
 
       res.json(updated);
@@ -1854,7 +1872,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const seller = await storage.getUser(offer.sellerId);
       const product = await storage.getProduct(offer.productId);
       if (seller && product) {
-        sendCounterAcceptedEmail(seller.email, product.title).catch(console.error);
+        const priceOffered = offer.price + offer.serviceFee;
+        sendCounterAcceptedEmail(
+          seller.email,
+          product.title,
+          priceOffered,
+          offer.quantity,
+        ).catch(console.error);
       }
 
       res.json(updated);
@@ -1893,7 +1917,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const seller = await storage.getUser(offer.sellerId);
       const product = await storage.getProduct(offer.productId);
       if (seller && product) {
-        sendCounterRejectedEmail(seller.email, product.title).catch(console.error);
+        const priceOffered = offer.price + offer.serviceFee;
+        sendCounterRejectedEmail(
+          seller.email,
+          product.title,
+          priceOffered,
+          offer.quantity,
+        ).catch(console.error);
       }
 
       res.sendStatus(204);
@@ -1950,7 +1980,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const seller = await storage.getUser(offer.sellerId);
       if (seller) {
-        sendCounterOfferEmail(seller.email, product.title, false).catch(console.error);
+        const priceOffered = price; // buyer offered price includes fee
+        sendCounterOfferEmail(
+          seller.email,
+          product.title,
+          priceOffered,
+          quantity,
+          false,
+        ).catch(console.error);
       }
 
       res.json(updated);
@@ -1989,7 +2026,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const buyer = await storage.getUser(offer.buyerId);
       const product = await storage.getProduct(offer.productId);
       if (buyer && product) {
-        sendOfferRejectedEmail(buyer.email, product.title).catch(console.error);
+        const priceOffered = offer.price + offer.serviceFee;
+        sendOfferRejectedEmail(
+          buyer.email,
+          product.title,
+          priceOffered,
+          offer.quantity,
+        ).catch(console.error);
       }
 
       res.sendStatus(204);

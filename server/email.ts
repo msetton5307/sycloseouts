@@ -1009,14 +1009,35 @@ export async function sendOfferEmail(
   message: string,
   buttonUrl: string,
   buttonText: string,
+  details?: { productTitle: string; price: number; quantity: number },
 ) {
   if (!transporter) {
     console.warn("Email transport not configured; skipping offer email");
     return;
   }
 
+  const detailHtml = details
+    ? `<table style="width:100%;border-collapse:collapse;margin:10px 0;">
+        <tr style="background:#f0f0f0;">
+          <th align="left" style="padding:4px 8px;">Product</th>
+          <th align="center" style="padding:4px 8px;">Qty</th>
+          <th align="right" style="padding:4px 8px;">Price</th>
+        </tr>
+        <tr>
+          <td style="padding:4px 8px;">${details.productTitle}</td>
+          <td align="center" style="padding:4px 8px;">${details.quantity}</td>
+          <td align="right" style="padding:4px 8px;">$${details.price.toFixed(2)}</td>
+        </tr>
+      </table>`
+    : "";
+
+  const textDetails = details
+    ? `\nProduct: ${details.productTitle}\nQuantity: ${details.quantity}\nPrice: $${details.price.toFixed(2)}`
+    : "";
+
   const htmlBody = `
     <p style="margin-top:0;">${message}</p>
+    ${detailHtml}
     <p style="text-align:center;margin:20px 0;">
       <a href="${buttonUrl}" style="background-color:#3498db;color:#ffffff;text-decoration:none;padding:12px 24px;border-radius:4px;display:inline-block;">${buttonText}</a>
     </p>
@@ -1027,7 +1048,7 @@ export async function sendOfferEmail(
     from: process.env.SMTP_FROM || user,
     to,
     subject,
-    text: `${message}\n${buttonUrl}`,
+    text: `${message}${textDetails}\n${buttonUrl}`,
     html: wrapTemplate(subject, htmlBody),
     attachments: [logo],
   } as nodemailer.SendMailOptions;
@@ -1039,33 +1060,100 @@ export async function sendOfferEmail(
   }
 }
 
-export async function sendNewOfferEmail(to: string, productTitle: string) {
+export async function sendNewOfferEmail(
+  to: string,
+  productTitle: string,
+  price: number,
+  quantity: number,
+) {
   await sendOfferEmail(
     to,
     `New offer for ${productTitle}`,
     `You have received a new offer for ${productTitle}.`,
     `https://sycloseouts.com/seller/offers`,
     "View Offer",
+    { productTitle, price, quantity },
   );
 }
 
-export async function sendOfferAcceptedEmail(to: string, productTitle: string) {
+export async function sendOfferAcceptedEmail(
+  to: string,
+  productTitle: string,
+  price: number,
+  quantity: number,
+) {
   await sendOfferEmail(
     to,
     `Offer for ${productTitle} accepted`,
     `Your offer for ${productTitle} was accepted. You can add the item to your cart.`,
     `https://sycloseouts.com/buyer/offers`,
     "Add to Cart",
+    { productTitle, price, quantity },
   );
 }
 
-export async function sendOfferRejectedEmail(to: string, productTitle: string) {
+export async function sendOfferRejectedEmail(
+  to: string,
+  productTitle: string,
+  price: number,
+  quantity: number,
+) {
   await sendOfferEmail(
     to,
     `Offer for ${productTitle} rejected`,
     `Your offer for ${productTitle} was rejected.`,
     `https://sycloseouts.com/buyer/offers`,
     "View Offer",
+    { productTitle, price, quantity },
+  );
+}
+
+export async function sendCounterOfferEmail(
+  to: string,
+  productTitle: string,
+  price: number,
+  quantity: number,
+  forBuyer: boolean,
+) {
+  await sendOfferEmail(
+    to,
+    `Counter offer for ${productTitle}`,
+    `You have received a counter offer for ${productTitle}.`,
+    forBuyer ? `https://sycloseouts.com/buyer/offers` : `https://sycloseouts.com/seller/offers`,
+    "View Offer",
+    { productTitle, price, quantity },
+  );
+}
+
+export async function sendCounterAcceptedEmail(
+  to: string,
+  productTitle: string,
+  price: number,
+  quantity: number,
+) {
+  await sendOfferEmail(
+    to,
+    `Counter offer for ${productTitle} accepted`,
+    `Your counter offer for ${productTitle} was accepted.`,
+    `https://sycloseouts.com/seller/offers`,
+    "View Offer",
+    { productTitle, price, quantity },
+  );
+}
+
+export async function sendCounterRejectedEmail(
+  to: string,
+  productTitle: string,
+  price: number,
+  quantity: number,
+) {
+  await sendOfferEmail(
+    to,
+    `Counter offer for ${productTitle} rejected`,
+    `Your counter offer for ${productTitle} was rejected.`,
+    `https://sycloseouts.com/seller/offers`,
+    "View Offer",
+    { productTitle, price, quantity },
   );
 }
 
