@@ -31,6 +31,7 @@ export default function HomePage() {
     if (user.role === "buyer") {
       return <Redirect to="/buyer/home" />;
     }
+    return <Redirect to="/products" />;
   }
 
   return (
