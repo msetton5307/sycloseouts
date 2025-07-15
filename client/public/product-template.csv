@@ -1,2 +1,2 @@
 title,description,category,price,totalUnits,availableUnits,minOrderQuantity,orderMultiple,images,fobLocation,retailComparisonUrl,upc,condition,shippingType,shippingResponsibility,shippingFee,isBanner
-Sample Product,"This is a sample product.",Electronics,9.99,100,100,1,1,https://example.com/image1.jpg|https://example.com/image2.jpg,"New York, NY",https://example.com,123456789012,New,truckload,seller_free,,false
+Sample Product,"This is a sample product.",Electronics,9.99,100,100,1,1,image1.jpg|image2.jpg,"New York, NY",https://example.com,123456789012,New,truckload,seller_free,,false

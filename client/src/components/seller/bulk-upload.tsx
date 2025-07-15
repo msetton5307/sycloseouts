@@ -40,6 +40,55 @@ function parseCsv(text: string): Omit<InsertProduct, "sellerId">[] {
   });
 }
 
+async function parseXlsx(file: File): Promise<Omit<InsertProduct, "sellerId">[]> {
+  const XLSX = await import("xlsx");
+  const data = new Uint8Array(await file.arrayBuffer());
+  const workbook = XLSX.read(data, { type: "array" });
+  const sheet = workbook.Sheets[workbook.SheetNames[0]];
+  const rows: any[] = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+  return rows.map((row) => {
+    row.images = row.images ? String(row.images).split("|").filter((s: string) => s) : [];
+    if (row.price !== undefined) row.price = parseFloat(row.price);
+    if (row.totalUnits !== undefined) row.totalUnits = parseInt(row.totalUnits, 10);
+    if (row.availableUnits !== undefined) row.availableUnits = parseInt(row.availableUnits, 10);
+    if (row.minOrderQuantity !== undefined) row.minOrderQuantity = parseInt(row.minOrderQuantity, 10);
+    if (row.orderMultiple !== undefined) row.orderMultiple = parseInt(row.orderMultiple, 10);
+    if (row.shippingFee !== undefined) row.shippingFee = row.shippingFee === "" ? undefined : parseFloat(row.shippingFee);
+    if (row.isBanner !== undefined) row.isBanner = row.isBanner === "true";
+    if (!row.shippingType) row.shippingType = "truckload";
+    if (!row.shippingResponsibility) row.shippingResponsibility = "seller_free";
+    return row as Omit<InsertProduct, "sellerId">;
+  });
+}
+
+function createFileMap(files: FileList | null): Record<string, File> {
+  const map: Record<string, File> = {};
+  if (!files) return map;
+  Array.from(files).forEach((f) => {
+    map[f.name] = f;
+  });
+  return map;
+}
+
+async function resolveImages(refs: string[], fileMap: Record<string, File>): Promise<string[]> {
+  const result: string[] = [];
+  for (const ref of refs) {
+    const file = fileMap[ref];
+    if (file) {
+      const data = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(e.target?.result as string);
+        reader.onerror = () => reject(new Error("read error"));
+        reader.readAsDataURL(file);
+      });
+      result.push(data);
+    } else {
+      result.push(ref);
+    }
+  }
+  return result;
+}
+
 export default function BulkUpload() {
   const [open, setOpen] = useState(false);
   const fileRef = useRef<HTMLInputElement | null>(null);
@@ -59,24 +108,42 @@ export default function BulkUpload() {
   });
 
   async function handleUpload() {
-    const file = fileRef.current?.files?.[0];
-    if (!file) return;
-    const text = await file.text();
+    const files = fileRef.current?.files;
+    if (!files || files.length === 0) return;
+
+    const spreadsheet = Array.from(files).find((f) =>
+      f.name.endsWith(".csv") || f.name.endsWith(".xlsx")
+    );
+    if (!spreadsheet) return;
+
     let products: Omit<InsertProduct, "sellerId">[] = [];
+
     try {
-      products = parseCsv(text);
+      if (spreadsheet.name.endsWith(".csv")) {
+        const text = await spreadsheet.text();
+        products = parseCsv(text);
+      } else {
+        products = await parseXlsx(spreadsheet);
+      }
     } catch (e) {
       toast({
-        title: "Invalid CSV",
+        title: "Invalid File",
         description: "Could not parse the selected file.",
         variant: "destructive",
       });
       return;
     }
+
+    const fileMap = createFileMap(files);
+    for (const p of products) {
+      p.images = await resolveImages(p.images, fileMap);
+    }
+
     if (products.length === 0) {
       toast({ title: "No products found" });
       return;
     }
+
     await mutateAsync(products);
     toast({
       title: "Upload complete",
@@ -103,11 +170,11 @@ export default function BulkUpload() {
             <a href={templateUrl} download className="text-primary underline">
               CSV template
             </a>{" "}
-            and fill it with your products, then re-upload the file.
+            and fill it with your products, then re-upload the file. XLSX files are also supported.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-2">
-          <Input type="file" accept=".csv" ref={fileRef} />
+          <Input type="file" multiple accept=".csv,.xlsx,image/*" ref={fileRef} />
           <DialogFooter className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => setOpen(false)}>
               Cancel
