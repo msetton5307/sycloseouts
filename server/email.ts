@@ -419,12 +419,28 @@ export async function sendSellerApprovalEmail(to: string) {
     return;
   }
 
+  const subject = "Seller Application Approved";
+  const htmlBody = `
+    <p style="margin-top:0;">Congratulations! Your seller application has been approved.</p>
+    <p>You can now access your seller dashboard and start listing products.</p>
+    <p style="text-align:center;margin:20px 0;">
+      <a href="https://sycloseouts.com/seller/dashboard" style="background-color:#3498db;color:#ffffff;text-decoration:none;padding:12px 24px;border-radius:4px;display:inline-block;">View Dashboard</a>
+    </p>
+    <p style="margin-top:0;">For questions, concerns, or comments please contact <a href="mailto:support@sycloseouts.com">support@sycloseouts.com</a>.</p>
+  `;
+
+  const logo = await getLogoAttachment();
   const mailOptions = {
     from: process.env.SMTP_FROM || user,
     to,
-    subject: "Seller Application Approved",
-    text: "Your seller application has been approved. You can now access your seller dashboard.",
-  };
+    subject,
+    text:
+      "Your seller application has been approved. " +
+      "Visit https://sycloseouts.com/seller/dashboard to view your dashboard. " +
+      "For questions or concerns contact support@sycloseouts.com.",
+    html: wrapTemplate(subject, htmlBody),
+    attachments: [logo],
+  } as nodemailer.SendMailOptions;
 
   try {
     await transporter.sendMail(mailOptions);
