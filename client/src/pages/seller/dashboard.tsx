@@ -141,7 +141,7 @@ export default function SellerDashboard() {
                     </p>
                   )}
                   <p className="text-sm">Qty: {o.quantity}</p>
-                  <p className="text-sm">{formatCurrency(o.price)}</p>
+                  <p className="text-sm">Price/Unit: {formatCurrency(o.price)}</p>
                 </div>
                 <div className="space-x-2 flex items-start">
                   <Button

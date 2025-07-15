@@ -1788,7 +1788,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (user.role !== 'seller' || offer.sellerId !== user.id) {
         return res.status(403).json({ message: "Forbidden" });
       }
-      if (offer.status !== 'pending') {
+      if (!['pending', 'countered'].includes(offer.status)) {
         return res.status(400).json({ message: "Offer already processed" });
       }
 
@@ -2012,7 +2012,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (user.role !== 'seller' || offer.sellerId !== user.id) {
         return res.status(403).json({ message: "Forbidden" });
       }
-      if (offer.status !== 'pending') {
+      if (!['pending', 'countered'].includes(offer.status)) {
         return res.status(400).json({ message: "Offer already processed" });
       }
 

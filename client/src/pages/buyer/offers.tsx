@@ -152,7 +152,7 @@ export default function BuyerOffersPage() {
                             <p className="text-sm">Quantity: {o.quantity}</p>
                           </div>
                           <div className="text-right space-y-1">
-                            <p>{formatCurrency(o.price + (o.serviceFee ?? 0))}</p>
+                            <p>Price/Unit: {formatCurrency(o.price + (o.serviceFee ?? 0))}</p>
                             <span className="text-xs capitalize">{o.status}</span>
                           </div>
                         </div>
