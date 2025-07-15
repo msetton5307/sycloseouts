@@ -32,7 +32,10 @@ function parseCsv(text: string): Omit<InsertProduct, "sellerId">[] {
     if (row.availableUnits !== undefined) row.availableUnits = parseInt(row.availableUnits, 10);
     if (row.minOrderQuantity !== undefined) row.minOrderQuantity = parseInt(row.minOrderQuantity, 10);
     if (row.orderMultiple !== undefined) row.orderMultiple = parseInt(row.orderMultiple, 10);
+    if (row.shippingFee !== undefined) row.shippingFee = row.shippingFee === "" ? undefined : parseFloat(row.shippingFee);
     if (row.isBanner !== undefined) row.isBanner = row.isBanner === "true";
+    if (!row.shippingType) row.shippingType = "truckload";
+    if (!row.shippingResponsibility) row.shippingResponsibility = "seller_free";
     return row as Omit<InsertProduct, "sellerId">;
   });
 }
