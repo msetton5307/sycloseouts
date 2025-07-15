@@ -272,10 +272,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const seller = await storage.getUser(product.sellerId);
       if (seller) {
+        // Show the seller the net price without the service fee
+        const netPrice = req.body.price - fee;
         sendNewOfferEmail(
           seller.email,
           product.title,
-          req.body.price,
+          netPrice,
           req.body.quantity,
         ).catch(console.error);
       }
