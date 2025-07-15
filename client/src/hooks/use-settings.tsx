@@ -5,7 +5,6 @@ export interface SiteSettings {
   commissionRate: number;
   logo?: string | null;
   siteTitle: string;
-  favicon?: string | null;
 }
 
 export const DEFAULT_SERVICE_FEE_RATE = 0.035;
