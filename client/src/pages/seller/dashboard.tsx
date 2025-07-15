@@ -57,6 +57,7 @@ import {
   Tooltip as RechartsTooltip,
   ResponsiveContainer,
   Cell,
+  Legend,
 } from "recharts";
 import { useAuth } from "@/hooks/use-auth";
 import { formatCurrency, formatDate, calculateSellerPayout } from "@/lib/utils";
@@ -315,29 +316,33 @@ export default function SellerDashboard() {
   );
 
   const today = new Date();
+  today.setHours(0, 0, 0, 0);
   const weekStart = new Date(today);
   weekStart.setDate(today.getDate() - 6);
+  const weekEnd = new Date(today);
+  weekEnd.setHours(23, 59, 59, 999);
   const startStr = weekStart.toISOString().slice(0, 10);
-  const endStr = today.toISOString().slice(0, 10);
+  const endStr = weekEnd.toISOString().slice(0, 10);
 
-  const { data: weeklySales = [] } = useQuery<{ date: string; revenue: number }[]>({
+  const { data: weeklySales = [] } = useQuery<{ date: string; orders: number; revenue: number }[]>({
     queryKey: [`/api/seller/sales?start=${startStr}&end=${endStr}`],
     enabled: !!user,
   });
 
   const weeklySalesData = useMemo(() => {
-    const map: Record<string, number> = {};
+    const map: Record<string, { orders: number; revenue: number }> = {};
     for (const row of weeklySales) {
-      map[row.date] = row.revenue;
+      map[row.date] = { orders: row.orders, revenue: row.revenue };
     }
-    const arr: { label: string; revenue: number; isToday: boolean }[] = [];
+    const arr: { label: string; orders: number; revenue: number; isToday: boolean }[] = [];
     for (let i = 6; i >= 0; i--) {
       const d = new Date(today);
       d.setDate(today.getDate() - i);
       const key = d.toISOString().slice(0, 10);
       arr.push({
         label: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-        revenue: map[key] ?? 0,
+        revenue: map[key]?.revenue ?? 0,
+        orders: map[key]?.orders ?? 0,
         isToday: i === 0,
       });
     }
@@ -493,13 +498,23 @@ export default function SellerDashboard() {
                     <BarChart data={weeklySalesData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="label" />
-                      <YAxis tickFormatter={(v) => `$${v}`} />
-                      <RechartsTooltip formatter={(v) => formatCurrency(Number(v))} />
-                      <Bar dataKey="revenue">
+                      <YAxis yAxisId="revenue" tickFormatter={(v) => `$${v}`} />
+                      <YAxis yAxisId="orders" orientation="right" />
+                      <RechartsTooltip
+                        formatter={(v, name) =>
+                          name === "revenue" ? formatCurrency(Number(v)) : String(v)
+                        }
+                      />
+                      <Legend />
+                      <Bar yAxisId="revenue" dataKey="revenue" name="Revenue">
                         {weeklySalesData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.isToday ? 'hsl(var(--primary))' : 'hsl(var(--muted-foreground))'} />
+                          <Cell
+                            key={`cell-rev-${index}`}
+                            fill={entry.isToday ? "hsl(var(--primary))" : "hsl(var(--muted-foreground))"}
+                          />
                         ))}
                       </Bar>
+                      <Bar yAxisId="orders" dataKey="orders" fill="hsl(var(--secondary))" name="Orders" />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>

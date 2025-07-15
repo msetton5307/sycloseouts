@@ -10,6 +10,7 @@ import { formatCurrency, formatDate } from "@/lib/utils";
 
 interface SummaryRow {
   date: string;
+  orders: number;
   revenue: number;
 }
 
@@ -29,9 +30,13 @@ export default function SellerAnalyticsPage() {
   const { user } = useAuth();
   const [range, setRange] = useState(30);
 
-  const start = new Date(Date.now() - range * 86400000);
-  const startStr = start.toISOString().slice(0, 10);
-  const endStr = new Date().toISOString().slice(0, 10);
+  const endDate = new Date();
+  endDate.setHours(23, 59, 59, 999);
+  const startDate = new Date(endDate);
+  startDate.setDate(endDate.getDate() - range + 1);
+  startDate.setHours(0, 0, 0, 0);
+  const startStr = startDate.toISOString().slice(0, 10);
+  const endStr = endDate.toISOString().slice(0, 10);
 
   const { data: rows = [] } = useQuery<SummaryRow[]>({
     queryKey: [`/api/seller/sales?start=${startStr}&end=${endStr}`],
@@ -107,6 +112,7 @@ export default function SellerAnalyticsPage() {
               <thead>
                 <tr className="border-b">
                   <th className="py-2 px-4 text-left">Date</th>
+                  <th className="py-2 px-4 text-right">Orders</th>
                   <th className="py-2 px-4 text-right">Revenue</th>
                 </tr>
               </thead>
@@ -114,6 +120,7 @@ export default function SellerAnalyticsPage() {
                 {rows.map((row) => (
                   <tr key={row.date} className="border-b hover:bg-gray-50">
                     <td className="py-2 px-4">{formatDate(row.date)}</td>
+                    <td className="py-2 px-4 text-right">{row.orders}</td>
                     <td className="py-2 px-4 text-right">{formatCurrency(row.revenue)}</td>
                   </tr>
                 ))}
