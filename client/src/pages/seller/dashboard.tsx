@@ -39,11 +39,10 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { 
   BarChart4,
-  CalendarIcon, 
+  CalendarIcon,
   Package,
   PackagePlus,
   PlusCircle,
-  DollarSign,
   PieChart,
   TrendingUp,
   Loader2,
@@ -357,23 +356,11 @@ export default function SellerDashboard() {
               Welcome back, {user?.firstName}
             </p>
           </div>
-          <div className="grid grid-cols-2 sm:flex sm:space-x-4 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             <Link href="/seller/products">
               <Button variant="outline" className="flex items-center">
                 <Package className="mr-2 h-4 w-4" />
                 My Products
-              </Button>
-            </Link>
-            <Link href="/seller/orders">
-              <Button variant="outline" className="flex items-center">
-                <ListOrdered className="mr-2 h-4 w-4" />
-                Orders
-              </Button>
-            </Link>
-            <Link href="/seller/offers">
-              <Button variant="outline" className="flex items-center">
-                <DollarSign className="mr-2 h-4 w-4" />
-                Offers
               </Button>
             </Link>
             <Link href="/seller/analytics">

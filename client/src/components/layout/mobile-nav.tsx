@@ -1,5 +1,12 @@
 import { Link, useLocation } from "wouter";
-import { ShoppingBag, ShoppingCart, ListOrdered, MessageCircle, DollarSign, CalendarIcon } from "lucide-react";
+import {
+  ShoppingBag,
+  ShoppingCart,
+  ListOrdered,
+  MessageCircle,
+  DollarSign,
+  LayoutDashboard,
+} from "lucide-react";
 import { useCart } from "@/hooks/use-cart";
 import { useAuth } from "@/hooks/use-auth";
 import { Badge } from "@/components/ui/badge";
@@ -23,6 +30,17 @@ export default function MobileNav() {
             Shop
           </Link>
         </li>
+        {user?.role === "seller" && (
+          <li>
+            <Link
+              href="/seller/dashboard"
+              className={`flex flex-col items-center py-2 text-xs ${isActive("/seller/dashboard") ? "text-primary" : "text-gray-500"}`}
+            >
+              <LayoutDashboard className="h-5 w-5" />
+              Dashboard
+            </Link>
+          </li>
+        )}
         {user?.role === "buyer" && (
           <li>
             <Link
@@ -64,17 +82,6 @@ export default function MobileNav() {
             >
               <DollarSign className="h-5 w-5" />
               Offers
-            </Link>
-          </li>
-        )}
-        {user?.role === "seller" && (
-          <li>
-            <Link
-              href="/seller/payouts"
-              className={`flex flex-col items-center py-2 text-xs ${isActive("/seller/payouts") ? "text-primary" : "text-gray-500"}`}
-            >
-              <CalendarIcon className="h-5 w-5" />
-              Payouts
             </Link>
           </li>
         )}

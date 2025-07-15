@@ -100,7 +100,7 @@ export default function SellerOffersPage() {
             <p>Loading...</p>
           ) : (
             <>
-              <div className="flex space-x-2 mb-4">
+              <div className="flex flex-wrap gap-2 mb-4">
                 {([
                   { label: "Pending", key: "pending", color: "bg-yellow-600" },
                   { label: "Countered", key: "countered", color: "bg-blue-600" },
