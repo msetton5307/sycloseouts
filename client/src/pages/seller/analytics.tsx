@@ -10,6 +10,7 @@ import { formatCurrency, formatDate } from "@/lib/utils";
 
 interface SummaryRow {
   date: string;
+  orders: number;
   revenue: number;
 }
 
@@ -107,6 +108,7 @@ export default function SellerAnalyticsPage() {
               <thead>
                 <tr className="border-b">
                   <th className="py-2 px-4 text-left">Date</th>
+                  <th className="py-2 px-4 text-right">Orders</th>
                   <th className="py-2 px-4 text-right">Revenue</th>
                 </tr>
               </thead>
@@ -114,6 +116,7 @@ export default function SellerAnalyticsPage() {
                 {rows.map((row) => (
                   <tr key={row.date} className="border-b hover:bg-gray-50">
                     <td className="py-2 px-4">{formatDate(row.date)}</td>
+                    <td className="py-2 px-4 text-right">{row.orders}</td>
                     <td className="py-2 px-4 text-right">{formatCurrency(row.revenue)}</td>
                   </tr>
                 ))}
