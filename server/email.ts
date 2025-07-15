@@ -1156,3 +1156,33 @@ export async function sendCounterRejectedEmail(
     { productTitle, price, quantity },
   );
 }
+
+export async function sendCounterOfferEmail(to: string, productTitle: string, forBuyer: boolean) {
+  await sendOfferEmail(
+    to,
+    `Counter offer for ${productTitle}`,
+    `You have received a counter offer for ${productTitle}.`,
+    forBuyer ? `https://sycloseouts.com/buyer/offers` : `https://sycloseouts.com/seller/offers`,
+    "View Offer",
+  );
+}
+
+export async function sendCounterAcceptedEmail(to: string, productTitle: string) {
+  await sendOfferEmail(
+    to,
+    `Counter offer for ${productTitle} accepted`,
+    `Your counter offer for ${productTitle} was accepted.`,
+    `https://sycloseouts.com/seller/offers`,
+    "View Offer",
+  );
+}
+
+export async function sendCounterRejectedEmail(to: string, productTitle: string) {
+  await sendOfferEmail(
+    to,
+    `Counter offer for ${productTitle} rejected`,
+    `Your counter offer for ${productTitle} was rejected.`,
+    `https://sycloseouts.com/seller/offers`,
+    "View Offer",
+  );
+}
