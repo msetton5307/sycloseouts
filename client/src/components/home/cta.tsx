@@ -13,7 +13,7 @@ export default function CTA() {
                 <span className="block">Sign up today.</span>
               </h2>
               <p className="mt-4 text-lg leading-6 text-blue-100">
-                Join thousands of businesses already using SY Closeouts to buy and sell wholesale inventory. Create your free account in minutes.
+                Don't get left behind—create your free SY Closeouts account in minutes.
               </p>
               <div className="mt-8 flex space-x-4">
                 <Link href="/auth?type=buyer">
