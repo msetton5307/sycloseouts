@@ -1,4 +1,4 @@
-import { useParams } from "wouter";
+import { useParams, Link } from "wouter";
 import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
 import { useConversation } from "@/hooks/use-messages";
@@ -7,7 +7,6 @@ import { useEffect, useRef } from "react";
 import ChatMessage from "@/components/messages/chat-message";
 import { useQuery } from "@tanstack/react-query";
 import { Order, OrderItem } from "@shared/schema";
-import ConversationPreview from "@/components/messages/conversation-preview";
 import ListingBanner from "@/components/messages/listing-banner";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -26,9 +25,12 @@ export default function ConversationPage() {
     queryKey: ["/api/orders"],
     enabled: !!user,
   });
-  const others = user?.role === "buyer"
-    ? Array.from(new Set(orders.map(o => o.sellerId)))
-    : Array.from(new Set(orders.map(o => o.buyerId)));
+  const backHref =
+    user?.role === "buyer"
+      ? "/buyer/messages"
+      : user?.role === "seller"
+        ? "/seller/messages"
+        : "/admin/messages";
   const { data: messages = [], isLoading, sendMessage, markRead } = useConversation(otherId);
   const inputRef = useRef<HTMLInputElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -68,13 +70,11 @@ export default function ConversationPage() {
   return (
     <>
       <Header />
-      <main className="max-w-7xl mx-auto px-4 py-4 flex flex-col md:flex-row h-[calc(100dvh-8rem)] gap-4 overflow-hidden">
-        <div className="md:w-64 h-48 md:h-auto overflow-y-auto bg-white shadow-sm rounded-lg border md:border-r mb-4 md:mb-0">
-          {others.map(id => (
-            <ConversationPreview key={id} otherId={id} selected={id === otherId} />
-          ))}
-        </div>
+      <main className="max-w-7xl mx-auto px-4 py-4 flex flex-col h-[calc(100dvh-8rem)] gap-4 overflow-hidden">
         <div className="flex-1 flex flex-col gap-2 overflow-hidden">
+          <Link href={backHref} className="text-sm text-blue-600 hover:underline self-start">
+            ← Back to conversations
+          </Link>
           {listing && (
             <ListingBanner
               productId={listing.productId}
@@ -104,4 +104,3 @@ export default function ConversationPage() {
     </>
   );
 }
-
