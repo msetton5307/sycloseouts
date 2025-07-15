@@ -1669,6 +1669,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       const start = req.query.start ? new Date(String(req.query.start)) : new Date(Date.now() - 30 * 86400000);
       const end = req.query.end ? new Date(String(req.query.end)) : new Date();
+      start.setHours(0, 0, 0, 0);
+      end.setHours(23, 59, 59, 999);
       const sellerId = user.role === "seller" ? user.id : user.id;
       const summary = await storage.getSalesSummary(sellerId, start, end);
       res.json(summary);

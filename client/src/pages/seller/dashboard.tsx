@@ -48,6 +48,17 @@ import {
   Loader2,
   ListOrdered
 } from "lucide-react";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip as RechartsTooltip,
+  ResponsiveContainer,
+  Cell,
+  Legend,
+} from "recharts";
 import { useAuth } from "@/hooks/use-auth";
 import { formatCurrency, formatDate, calculateSellerPayout } from "@/lib/utils";
 
@@ -169,6 +180,7 @@ export default function SellerDashboard() {
                 <Button variant="outline">View All Offers</Button>
               </Link>
             </div>
+
           </div>
         )}
       </CardContent>
@@ -303,6 +315,40 @@ export default function SellerDashboard() {
     0,
   );
 
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const weekStart = new Date(today);
+  weekStart.setDate(today.getDate() - 6);
+  const weekEnd = new Date(today);
+  weekEnd.setHours(23, 59, 59, 999);
+  const startStr = weekStart.toISOString().slice(0, 10);
+  const endStr = weekEnd.toISOString().slice(0, 10);
+
+  const { data: weeklySales = [] } = useQuery<{ date: string; orders: number; revenue: number }[]>({
+    queryKey: [`/api/seller/sales?start=${startStr}&end=${endStr}`],
+    enabled: !!user,
+  });
+
+  const weeklySalesData = useMemo(() => {
+    const map: Record<string, { orders: number; revenue: number }> = {};
+    for (const row of weeklySales) {
+      map[row.date] = { orders: row.orders, revenue: row.revenue };
+    }
+    const arr: { label: string; orders: number; revenue: number; isToday: boolean }[] = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(today);
+      d.setDate(today.getDate() - i);
+      const key = d.toISOString().slice(0, 10);
+      arr.push({
+        label: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        revenue: map[key]?.revenue ?? 0,
+        orders: map[key]?.orders ?? 0,
+        isToday: i === 0,
+      });
+    }
+    return arr;
+  }, [weeklySales, today]);
+
   const getPayoutDate = (order: Order) => {
     const base = order.deliveredAt
       ? new Date(order.deliveredAt)
@@ -357,26 +403,26 @@ export default function SellerDashboard() {
             </p>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-            <Link href="/seller/products">
-              <Button variant="outline" className="flex items-center">
+            <Link href="/seller/products" className="w-full">
+              <Button variant="outline" className="flex items-center w-full justify-center text-xs sm:text-sm">
                 <Package className="mr-2 h-4 w-4" />
                 My Products
               </Button>
             </Link>
-            <Link href="/seller/analytics">
-              <Button variant="outline" className="flex items-center">
+            <Link href="/seller/analytics" className="w-full">
+              <Button variant="outline" className="flex items-center w-full justify-center text-xs sm:text-sm">
                 <BarChart4 className="mr-2 h-4 w-4" />
                 Analytics
               </Button>
             </Link>
-            <Link href="/seller/payouts">
-              <Button variant="outline" className="flex items-center">
+            <Link href="/seller/payouts" className="w-full">
+              <Button variant="outline" className="flex items-center w-full justify-center text-xs sm:text-sm">
                 <CalendarIcon className="mr-2 h-4 w-4" />
                 Payouts
               </Button>
             </Link>
-            <Link href="/seller/products?action=new">
-              <Button className="flex items-center">
+            <Link href="/seller/products?action=new" className="w-full">
+              <Button className="flex items-center w-full justify-center text-xs sm:text-sm">
                 <PlusCircle className="mr-2 h-4 w-4" />
                 Add Product
               </Button>
@@ -440,6 +486,41 @@ export default function SellerDashboard() {
                 </CardContent>
               </Card>
             </div>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>This Week's Sales</CardTitle>
+                <CardDescription>Today's sales highlighted</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="h-72">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={weeklySalesData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="label" />
+                      <YAxis yAxisId="revenue" tickFormatter={(v) => `$${v}`} />
+                      <YAxis yAxisId="orders" orientation="right" />
+                      <RechartsTooltip
+                        formatter={(v, name) =>
+                          name === "revenue" ? formatCurrency(Number(v)) : String(v)
+                        }
+                      />
+                      <Legend />
+                      <Bar yAxisId="revenue" dataKey="revenue" name="Revenue">
+                        {weeklySalesData.map((entry, index) => (
+                          <Cell
+                            key={`cell-rev-${index}`}
+                            fill={entry.isToday ? "hsl(var(--primary))" : "hsl(var(--muted-foreground))"}
+                          />
+                        ))}
+                      </Bar>
+                      <Bar yAxisId="orders" dataKey="orders" fill="hsl(var(--secondary))" name="Orders" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+
 
             <Card>
               <CardHeader>

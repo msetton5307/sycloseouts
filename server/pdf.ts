@@ -125,6 +125,7 @@ export function generateInvoicePdf(order: Order, items: InvoiceItem[]): Buffer {
 
 export interface SalesSummary {
   date: string;
+  orders: number;
   revenue: number;
 }
 
