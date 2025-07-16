@@ -328,7 +328,7 @@ export default function ProductDetailPage() {
               Add to Cart
             </Button>
 
-            {user?.role === "buyer" && (
+            {(user?.role === "buyer" || user?.role === "seller") && (
               <>
                 <MakeOfferDialog
                   onSubmit={(p, q) =>

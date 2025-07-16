@@ -135,6 +135,10 @@ export function setupAuth(app: Express) {
         ...userFields
       } = req.body;
 
+      if (userFields.role === "buyer" && !resaleCertUrl) {
+        return res.status(400).json({ error: "Resale certificate is required" });
+      }
+
       const resaleCertStatus = resaleCertUrl ? "pending" : "none";
 
       const user = await storage.createUser({

@@ -43,13 +43,20 @@ export const registerSchemaBase = z.object({
 });
 
 // Registration schema used on the signup page with password confirmation check
-export const registerSchema = registerSchemaBase.refine(
-  (data) => data.password === data.confirmPassword,
-  {
+export const registerSchema = registerSchemaBase
+  .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords don't match",
     path: ["confirmPassword"],
-  }
-);
+  })
+  .refine(
+    (data) =>
+      data.role !== "buyer" ||
+      (typeof data.resaleCertUrl === "string" && data.resaleCertUrl.trim() !== ""),
+    {
+      message: "Resale certificate is required",
+      path: ["resaleCertUrl"],
+    }
+  );
 
 type AuthContextType = {
   user: User | null;

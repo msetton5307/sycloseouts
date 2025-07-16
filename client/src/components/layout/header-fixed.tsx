@@ -69,7 +69,7 @@ export default function Header() {
                   user?.role === 'admin' && { label: 'Admin', href: '/admin/dashboard' },
                   user?.role === 'admin' && { label: 'Tickets', href: '/admin/tickets' },
                   user?.role === 'buyer' && { label: 'My Orders', href: '/buyer/orders' },
-                  user?.role === 'buyer' && { label: 'Offers', href: '/buyer/offers' },
+                  (user?.role === 'buyer' || user?.role === 'seller') && { label: 'Offers', href: '/buyer/offers' },
                   user?.role === 'seller'
                     ? { label: 'Dashboard', href: '/seller/dashboard' }
                     : !user || user.role === 'buyer'
