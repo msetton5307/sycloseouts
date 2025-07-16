@@ -52,7 +52,7 @@ export default function MobileNav() {
             </Link>
           </li>
         )}
-        {user?.role === "buyer" && (
+        {(user?.role === "buyer" || user?.role === "seller") && (
           <li>
             <Link
               href="/buyer/offers"

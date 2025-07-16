@@ -108,7 +108,7 @@ function Router() {
       <ProtectedRoute path="/buyer/home" component={BuyerHomePage} allowedRoles={["buyer", "admin"]} />
       <ProtectedRoute path="/buyer/orders" component={BuyerOrdersPage} allowedRoles={["buyer", "admin"]} />
       <ProtectedRoute path="/buyer/messages" component={BuyerMessagesPage} allowedRoles={["buyer", "admin"]} />
-      <ProtectedRoute path="/buyer/offers" component={BuyerOffersPage} allowedRoles={["buyer", "admin"]} />
+      <ProtectedRoute path="/buyer/offers" component={BuyerOffersPage} allowedRoles={["buyer", "seller", "admin"]} />
       <ProtectedRoute path="/buyer/orders/:id" component={BuyerOrderDetailPage} allowedRoles={["buyer", "admin"]} />
       <ProtectedRoute path="/buyer/profile" component={BuyerProfilePage} allowedRoles={["buyer", "admin"]} />
 

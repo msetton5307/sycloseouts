@@ -232,8 +232,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid product ID" });
       }
       const user = req.user as Express.User;
-      if (user.role !== "buyer") {
-        return res.status(403).json({ message: "Only buyers can send offers" });
+      if (user.role !== "buyer" && user.role !== "seller") {
+        return res.status(403).json({ message: "Only buyers or sellers can send offers" });
       }
       const product = await storage.getProduct(id);
       if (!product) {
