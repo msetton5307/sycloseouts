@@ -210,7 +210,18 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteUser(id: number): Promise<void> {
-    await db.delete(users).where(eq(users.id, id));
+    await db.transaction(async (tx) => {
+      await tx
+        .delete(userNotes)
+        .where(
+          or(
+            eq(userNotes.userId, id),
+            eq(userNotes.adminId, id),
+            eq(userNotes.relatedUserId, id),
+          )
+        );
+      await tx.delete(users).where(eq(users.id, id));
+    });
   }
 
   // Product methods
