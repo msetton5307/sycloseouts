@@ -31,6 +31,7 @@ import ChatMessage from "@/components/messages/chat-message";
 import { useAdminUserMessages } from "@/hooks/use-messages";
 import { useUserNotes, useCreateUserNote } from "@/hooks/use-user-notes";
 import { Textarea } from "@/components/ui/textarea";
+import { useDeleteUser } from "@/hooks/use-users";
 
 export default function AdminUserProfilePage() {
   const { id } = useParams();
@@ -83,6 +84,8 @@ export default function AdminUserProfilePage() {
       queryClient.invalidateQueries({ queryKey: ["/api/users/" + userId] });
     },
   });
+
+  const deleteUserMutation = useDeleteUser();
 
   const [certStatus, setCertStatus] = useState<string>("pending");
   const updateCertStatus = useMutation({
@@ -282,6 +285,29 @@ export default function AdminUserProfilePage() {
                     Reinstate Now
                   </Button>
                 )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Delete User</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Button
+                  variant="destructive"
+                  onClick={() => {
+                    if (confirm("Delete this user?")) {
+                      deleteUserMutation.mutate(userId, {
+                        onSuccess: () => {
+                          window.location.href = "/admin/users";
+                        },
+                      });
+                    }
+                  }}
+                  disabled={deleteUserMutation.isPending}
+                >
+                  Delete User
+                </Button>
               </CardContent>
             </Card>
 
