@@ -52,8 +52,10 @@ import {
   FilterX,
   Mail,
   ShieldCheck,
-  ShieldX
+  ShieldX,
+  Trash2
 } from "lucide-react";
+import { useDeleteUser } from "@/hooks/use-users";
 
 export default function AdminUsers() {
   const { toast } = useToast();
@@ -146,6 +148,8 @@ export default function AdminUsers() {
       }
     });
   };
+
+  const deleteUser = useDeleteUser();
   
   const clearFilters = () => {
     setSearchTerm("");
@@ -331,9 +335,9 @@ export default function AdminUsers() {
                             )}
                             
                             {user.role === "seller" && user.isApproved && (
-                              <Button 
-                                size="sm" 
-                                variant="outline" 
+                              <Button
+                                size="sm"
+                                variant="outline"
                                 onClick={() => handleRevokeSeller(user)}
                                 disabled={isUpdating}
                                 className="h-8 px-2 flex items-center text-red-600 border-red-200 hover:bg-red-50"
@@ -342,6 +346,20 @@ export default function AdminUsers() {
                                 Revoke
                               </Button>
                             )}
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                if (confirm("Delete this user?")) {
+                                  deleteUser.mutate(user.id);
+                                }
+                              }}
+                              disabled={deleteUser.isPending}
+                              className="h-8 px-2 flex items-center text-red-600 border-red-200 hover:bg-red-50"
+                            >
+                              <Trash2 className="h-4 w-4 mr-1" />
+                              Delete
+                            </Button>
                           </div>
                         </TableCell>
                       </TableRow>
