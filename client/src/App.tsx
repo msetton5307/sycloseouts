@@ -42,6 +42,7 @@ import AdminDashboard from "@/pages/admin/dashboard";
 import FeaturedProductsPage from "@/pages/admin/featured-products";
 import AdminUsers from "@/pages/admin/users";
 import AdminBillingPage from "@/pages/admin/billing";
+import AdminProductsPage from "@/pages/admin/products";
 import AdminOrderDetailPage from "@/pages/admin/order-detail";
 import AdminOrdersPage from "@/pages/admin/orders";
 import AdminApplications from "@/pages/admin/applications";
@@ -130,6 +131,7 @@ function Router() {
       <ProtectedRoute path="/admin/users/:id" component={AdminUserProfilePage} allowedRoles={["admin"]} />
       <ProtectedRoute path="/admin/users" component={AdminUsers} allowedRoles={["admin"]} />
       <ProtectedRoute path="/admin/billing" component={AdminBillingPage} allowedRoles={["admin"]} />
+      <ProtectedRoute path="/admin/products" component={AdminProductsPage} allowedRoles={["admin"]} />
       <ProtectedRoute path="/admin/orders" component={AdminOrdersPage} allowedRoles={["admin"]} />
       <ProtectedRoute path="/admin/orders/:id" component={AdminOrderDetailPage} allowedRoles={["admin"]} />
       <ProtectedRoute path="/admin/applications" component={AdminApplications} allowedRoles={["admin"]} />
