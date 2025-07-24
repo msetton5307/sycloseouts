@@ -182,24 +182,38 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.username, username));
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.username, username.toLowerCase()));
     return user;
   }
 
   async getUserByEmail(email: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.email, email));
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.email, email.toLowerCase()));
     return user;
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const [user] = await db.insert(users).values(insertUser).returning();
+    const normalized = {
+      ...insertUser,
+      username: insertUser.username.toLowerCase(),
+      email: insertUser.email.toLowerCase(),
+    };
+    const [user] = await db.insert(users).values(normalized).returning();
     return user;
   }
 
   async updateUser(id: number, userData: Partial<User>): Promise<User | undefined> {
+    const normalized: Partial<User> = { ...userData };
+    if (normalized.username) normalized.username = normalized.username.toLowerCase();
+    if (normalized.email) normalized.email = normalized.email.toLowerCase();
     const [updatedUser] = await db
       .update(users)
-      .set(userData)
+      .set(normalized)
       .where(eq(users.id, id))
       .returning();
     return updatedUser;
