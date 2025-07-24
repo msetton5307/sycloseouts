@@ -1104,13 +1104,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id, 10);
       const group = req.body.group as string;
-      if (Number.isNaN(id) || (group !== "buyers" && group !== "sellers")) {
+      if (Number.isNaN(id) || !["buyers", "sellers", "both"].includes(group)) {
         return res.status(400).json({ message: "Invalid parameters" });
       }
       const template = await storage.getEmailTemplate(id);
       if (!template) return res.status(404).json({ message: "Template not found" });
-      const users = await storage.getUsers();
-      const targets = users.filter(u => u.role === (group === "buyers" ? "buyer" : "seller"));
+      const roles = group === "buyers" ? ["buyer"] : group === "sellers" ? ["seller"] : ["buyer", "seller"];
+      const targets = await storage.getUsers({ roles });
       for (const u of targets) {
         const html = template.body
           .replace(/\[first_name\]/gi, u.firstName)
