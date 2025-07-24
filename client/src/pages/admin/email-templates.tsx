@@ -50,6 +50,7 @@ export default function AdminEmailTemplatesPage() {
 
   const [search, setSearch] = useState("");
   const [selectedUsers, setSelectedUsers] = useState<User[]>([]);
+  const [group, setGroup] = useState("");
   const [templateId, setTemplateId] = useState<number>();
   const [creatingNew, setCreatingNew] = useState(false);
   const [name, setName] = useState("");
@@ -107,6 +108,12 @@ export default function AdminEmailTemplatesPage() {
 
   const sendEmail = useMutation({
     mutationFn: async () => {
+      if (group && templateId) {
+        await apiRequest("POST", `/api/admin/email-templates/${templateId}/send`, {
+          group,
+        });
+        return;
+      }
       for (const u of selectedUsers) {
         const html = applyPlaceholders(body, u);
         await apiRequest(`POST`, `/api/admin/users/${u.id}/email`, {
@@ -147,6 +154,16 @@ export default function AdminEmailTemplatesPage() {
               value={search}
               onChange={e => setSearch(e.target.value)}
             />
+            <Select value={group} onValueChange={setGroup}>
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder="Send to group..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="buyers">All Buyers</SelectItem>
+                <SelectItem value="sellers">All Sellers</SelectItem>
+                <SelectItem value="both">Buyers &amp; Sellers</SelectItem>
+              </SelectContent>
+            </Select>
             {search && (
               <div className="border rounded p-2 max-h-40 overflow-y-auto bg-white shadow">
                 {users
@@ -237,7 +254,7 @@ export default function AdminEmailTemplatesPage() {
               className="border rounded p-4 bg-white shadow"
               dangerouslySetInnerHTML={{ __html: buildPreview() }}
             />
-            <Button onClick={() => sendEmail.mutate()} disabled={sendEmail.isPending || selectedUsers.length === 0}>
+            <Button onClick={() => sendEmail.mutate()} disabled={sendEmail.isPending || (selectedUsers.length === 0 && !group)}>
               Send Email
             </Button>
           </CardContent>

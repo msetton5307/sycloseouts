@@ -21,7 +21,7 @@ import {
 } from "@shared/schema";
 import session from "express-session";
 import { db, pool } from "./db";
-import { eq, and, or, desc, SQL, ilike, lte, gte, sql } from "drizzle-orm";
+import { eq, and, or, desc, SQL, ilike, lte, gte, sql, inArray } from "drizzle-orm";
 import connectPgSimple from "connect-pg-simple";
 import { generateOrderCode } from "./orderCode";
 import { randomBytes } from "crypto";
@@ -36,7 +36,7 @@ export interface IStorage {
   getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: number, user: Partial<User>): Promise<User | undefined>;
-  getUsers(): Promise<User[]>;
+  getUsers(filter?: { roles?: string[] }): Promise<User[]>;
   deleteUser(id: number): Promise<void>;
   
   // Product methods
@@ -205,7 +205,10 @@ export class DatabaseStorage implements IStorage {
     return updatedUser;
   }
 
-  async getUsers(): Promise<User[]> {
+  async getUsers(filter?: { roles?: string[] }): Promise<User[]> {
+    if (filter?.roles && filter.roles.length > 0) {
+      return await db.select().from(users).where(inArray(users.role, filter.roles));
+    }
     return await db.select().from(users);
   }
 
