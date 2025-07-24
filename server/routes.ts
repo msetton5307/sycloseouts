@@ -2175,6 +2175,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/users.csv", isAuthenticated, isAdmin, async (_req, res) => {
+    try {
+      const buyersAndSellers = await storage.getUsers({ roles: ["buyer", "seller"] });
+      const records = buyersAndSellers.map(({ password, ...u }) => u);
+
+      const headers = records.length > 0 ? Object.keys(records[0]) : [];
+
+      const escapeCsv = (val: unknown) => {
+        if (val === null || val === undefined) return "";
+        const str = String(val);
+        if (/[",\n]/.test(str)) {
+          return '"' + str.replace(/"/g, '""') + '"';
+        }
+        return str;
+      };
+
+      const lines = [
+        headers.join(","),
+        ...records.map((r) => headers.map((h) => escapeCsv((r as any)[h])).join(",")),
+      ];
+
+      const csv = lines.join("\n");
+
+      res.setHeader("Content-Type", "text/csv");
+      res.setHeader("Content-Disposition", "attachment; filename=users.csv");
+      res.send(csv);
+    } catch (error) {
+      handleApiError(res, error);
+    }
+  });
+
   app.put("/api/users/:id", isAuthenticated, isAdmin, async (req, res) => {
     try {
       const id = parseInt(req.params.id, 10);
