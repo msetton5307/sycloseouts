@@ -23,8 +23,7 @@ export default function Footer() {
               )}
             </Link>
             <p className="text-gray-400 text-base max-w-xs">
-              Your trusted source for wholesale liquidation merchandise. 
-              Quality products at closeout prices for resellers and retailers.
+              Your trusted source for wholesale liquidation merchandise and closeout lots. Shop surplus inventory and overstock pallets at unbeatable prices.
             </p>
             <div className="flex space-x-6">
               <a href="#" className="text-gray-400 hover:text-white">
