@@ -224,6 +224,13 @@ export default function AdminUsers() {
                     <SelectItem value="pending">Pending</SelectItem>
                   </SelectContent>
                 </Select>
+
+                <Button variant="outline" asChild>
+                  <a href="/api/users.csv?role=buyer" download>Export Buyers</a>
+                </Button>
+                <Button variant="outline" asChild>
+                  <a href="/api/users.csv?role=seller" download>Export Sellers</a>
+                </Button>
                 
                 {(searchTerm || roleFilter !== "all" || statusFilter !== "all") && (
                   <Button 
