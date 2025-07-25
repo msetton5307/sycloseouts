@@ -1004,6 +1004,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   );
 
   app.get(
+    "/api/admin/messages",
+    isAuthenticated,
+    isAdmin,
+    async (req, res) => {
+      try {
+        const limit = parseInt(String(req.query.limit || "100"), 10);
+        const msgs = await storage.getRecentMessages(limit);
+        res.json(msgs);
+      } catch (error) {
+        handleApiError(res, error);
+      }
+    },
+  );
+
+  app.get(
     "/api/admin/users/:userId/orders",
     isAuthenticated,
     isAdmin,

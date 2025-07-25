@@ -63,6 +63,12 @@ export function useAdminUserMessages(userId: number) {
   });
 }
 
+export function useAdminRecentMessages(limit = 100) {
+  return useQuery<any[]>({
+    queryKey: [`/api/admin/messages?limit=${limit}`],
+  });
+}
+
 export function useUnreadMessages() {
   const { data } = useQuery<{ count: number }>({
     queryKey: ["/api/messages/unread-count"],

@@ -1,67 +1,69 @@
-import { useEffect, useState } from "react";
 import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
-import { useQuery } from "@tanstack/react-query";
-import { User } from "@shared/schema";
-import { getQueryFn } from "@/lib/queryClient";
-import ChatMessage from "@/components/messages/chat-message";
-import { useAdminUserMessages } from "@/hooks/use-messages";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Loader2 } from "lucide-react";
+import { useAdminRecentMessages } from "@/hooks/use-messages";
+import { formatDate } from "@/lib/utils";
 
 export default function AdminMessagesPage() {
-  const { data: users = [] } = useQuery<User[]>({
-    queryKey: ["/api/users"],
-    queryFn: getQueryFn({ on401: "throw" }),
-  });
-
-  const [search, setSearch] = useState("");
-  const [selectedUser, setSelectedUser] = useState<number>();
-
-  const filteredUsers = users.filter(u =>
-    `${u.firstName} ${u.lastName} ${u.username} ${u.email}`
-      .toLowerCase()
-      .includes(search.toLowerCase())
-  );
-
-  const { data: messages = [], isLoading } = useAdminUserMessages(selectedUser ?? 0);
-
-  useEffect(() => {
-    window.scrollTo({ top: 0 });
-  }, []);
+  const { data: messages = [], isLoading } = useAdminRecentMessages();
 
   return (
     <>
       <Header />
-      <main className="max-w-5xl mx-auto px-4 py-8 space-y-4">
-        <h1 className="text-2xl font-bold">Message Supervision</h1>
-        <div className="flex gap-4">
-          <input
-            className="border rounded p-2 flex-1"
-            placeholder="Search users"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-          />
-          <select
-            className="border rounded p-2"
-            value={selectedUser ?? ""}
-            onChange={e => setSelectedUser(Number(e.target.value) || undefined)}
-          >
-            <option value="">Select User</option>
-            {filteredUsers.map(u => (
-              <option key={u.id} value={u.id}>
-                {u.username}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="space-y-2 bg-gray-50 p-4 rounded h-96 overflow-y-auto">
-          {isLoading ? (
-            <p>Loading...</p>
-          ) : (
-            messages.map(m => (
-              <ChatMessage key={m.id} message={m} isOwn={m.senderId === selectedUser} />
-            ))
-          )}
-        </div>
+      <main className="max-w-7xl mx-auto px-4 py-8 space-y-6">
+        <h1 className="text-3xl font-bold">Message Supervision</h1>
+        <Card>
+          <CardHeader>
+            <CardTitle>Recent Messages</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <div className="flex justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : messages.length > 0 ? (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Date</TableHead>
+                      <TableHead>From</TableHead>
+                      <TableHead>To</TableHead>
+                      <TableHead>Message</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {messages.map(m => (
+                      <TableRow key={m.id}>
+                        <TableCell>{formatDate(m.created_at ?? m.createdAt, true)}</TableCell>
+                        <TableCell>
+                          {m.sender_first_name} {m.sender_last_name} ({m.sender_username})
+                        </TableCell>
+                        <TableCell>
+                          {m.receiver_first_name} {m.receiver_last_name} ({m.receiver_username})
+                        </TableCell>
+                        <TableCell className="whitespace-pre-wrap max-w-sm">
+                          {m.content}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            ) : (
+              <p>No messages found.</p>
+            )}
+          </CardContent>
+        </Card>
       </main>
       <Footer />
     </>
