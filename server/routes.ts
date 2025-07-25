@@ -149,6 +149,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/products.csv", isAuthenticated, isAdmin, async (_req, res) => {
+    try {
+      const products = await storage.getProducts();
+      const records = products as Record<string, unknown>[];
+
+      const headers = records.length > 0 ? Object.keys(records[0]) : [];
+
+      const escapeCsv = (val: unknown) => {
+        if (val === null || val === undefined) return "";
+        const str = Array.isArray(val) ? JSON.stringify(val) : String(val);
+        return /[",\n]/.test(str) ? '"' + str.replace(/"/g, '""') + '"' : str;
+      };
+
+      const lines = [
+        headers.join(","),
+        ...records.map((r) => headers.map((h) => escapeCsv((r as any)[h])).join(",")),
+      ];
+
+      const csv = lines.join("\n");
+
+      res.setHeader("Content-Type", "text/csv");
+      res.setHeader("Content-Disposition", "attachment; filename=products.csv");
+      res.send(csv);
+    } catch (error) {
+      handleApiError(res, error);
+    }
+  });
+
   app.get("/api/products/low-stock", isAuthenticated, isSeller, async (req, res) => {
     try {
       const threshold = parseInt(req.query.threshold as string, 10) || 5;
@@ -2190,10 +2218,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/users.csv", isAuthenticated, isAdmin, async (_req, res) => {
+  app.get("/api/users.csv", isAuthenticated, isAdmin, async (req, res) => {
     try {
-      const buyersAndSellers = await storage.getUsers({ roles: ["buyer", "seller"] });
-      const records = buyersAndSellers.map(({ password, ...u }) => u);
+      const roleParam = (req.query.role as string | undefined)?.trim();
+      const roles = roleParam ? roleParam.split(',').map(r => r.trim()) : ["buyer", "seller"];
+      const usersForCsv = await storage.getUsers({ roles });
+      const records = usersForCsv.map(({ password, ...u }) => u);
 
       const headers = records.length > 0 ? Object.keys(records[0]) : [];
 
