@@ -630,6 +630,14 @@ export class DatabaseStorage implements IStorage {
       .orderBy(messages.createdAt);
   }
 
+  async getRecentMessages(limit: number): Promise<any[]> {
+    const result = await pool.query(
+      `SELECT m.*,\n              s.first_name AS sender_first_name, s.last_name AS sender_last_name, s.username AS sender_username,\n              r.first_name AS receiver_first_name, r.last_name AS receiver_last_name, r.username AS receiver_username\n         FROM messages m\n         JOIN users s ON s.id = m.sender_id\n         JOIN users r ON r.id = m.receiver_id\n        ORDER BY m.created_at DESC\n        LIMIT $1`,
+      [limit],
+    );
+    return result.rows;
+  }
+
   // Product question methods
   async createProductQuestion(insertQuestion: InsertProductQuestion): Promise<ProductQuestion> {
     const [q] = await db.insert(productQuestions).values(insertQuestion).returning();
