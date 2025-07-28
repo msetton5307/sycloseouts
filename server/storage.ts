@@ -17,7 +17,8 @@ import {
   siteSettings,
   userStrikes, UserStrike, InsertUserStrike,
   strikeReasons, StrikeReason, InsertStrikeReason,
-  userNotes, UserNote, InsertUserNote
+  userNotes, UserNote, InsertUserNote,
+  productNotes, ProductNote, InsertProductNote
 } from "@shared/schema";
 import session from "express-session";
 import { db, pool } from "./db";
@@ -144,6 +145,10 @@ export interface IStorage {
   // User note methods
   getUserNotes(userId: number): Promise<UserNote[]>;
   createUserNote(note: InsertUserNote): Promise<UserNote>;
+
+  // Product note methods
+  getProductNotes(productId: number): Promise<ProductNote[]>;
+  createProductNote(note: InsertProductNote): Promise<ProductNote>;
 
   // Cart methods
   getCart(userId: number): Promise<Cart | undefined>;
@@ -1000,6 +1005,20 @@ export class DatabaseStorage implements IStorage {
 
   async createUserNote(note: InsertUserNote): Promise<UserNote> {
     const [n] = await db.insert(userNotes).values(note).returning();
+    return n;
+  }
+
+  // Product note methods
+  async getProductNotes(productId: number): Promise<ProductNote[]> {
+    return await db
+      .select()
+      .from(productNotes)
+      .where(eq(productNotes.productId, productId))
+      .orderBy(desc(productNotes.createdAt));
+  }
+
+  async createProductNote(note: InsertProductNote): Promise<ProductNote> {
+    const [n] = await db.insert(productNotes).values(note).returning();
     return n;
   }
 

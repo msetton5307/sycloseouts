@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import {
   Search,
@@ -40,10 +41,12 @@ import {
   XCircle,
   Loader2,
   ShoppingBag,
-  Star
+  Star,
+  StickyNote,
 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
+import { useProductNotes, useCreateProductNote } from "@/hooks/use-product-notes";
 
 export default function AdminProducts() {
   const { user } = useAuth();
@@ -53,6 +56,8 @@ export default function AdminProducts() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false);
   const [productToDelete, setProductToDelete] = useState<Product | null>(null);
+  const [notesProduct, setNotesProduct] = useState<Product | null>(null);
+  const [noteText, setNoteText] = useState("");
 
   const { mutate: toggleBanner } = useMutation({
     mutationFn: async (data: { id: number; isBanner: boolean }) => {
@@ -69,6 +74,9 @@ export default function AdminProducts() {
     queryKey: ["/api/products"],
     enabled: !!user,
   });
+
+  const { data: productNotes = [] } = useProductNotes(notesProduct?.id ?? 0);
+  const createProductNote = useCreateProductNote(notesProduct?.id ?? 0);
   
   // Filter products for the current seller
   const sellerProducts = user?.role === "admin" ? products : products.filter(product => product.sellerId === user?.id);
@@ -115,6 +123,10 @@ export default function AdminProducts() {
   const handleEditProduct = (product: Product) => {
     setSelectedProduct(product);
   };
+
+  const handleViewNotes = (product: Product) => {
+    setNotesProduct(product);
+  };
   
   const handleDeleteProduct = (product: Product) => {
     setProductToDelete(product);
@@ -133,6 +145,11 @@ export default function AdminProducts() {
   
   const handleFormSuccess = () => {
     setSelectedProduct(null);
+  };
+
+  const closeNotesDialog = () => {
+    setNotesProduct(null);
+    setNoteText("");
   };
 
   return (
@@ -171,7 +188,48 @@ export default function AdminProducts() {
             )}
           </DialogContent>
         </Dialog>
-        
+
+        {/* Product Notes Dialog */}
+        <Dialog open={!!notesProduct} onOpenChange={closeNotesDialog}>
+          <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto" aria-describedby="notes-description">
+            <DialogHeader>
+              <DialogTitle>Product Notes</DialogTitle>
+              <DialogDescription id="notes-description">
+                {notesProduct?.title}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-2 max-h-60 overflow-y-auto">
+              {productNotes.map(n => (
+                <div key={n.id} className="border rounded p-2 bg-gray-50">
+                  <div className="text-xs text-gray-500">
+                    {new Date(n.createdAt).toLocaleDateString()}
+                  </div>
+                  <p className="mt-1 whitespace-pre-wrap text-sm">{n.note}</p>
+                </div>
+              ))}
+              {productNotes.length === 0 && (
+                <p className="text-sm text-gray-500">No notes yet.</p>
+              )}
+            </div>
+            <div className="space-y-2 border-t pt-4">
+              <Textarea
+                value={noteText}
+                onChange={e => setNoteText(e.target.value)}
+                placeholder="Add a note..."
+              />
+              <Button
+                onClick={() => {
+                  createProductNote.mutate({ note: noteText });
+                  setNoteText("");
+                }}
+                disabled={createProductNote.isPending}
+              >
+                Add Note
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
         {/* Delete Confirmation Dialog */}
         <Dialog open={isConfirmDeleteOpen} onOpenChange={setIsConfirmDeleteOpen}>
           <DialogContent className="sm:max-w-[500px]" aria-describedby="delete-description">
@@ -303,6 +361,17 @@ export default function AdminProducts() {
                               {user?.role === "admin" && (
                                 <Button
                                   size="sm"
+                                  variant="outline"
+                                  onClick={() => handleViewNotes(product)}
+                                  className="h-8 w-8 p-0"
+                                >
+                                  <StickyNote className="h-4 w-4" />
+                                  <span className="sr-only">Notes</span>
+                                </Button>
+                              )}
+                              {user?.role === "admin" && (
+                                <Button
+                                  size="sm"
                                   variant={product.isBanner ? "default" : "outline"}
                                   onClick={() => handleToggleBanner(product)}
                                   className="h-8 w-8 p-0"
@@ -356,6 +425,17 @@ export default function AdminProducts() {
                           <Edit className="h-4 w-4" />
                           <span className="sr-only">Edit</span>
                         </Button>
+                        {user?.role === "admin" && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleViewNotes(product)}
+                            className="h-8 w-8 p-0"
+                          >
+                            <StickyNote className="h-4 w-4" />
+                            <span className="sr-only">Notes</span>
+                          </Button>
+                        )}
                         {user?.role === "admin" && (
                           <Button
                             size="sm"
