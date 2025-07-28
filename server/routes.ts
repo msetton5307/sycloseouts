@@ -37,7 +37,9 @@ import {
   insertStrikeReasonSchema,
   insertAddressSchema,
   insertUserNoteSchema,
+  insertProductNoteSchema,
   type InsertUserNote,
+  type InsertProductNote,
   type Order,
   insertOfferSchema,
   offers as offersTable,
@@ -1004,7 +1006,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
           note: noteText,
           relatedUserId: Number.isNaN(related) ? undefined : related,
         }) as InsertUserNote;
-        const newNote = await storage.createUserNote(data);
+      const newNote = await storage.createUserNote(data);
+      res.status(201).json(newNote);
+      } catch (error) {
+        handleApiError(res, error);
+      }
+    },
+  );
+
+  app.get(
+    "/api/admin/products/:productId/notes",
+    isAuthenticated,
+    isAdmin,
+    async (req, res) => {
+      try {
+        const productId = parseInt(req.params.productId, 10);
+        if (Number.isNaN(productId)) {
+          return res.status(400).json({ message: "Invalid product ID" });
+        }
+        const notes = await storage.getProductNotes(productId);
+        res.json(notes);
+      } catch (error) {
+        handleApiError(res, error);
+      }
+    },
+  );
+
+  app.post(
+    "/api/admin/products/:productId/notes",
+    isAuthenticated,
+    isAdmin,
+    async (req, res) => {
+      try {
+        const productId = parseInt(req.params.productId, 10);
+        if (Number.isNaN(productId)) {
+          return res.status(400).json({ message: "Invalid product ID" });
+        }
+        const admin = req.user as Express.User;
+        const noteText = String(req.body.note || "").trim();
+        if (!noteText) {
+          return res.status(400).json({ message: "Missing note" });
+        }
+        const data = insertProductNoteSchema.parse({
+          productId,
+          adminId: admin.id,
+          note: noteText,
+        }) as InsertProductNote;
+        const newNote = await storage.createProductNote(data);
         res.status(201).json(newNote);
       } catch (error) {
         handleApiError(res, error);

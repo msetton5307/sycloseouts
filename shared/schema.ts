@@ -551,6 +551,25 @@ export const siteSettings = pgTable("site_settings", {
 
 export const insertSiteSettingSchema = createInsertSchema(siteSettings);
 
+// Notes created by admins about a product
+export const productNotes = pgTable("product_notes", {
+  id: serial("id").primaryKey(),
+  productId: integer("product_id").notNull(),
+  adminId: integer("admin_id").notNull(),
+  note: text("note").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const productNotesRelations = relations(productNotes, ({ one }) => ({
+  product: one(products, { fields: [productNotes.productId], references: [products.id] }),
+  admin: one(users, { fields: [productNotes.adminId], references: [users.id] }),
+}));
+
+export const insertProductNoteSchema = createInsertSchema(productNotes).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Type definitions
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -599,6 +618,9 @@ export type InsertUserStrike = z.infer<typeof insertUserStrikeSchema>;
 
 export type UserNote = typeof userNotes.$inferSelect;
 export type InsertUserNote = z.infer<typeof insertUserNoteSchema>;
+
+export type ProductNote = typeof productNotes.$inferSelect;
+export type InsertProductNote = z.infer<typeof insertProductNoteSchema>;
 
 export type StrikeReason = typeof strikeReasons.$inferSelect;
 export type InsertStrikeReason = z.infer<typeof insertStrikeReasonSchema>;
