@@ -7,7 +7,7 @@ export default function Hero() {
       <img
         className="absolute inset-0 w-full h-full object-cover"
         src="https://images.unsplash.com/photo-1553413077-190dd305871c?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1350&h=900"
-        alt="Wholesale inventory warehouse"
+        alt="Liquidation pallets in a wholesale warehouse"
       />
       <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/30 to-black/20 sm:bg-gradient-to-r" />
       <div className="relative z-10 max-w-2xl mx-auto text-center px-4 pb-10 sm:pb-0 space-y-4 sm:space-y-6">
@@ -16,7 +16,7 @@ export default function Hero() {
           <span className="text-primary">Marketplace</span>
         </h1>
         <p className="text-sm sm:text-lg md:text-xl text-gray-100">
-          Buy and sell overstock inventory, closeouts and shelf-pulls directly from verified sellers. Access wholesale pricing for resale and grow your business.
+          Buy liquidation pallets, wholesale closeouts and surplus inventory from verified sellers. Access bulk deals for resale and grow your business.
         </p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
           <Link href="/products">
