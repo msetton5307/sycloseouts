@@ -474,6 +474,7 @@ export const emailLogs = pgTable("email_logs", {
   userId: integer("user_id")
     .notNull()
     .references(() => users.id),
+  toAddress: text("to_address").notNull(),
   subject: text("subject").notNull(),
   html: text("html").notNull(),
   success: boolean("success").notNull().default(true),
