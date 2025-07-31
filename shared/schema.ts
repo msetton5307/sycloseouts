@@ -476,6 +476,7 @@ export const emailLogs = pgTable("email_logs", {
     .references(() => users.id),
   subject: text("subject").notNull(),
   html: text("html").notNull(),
+  success: boolean("success").notNull().default(true),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

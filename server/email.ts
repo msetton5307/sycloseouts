@@ -688,21 +688,21 @@ export async function sendStrikeEmail(
 }
 
 export async function sendAdminUserEmail(
-  to: string,
+  to: string | string[],
   subject: string,
   body: string,
   html?: string,
-) {
+): Promise<boolean> {
   if (!transporter) {
     console.warn("Email transport not configured; skipping admin user email");
-    return;
+    return false;
   }
 
   const logo = await getLogoAttachment();
   const finalHtml = wrapTemplate(subject, html ?? body.replace(/\n/g, "<br>"));
   const mailOptions = {
     from: process.env.SMTP_FROM || user,
-    to,
+    to: Array.isArray(to) ? to.join(",") : to,
     subject,
     text: (html ?? body).replace(/<[^>]*>/g, ""),
     html: finalHtml,
@@ -711,15 +711,21 @@ export async function sendAdminUserEmail(
 
   try {
     await transporter.sendMail(mailOptions);
+    return true;
   } catch (err) {
     console.error("Failed to send admin user email", err);
+    return false;
   }
 }
 
-export async function sendHtmlEmail(to: string, subject: string, html: string) {
+export async function sendHtmlEmail(
+  to: string | string[],
+  subject: string,
+  html: string,
+): Promise<boolean> {
   if (!transporter) {
     console.warn("Email transport not configured; skipping html email");
-    return;
+    return false;
   }
 
   const logo = await getLogoAttachment();
@@ -727,7 +733,7 @@ export async function sendHtmlEmail(to: string, subject: string, html: string) {
   const text = wrapped.replace(/<[^>]*>/g, "");
   const mailOptions = {
     from: process.env.SMTP_FROM || user,
-    to,
+    to: Array.isArray(to) ? to.join(",") : to,
     subject,
     text,
     html: wrapped,
@@ -736,8 +742,10 @@ export async function sendHtmlEmail(to: string, subject: string, html: string) {
 
   try {
     await transporter.sendMail(mailOptions);
+    return true;
   } catch (err) {
     console.error("Failed to send html email", err);
+    return false;
   }
 }
 

@@ -328,6 +328,7 @@ export default function AdminEmailTemplatesPage() {
                   <TableRow>
                     <TableHead>Recipient</TableHead>
                     <TableHead>Date</TableHead>
+                    <TableHead>Status</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -338,6 +339,7 @@ export default function AdminEmailTemplatesPage() {
                         {l.user ? `${l.user.firstName} ${l.user.lastName}` : "Unknown"}
                       </TableCell>
                       <TableCell>{new Date(l.createdAt).toLocaleString()}</TableCell>
+                      <TableCell>{l.success ? "Success" : "Failed"}</TableCell>
                       <TableCell>
                         <Dialog open={openLog === String(l.id)} onOpenChange={o => !o && setOpenLog(null)}>
                           <DialogTrigger asChild>
