@@ -924,8 +924,10 @@ export class DatabaseStorage implements IStorage {
       id: r.id,
       templateId: r.template_id,
       userId: r.user_id,
+      toAddress: r.to_address,
       subject: r.subject,
       html: r.html,
+      success: r.success,
       createdAt: r.created_at,
       user: {
         id: r.user_id,
