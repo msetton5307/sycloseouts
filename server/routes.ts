@@ -1135,12 +1135,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(400).json({ message: "Missing subject or message" });
         }
 
-        await sendAdminUserEmail(user.email, subject, message, html);
+        const success = await sendAdminUserEmail(user.email, subject, message, html);
         await storage.createEmailLog({
           templateId: req.body.templateId,
           userId: user.id,
           subject,
           html: html || message,
+          success,
         });
         res.sendStatus(204);
       } catch (error) {
@@ -1208,12 +1209,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           .replace(/\[last_name\]/gi, u.lastName)
           .replace(/\[name\]/gi, `${u.firstName} ${u.lastName}`)
           .replace(/\[company\]/gi, u.company || "");
-        await sendHtmlEmail(u.email, template.subject, html);
+        const success = await sendHtmlEmail(u.email, template.subject, html);
         await storage.createEmailLog({
           templateId: template.id,
           userId: u.id,
           subject: template.subject,
           html,
+          success,
         });
       }
       res.sendStatus(204);
