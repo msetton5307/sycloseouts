@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
 import {
@@ -58,6 +58,16 @@ export default function AdminEmailTemplatesPage() {
   const [body, setBody] = useState("");
   const { data: logs = [] } = useEmailLogs(templateId);
   const [openLog, setOpenLog] = useState<string | null>(null);
+  function handleHtmlUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = evt => {
+      const text = evt.target?.result as string;
+      if (text) setBody(text);
+    };
+    reader.readAsText(file);
+  }
 
   useEffect(() => {
     if (templates.length > 0 && templateId === undefined && !creatingNew) {
@@ -240,6 +250,7 @@ export default function AdminEmailTemplatesPage() {
               value={subject}
               onChange={e => setSubject(e.target.value)}
             />
+            <input type="file" accept=".html" onChange={handleHtmlUpload} />
             <RichTextEditor value={body} onChange={setBody} />
             <Button
               variant="outline"
@@ -323,7 +334,9 @@ export default function AdminEmailTemplatesPage() {
                 <TableBody>
                   {logs.map(l => (
                     <TableRow key={l.id}>
-                      <TableCell>{l.user.firstName} {l.user.lastName}</TableCell>
+                      <TableCell>
+                        {l.user ? `${l.user.firstName} ${l.user.lastName}` : "Unknown"}
+                      </TableCell>
                       <TableCell>{new Date(l.createdAt).toLocaleString()}</TableCell>
                       <TableCell>
                         <Dialog open={openLog === String(l.id)} onOpenChange={o => !o && setOpenLog(null)}>
