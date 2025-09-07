@@ -181,6 +181,7 @@ export default function Header() {
                 size="icon"
                 className="text-gray-400 hover:text-gray-500"
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
+                type="button"
               >
                 <span className="sr-only">Open main menu</span>
                 {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
