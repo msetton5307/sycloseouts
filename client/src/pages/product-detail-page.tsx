@@ -338,6 +338,9 @@ export default function ProductDetailPage() {
                   currentPrice={unitPrice}
                   currentStock={availableStock}
                   selectedVariations={selectedVariations}
+                  label="Request Quote"
+                  variant="default"
+                  className="w-full mb-2 bg-blue-600 hover:bg-blue-700"
                 />
                 <AskQuestionDialog onSubmit={q => questionMutation.mutate(q)} />
               </>
