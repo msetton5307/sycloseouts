@@ -3,6 +3,7 @@ import FeaturedProducts from "@/components/home/featured-products";
 import Features from "@/components/home/features";
 import SellWithUs from "@/components/home/sell-with-us";
 import CTA from "@/components/home/cta";
+import WhyChooseUs from "@/components/home/why-choose-us";
 import Header from "@/components/layout/header-fixed";
 import Footer from "@/components/layout/footer-fixed";
 import { useAuth } from "@/hooks/use-auth";
@@ -40,6 +41,7 @@ export default function HomePage() {
         <Hero />
         <FeaturedProducts />
         <Features />
+        <WhyChooseUs />
         <SellWithUs />
         <CTA />
       </main>
