@@ -1,14 +1,4 @@
-import {
-  pgTable,
-  text,
-  serial,
-  integer,
-  boolean,
-  jsonb,
-  timestamp,
-  doublePrecision,
-  uuid,
-} from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, jsonb, timestamp, doublePrecision, uuid } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { relations } from "drizzle-orm";
@@ -243,91 +233,6 @@ export const insertOrderSchema = createInsertSchema(orders)
     shippingLabel: z.string().optional(),
     shippingPackage: z.any().optional(),
   });
-
-// Insurance quotes that require contract signing before conversion
-export const quotes = pgTable("quotes", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull(),
-  salespersonId: integer("salesperson_id").notNull(),
-  title: text("title").notNull(),
-  description: text("description"),
-  premium: doublePrecision("premium").notNull(),
-  status: text("status").notNull().default("draft"), // draft, awaiting_signature, converted, cancelled
-  contractPdfUrl: text("contract_pdf_url"),
-  sentAt: timestamp("sent_at"),
-  signedAt: timestamp("signed_at"),
-  signedBy: text("signed_by"),
-  signatureConsent: boolean("signature_consent").default(false),
-  paymentMethod: text("payment_method"),
-  paymentDetails: jsonb("payment_details"),
-  paymentDocumentUrl: text("payment_document_url"),
-  policyNumber: text("policy_number"),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
-
-export const quotesRelations = relations(quotes, ({ one }) => ({
-  customer: one(users, {
-    fields: [quotes.userId],
-    references: [users.id],
-  }),
-  salesperson: one(users, {
-    fields: [quotes.salespersonId],
-    references: [users.id],
-  }),
-}));
-
-export const insertQuoteSchema = createInsertSchema(quotes)
-  .omit({
-    id: true,
-    status: true,
-    sentAt: true,
-    signedAt: true,
-    signedBy: true,
-    signatureConsent: true,
-    paymentMethod: true,
-    paymentDetails: true,
-    paymentDocumentUrl: true,
-    policyNumber: true,
-    createdAt: true,
-    updatedAt: true,
-  })
-  .extend({
-    description: z.string().optional(),
-    contractPdfUrl: z.string().optional(),
-  });
-
-// Policies generated after a quote is signed
-export const policies = pgTable("policies", {
-  id: serial("id").primaryKey(),
-  quoteId: integer("quote_id").notNull(),
-  userId: integer("user_id").notNull(),
-  salespersonId: integer("salesperson_id").notNull(),
-  policyNumber: text("policy_number").notNull().unique(),
-  premium: doublePrecision("premium").notNull(),
-  status: text("status").notNull().default("active"),
-  effectiveDate: timestamp("effective_date").defaultNow(),
-  createdAt: timestamp("created_at").defaultNow(),
-});
-
-export const policiesRelations = relations(policies, ({ one }) => ({
-  quote: one(quotes, {
-    fields: [policies.quoteId],
-    references: [quotes.id],
-  }),
-  customer: one(users, {
-    fields: [policies.userId],
-    references: [users.id],
-  }),
-  salesperson: one(users, {
-    fields: [policies.salespersonId],
-    references: [users.id],
-  }),
-}));
-
-export const insertPolicySchema = createInsertSchema(policies)
-  .omit({ id: true, createdAt: true, effectiveDate: true })
-  .extend({ status: z.string().optional() });
 
 // Order items schema
 export const orderItems = pgTable("order_items", {
@@ -676,12 +581,6 @@ export type InsertProduct = z.infer<typeof insertProductSchema>;
 
 export type Order = typeof orders.$inferSelect;
 export type InsertOrder = z.infer<typeof insertOrderSchema>;
-
-export type Quote = typeof quotes.$inferSelect;
-export type InsertQuote = z.infer<typeof insertQuoteSchema>;
-
-export type Policy = typeof policies.$inferSelect;
-export type InsertPolicy = z.infer<typeof insertPolicySchema>;
 
 export type OrderItem = typeof orderItems.$inferSelect;
 export type InsertOrderItem = z.infer<typeof insertOrderItemSchema>;

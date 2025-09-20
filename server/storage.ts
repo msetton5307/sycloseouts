@@ -3,8 +3,6 @@ import {
   products, Product, InsertProduct,
   orders, Order, InsertOrder,
   orderItems, OrderItem, InsertOrderItem,
-  quotes, Quote, InsertQuote,
-  policies, Policy, InsertPolicy,
   sellerApplications, SellerApplication, InsertSellerApplication,
   carts, Cart, InsertCart,
   addresses, Address, InsertAddress,
@@ -60,17 +58,7 @@ export interface IStorage {
   getOrderItems(orderId: number): Promise<OrderItem[]>;
   getOrderItemsWithProducts(orderId: number): Promise<(OrderItem & { productTitle: string; productImages: string[] })[]>;
   createOrderItem(orderItem: InsertOrderItem): Promise<OrderItem>;
-
-  // Quote methods
-  getQuote(id: number): Promise<Quote | undefined>;
-  getQuotes(filter?: { userId?: number; salespersonId?: number }): Promise<Quote[]>;
-  createQuote(quote: InsertQuote): Promise<Quote>;
-  updateQuote(id: number, quote: Partial<Quote>): Promise<Quote | undefined>;
-
-  // Policy methods
-  getPolicies(filter?: { userId?: number; salespersonId?: number; quoteId?: number }): Promise<Policy[]>;
-  createPolicy(policy: InsertPolicy): Promise<Policy>;
-
+  
   // Seller application methods
   getSellerApplication(id: number): Promise<SellerApplication | undefined>;
   getSellerApplicationByUserId(userId: number): Promise<SellerApplication | undefined>;
@@ -447,85 +435,6 @@ export class DatabaseStorage implements IStorage {
       .values(insertOrderItem)
       .returning();
     return orderItem;
-  }
-
-  // Quote methods
-  async getQuote(id: number): Promise<Quote | undefined> {
-    const [quote] = await db.select().from(quotes).where(eq(quotes.id, id));
-    return quote;
-  }
-
-  async getQuotes(filter?: { userId?: number; salespersonId?: number }): Promise<Quote[]> {
-    const conditions: SQL<unknown>[] = [];
-    if (filter?.userId !== undefined) {
-      conditions.push(eq(quotes.userId, filter.userId));
-    }
-    if (filter?.salespersonId !== undefined) {
-      conditions.push(eq(quotes.salespersonId, filter.salespersonId));
-    }
-
-    if (conditions.length === 0) {
-      return await db.select().from(quotes).orderBy(desc(quotes.createdAt));
-    }
-
-    let combinedCondition = conditions[0];
-    for (let i = 1; i < conditions.length; i++) {
-      combinedCondition = and(combinedCondition, conditions[i]);
-    }
-
-    return await db
-      .select()
-      .from(quotes)
-      .where(combinedCondition)
-      .orderBy(desc(quotes.createdAt));
-  }
-
-  async createQuote(insertQuote: InsertQuote): Promise<Quote> {
-    const [quote] = await db.insert(quotes).values(insertQuote).returning();
-    return quote;
-  }
-
-  async updateQuote(id: number, quoteData: Partial<Quote>): Promise<Quote | undefined> {
-    const [quote] = await db
-      .update(quotes)
-      .set({ ...quoteData, updatedAt: new Date() })
-      .where(eq(quotes.id, id))
-      .returning();
-    return quote;
-  }
-
-  // Policy methods
-  async getPolicies(filter?: { userId?: number; salespersonId?: number; quoteId?: number }): Promise<Policy[]> {
-    const conditions: SQL<unknown>[] = [];
-    if (filter?.userId !== undefined) {
-      conditions.push(eq(policies.userId, filter.userId));
-    }
-    if (filter?.salespersonId !== undefined) {
-      conditions.push(eq(policies.salespersonId, filter.salespersonId));
-    }
-    if (filter?.quoteId !== undefined) {
-      conditions.push(eq(policies.quoteId, filter.quoteId));
-    }
-
-    if (conditions.length === 0) {
-      return await db.select().from(policies).orderBy(desc(policies.createdAt));
-    }
-
-    let combinedCondition = conditions[0];
-    for (let i = 1; i < conditions.length; i++) {
-      combinedCondition = and(combinedCondition, conditions[i]);
-    }
-
-    return await db
-      .select()
-      .from(policies)
-      .where(combinedCondition)
-      .orderBy(desc(policies.createdAt));
-  }
-
-  async createPolicy(insertPolicy: InsertPolicy): Promise<Policy> {
-    const [policy] = await db.insert(policies).values(insertPolicy).returning();
-    return policy;
   }
 
   // Seller application methods

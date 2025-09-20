@@ -41,9 +41,6 @@ import {
   type InsertUserNote,
   type InsertProductNote,
   type Order,
-  insertQuoteSchema,
-  type Quote,
-  type Policy,
   insertOfferSchema,
   offers as offersTable,
   orders as ordersTable,
@@ -53,7 +50,7 @@ import {
 import { db } from "./db";
 import { eq } from "drizzle-orm";
 import { generateOrderCode } from "./orderCode";
-import { ZodError, z } from "zod";
+import { ZodError } from "zod";
 import { containsContactInfo } from "./contactFilter";
 import { randomBytes } from "crypto";
 import { storage } from "./storage";
@@ -76,35 +73,6 @@ function subtractServiceFee(amount: number, rate: number): number {
 function calculateServiceFee(amount: number, rate: number): number {
   return Math.round(amount * rate * 100) / 100;
 }
-
-const createQuoteSchema = insertQuoteSchema.omit({ userId: true });
-
-const updateQuoteSchema = z.object({
-  contractPdfUrl: z.string().optional(),
-  status: z.enum(["draft", "awaiting_signature", "converted", "cancelled"]).optional(),
-  title: z.string().min(1).optional(),
-  description: z.string().optional(),
-  premium: z.number().positive().optional(),
-  salespersonId: z.number().int().optional(),
-});
-
-const paymentDetailsSchema = z
-  .object({
-    accountNumber: z.string().min(2).optional(),
-    routingNumber: z.string().min(2).optional(),
-    cardLast4: z.string().min(2).optional(),
-    nameOnAccount: z.string().min(2).optional(),
-    notes: z.string().optional(),
-  })
-  .partial();
-
-const signQuoteSchema = z.object({
-  signature: z.string().min(2),
-  consent: z.boolean(),
-  paymentMethod: z.string().min(2),
-  paymentDetails: paymentDetailsSchema.optional(),
-  paymentDocumentUrl: z.string().optional(),
-});
 
 async function fetchTrackingStatus(trackingNumber: string): Promise<string | undefined> {
   try {
@@ -1140,113 +1108,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const buyerOrders = await storage.getOrders({ buyerId: userId });
         const sellerOrders = await storage.getOrders({ sellerId: userId });
         res.json([...buyerOrders, ...sellerOrders]);
-      } catch (error) {
-        handleApiError(res, error);
-      }
-    },
-  );
-
-  app.get(
-    "/api/admin/users/:userId/quotes",
-    isAuthenticated,
-    isAdmin,
-    async (req, res) => {
-      try {
-        const userId = parseInt(req.params.userId, 10);
-        if (Number.isNaN(userId)) {
-          return res.status(400).json({ message: "Invalid user ID" });
-        }
-
-        const quotes = await storage.getQuotes({ userId });
-        const policies = await storage.getPolicies({ userId });
-        const policyMap = new Map(policies.map((policy) => [policy.quoteId, policy]));
-        const payload: QuoteWithPolicy[] = quotes.map((quote) => ({
-          ...quote,
-          policy: policyMap.get(quote.id) ?? null,
-        }));
-        res.json(payload);
-      } catch (error) {
-        handleApiError(res, error);
-      }
-    },
-  );
-
-  app.post(
-    "/api/admin/users/:userId/quotes",
-    isAuthenticated,
-    isAdmin,
-    async (req, res) => {
-      try {
-        const userId = parseInt(req.params.userId, 10);
-        if (Number.isNaN(userId)) {
-          return res.status(400).json({ message: "Invalid user ID" });
-        }
-
-        const parsedBody = createQuoteSchema.parse(req.body);
-        const quote = await storage.createQuote({
-          ...parsedBody,
-          userId,
-          status: "awaiting_signature",
-          sentAt: new Date(),
-          contractPdfUrl: parsedBody.contractPdfUrl || "/placeholder-contract.pdf",
-        });
-
-        await storage.createNotification({
-          userId,
-          type: "contract",
-          content: `New contract available for ${quote.title}`,
-          link: "/buyer/contracts",
-        });
-
-        res.status(201).json(quote);
-      } catch (error) {
-        handleApiError(res, error);
-      }
-    },
-  );
-
-  app.put(
-    "/api/admin/quotes/:quoteId",
-    isAuthenticated,
-    isAdmin,
-    async (req, res) => {
-      try {
-        const quoteId = parseInt(req.params.quoteId, 10);
-        if (Number.isNaN(quoteId)) {
-          return res.status(400).json({ message: "Invalid quote ID" });
-        }
-
-        const updates = updateQuoteSchema.parse(req.body);
-        const current = await storage.getQuote(quoteId);
-        if (!current) {
-          return res.status(404).json({ message: "Quote not found" });
-        }
-
-        const payload: Partial<Quote> = { ...updates };
-
-        if (updates.status === "awaiting_signature") {
-          payload.sentAt = new Date();
-        }
-
-        if (updates.contractPdfUrl && updates.contractPdfUrl !== current.contractPdfUrl) {
-          payload.contractPdfUrl = updates.contractPdfUrl;
-        }
-
-        const updatedQuote = await storage.updateQuote(quoteId, payload);
-        if (!updatedQuote) {
-          return res.status(404).json({ message: "Quote not found" });
-        }
-
-        if (updates.status === "awaiting_signature") {
-          await storage.createNotification({
-            userId: updatedQuote.userId,
-            type: "contract",
-            content: `Updated contract ready for ${updatedQuote.title}`,
-            link: "/buyer/contracts",
-          });
-        }
-
-        res.json(updatedQuote);
       } catch (error) {
         handleApiError(res, error);
       }
@@ -2398,21 +2259,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // User management routes (admin only)
-  type QuoteWithPolicy = Quote & { policy?: Policy | null };
-
   app.get("/api/users", isAuthenticated, isAdmin, async (req, res) => {
     try {
-      const rolesParam =
-        ((req.query.roles as string | undefined) ?? (req.query.role as string | undefined))?.trim();
-      const roleFilters = rolesParam
-        ? rolesParam
-            .split(",")
-            .map((role) => role.trim())
-            .filter(Boolean)
-        : undefined;
-      const users = await storage.getUsers(
-        roleFilters && roleFilters.length > 0 ? { roles: roleFilters } : undefined,
-      );
+      const users = await storage.getUsers();
       // Remove passwords from response
       const usersWithoutPasswords = users.map(({ password, ...user }) => user);
       res.json(usersWithoutPasswords);
@@ -2573,154 +2422,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const { password, ...userWithoutPassword } = user;
       res.json(userWithoutPassword);
-    } catch (error) {
-      handleApiError(res, error);
-    }
-  });
-
-  app.get("/api/quotes", isAuthenticated, async (req, res) => {
-    try {
-      const user = req.user as Express.User;
-      const filter: { userId?: number; salespersonId?: number } = {};
-
-      if (user.role === "buyer") {
-        filter.userId = user.id;
-      } else if (user.role === "seller") {
-        filter.salespersonId = user.id;
-      } else if (user.role === "admin") {
-        const userIdParam = req.query.userId as string | undefined;
-        const salespersonIdParam = req.query.salespersonId as string | undefined;
-        if (userIdParam) {
-          const userId = parseInt(userIdParam, 10);
-          if (!Number.isNaN(userId)) {
-            filter.userId = userId;
-          }
-        }
-        if (salespersonIdParam) {
-          const salespersonId = parseInt(salespersonIdParam, 10);
-          if (!Number.isNaN(salespersonId)) {
-            filter.salespersonId = salespersonId;
-          }
-        }
-      }
-
-      const quotes = await storage.getQuotes(
-        Object.keys(filter).length > 0 ? filter : undefined,
-      );
-
-      const policyFilter = filter.userId
-        ? { userId: filter.userId }
-        : filter.salespersonId
-        ? { salespersonId: filter.salespersonId }
-        : undefined;
-
-      const policies = await storage.getPolicies(policyFilter);
-      const policyMap = new Map(policies.map((policy) => [policy.quoteId, policy]));
-      const payload: QuoteWithPolicy[] = quotes.map((quote) => ({
-        ...quote,
-        policy: policyMap.get(quote.id) ?? null,
-      }));
-
-      res.json(payload);
-    } catch (error) {
-      handleApiError(res, error);
-    }
-  });
-
-  app.post("/api/quotes/:id/sign", isAuthenticated, async (req, res) => {
-    try {
-      const quoteId = parseInt(req.params.id, 10);
-      if (Number.isNaN(quoteId)) {
-        return res.status(400).json({ message: "Invalid quote ID" });
-      }
-
-      const quote = await storage.getQuote(quoteId);
-      if (!quote) {
-        return res.status(404).json({ message: "Quote not found" });
-      }
-
-      const user = req.user as Express.User;
-      if (user.role === "buyer" && quote.userId !== user.id) {
-        return res.status(403).json({ message: "Forbidden" });
-      }
-      if (user.role === "seller") {
-        return res.status(403).json({ message: "Forbidden" });
-      }
-      if (quote.status !== "awaiting_signature") {
-        return res.status(400).json({ message: "Quote is not awaiting signature" });
-      }
-
-      const payload = signQuoteSchema.parse(req.body);
-      if (!payload.consent) {
-        return res.status(400).json({ message: "Digital consent is required" });
-      }
-
-      const policyNumber = `POL-${Date.now()}-${Math.floor(Math.random() * 10000)
-        .toString()
-        .padStart(4, "0")}`;
-      const now = new Date();
-
-      const updatedQuote = await storage.updateQuote(quoteId, {
-        status: "converted",
-        signedAt: now,
-        signedBy: payload.signature,
-        signatureConsent: payload.consent,
-        paymentMethod: payload.paymentMethod,
-        paymentDetails: payload.paymentDetails ?? quote.paymentDetails,
-        paymentDocumentUrl: payload.paymentDocumentUrl ?? quote.paymentDocumentUrl,
-        policyNumber,
-      });
-
-      if (!updatedQuote) {
-        return res.status(404).json({ message: "Quote not found" });
-      }
-
-      const policy = await storage.createPolicy({
-        quoteId,
-        userId: quote.userId,
-        salespersonId: quote.salespersonId,
-        premium: quote.premium,
-        status: "active",
-        policyNumber,
-      });
-
-      await storage.createNotification({
-        userId: quote.salespersonId,
-        type: "contract",
-        content: `Contract signed for ${quote.title}. Policy ${policy.policyNumber} activated.`,
-        link: "/notifications",
-      });
-
-      const salesperson = await storage.getUser(quote.salespersonId);
-      if (salesperson?.email) {
-        const buyer = await storage.getUser(quote.userId);
-        const buyerName = buyer
-          ? `${buyer.firstName ?? ""} ${buyer.lastName ?? ""}`.trim() || buyer.email || `Client #${quote.userId}`
-          : `Client #${quote.userId}`;
-        const salespersonName = `${salesperson.firstName ?? ""} ${salesperson.lastName ?? ""}`.trim() ||
-          salesperson.username ||
-          salesperson.email;
-        const emailBody = `
-          <p>Hi ${salespersonName},</p>
-          <p>${buyerName} has digitally signed the contract for <strong>${quote.title}</strong>.</p>
-          <p>The policy <strong>${policy.policyNumber}</strong> is now active.</p>
-          <p><a href="${process.env.PUBLIC_SITE_URL || "https://sycloseouts.com"}/admin/users/${quote.userId}">View customer record</a> to review payment details and documents.</p>
-        `;
-        const emailSubject = `Contract signed for ${quote.title}`;
-        const emailResult = await sendHtmlEmail(salesperson.email, emailSubject, emailBody);
-        if (!emailResult) {
-          console.warn("Unable to send contract signed email to salesperson", salesperson.email);
-        }
-      }
-
-      await storage.createNotification({
-        userId: quote.userId,
-        type: "contract",
-        content: `Policy ${policy.policyNumber} is active.`,
-        link: "/buyer/contracts",
-      });
-
-      res.json({ quote: updatedQuote, policy });
     } catch (error) {
       handleApiError(res, error);
     }
