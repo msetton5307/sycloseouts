@@ -6,6 +6,7 @@ import {
   MessageCircle,
   DollarSign,
   LayoutDashboard,
+  FileText,
 } from "lucide-react";
 import { useCart } from "@/hooks/use-cart";
 import { useAuth } from "@/hooks/use-auth";
@@ -49,6 +50,17 @@ export default function MobileNav() {
             >
               <ListOrdered className="h-5 w-5" />
               Orders
+            </Link>
+          </li>
+        )}
+        {user?.role === "buyer" && (
+          <li className="flex-1">
+            <Link
+              href="/buyer/contracts"
+              className={`flex flex-col items-center py-2 text-xs w-full ${isActive("/buyer/contracts") ? "text-primary" : "text-gray-500"}`}
+            >
+              <FileText className="h-5 w-5" />
+              Contracts
             </Link>
           </li>
         )}
