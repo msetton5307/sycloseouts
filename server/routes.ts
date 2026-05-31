@@ -1139,7 +1139,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await storage.createEmailLog({
           templateId: req.body.templateId,
           userId: user.id,
-          toAddress: user.email,
           subject,
           html: html || message,
           success,
@@ -1214,7 +1213,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await storage.createEmailLog({
           templateId: template.id,
           userId: u.id,
-          toAddress: u.email,
           subject: template.subject,
           html,
           success,
