@@ -327,7 +327,6 @@ export default function AdminEmailTemplatesPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Recipient</TableHead>
-                    <TableHead>Email</TableHead>
                     <TableHead>Date</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Actions</TableHead>
@@ -339,7 +338,6 @@ export default function AdminEmailTemplatesPage() {
                       <TableCell>
                         {l.user ? `${l.user.firstName} ${l.user.lastName}` : "Unknown"}
                       </TableCell>
-                      <TableCell>{l.toAddress}</TableCell>
                       <TableCell>{new Date(l.createdAt).toLocaleString()}</TableCell>
                       <TableCell>{l.success ? "Success" : "Failed"}</TableCell>
                       <TableCell>
